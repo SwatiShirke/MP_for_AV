@@ -1,7 +1,7 @@
 {
     "acados_include_path": "/home/swati/acados/include",
     "acados_lib_path": "/home/swati/acados/lib",
-    "code_export_directory": "/home/swati/acados/my_code/ackerman_carla_ROS2_WS/src/Vehicle_MPC/vd_mpc_controller/scripts/c_generated_code",
+    "code_export_directory": "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_local_planner/scripts/c_generated_code",
     "constraints": {
         "C": [],
         "C_e": [],
@@ -11,6 +11,7 @@
         "constr_type_e": "BGH",
         "has_x0": true,
         "idxbu": [
+            0,
             1,
             2
         ],
@@ -43,6 +44,7 @@
         "idxsphi_0": [],
         "idxsphi_e": [],
         "lbu": [
+            -8.5,
             -0.7,
             -0.7
         ],
@@ -77,6 +79,7 @@
         "lsphi_0": [],
         "lsphi_e": [],
         "ubu": [
+            2.5,
             0.7,
             0.7
         ],
@@ -156,7 +159,7 @@
     ],
     "dims": {
         "N": 10,
-        "nbu": 2,
+        "nbu": 3,
         "nbx": 2,
         "nbx_0": 4,
         "nbx_e": 0,
@@ -211,8 +214,8 @@
         "cost_conl_custom_outer_hess": null,
         "cost_conl_custom_outer_hess_0": null,
         "cost_conl_custom_outer_hess_e": null,
-        "cost_expr_ext_cost": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegfaaaaaaaaaaaaaaabaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaajgepbaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfadegpcaaaaaaaaaaaaaafaaaaaaaihpfahpgdhegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfbdegpcaaaaaaaaaaaaaafaaaaaaajhpfahpgdhegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfddegpcaaaaaaaaaaaaaacaaaaaaagfggegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaabdegoaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfcdegpcaaaaaaaaaaaaaafaaaaaaaehigfgehbgegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaachkdmiadcooijhfeodeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfedegpcaaaaaaaaaaaaaafaaaaaaabgdgdgfgmgegdaaaaaaaaaaaaaaachmbaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpffdegpcaaaaaaaaaaaaaaoaaaaaaadhehfgfgchpfbgoghgmgfgpfjgogegdaaaaaaaaaaaaaaachmbaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfgdegpcaaaaaaaaaaaaaapaaaaaaadhehfgfgchpfbgoghgmgfgpfpgfhehegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaajgiodaaaaaeglaaaaaaaaaaaaaaachdcaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaachocaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaachjcaaaaaaaaaaaaaa",
-        "cost_expr_ext_cost_0": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegfaaaaaaaaaaaaaaabaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaajgepbaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfadegpcaaaaaaaaaaaaaafaaaaaaaihpfahpgdhegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfbdegpcaaaaaaaaaaaaaafaaaaaaajhpfahpgdhegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfddegpcaaaaaaaaaaaaaacaaaaaaagfggegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaabdegoaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfcdegpcaaaaaaaaaaaaaafaaaaaaaehigfgehbgegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaachkdmiadcooijhfeodeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfedegpcaaaaaaaaaaaaaafaaaaaaabgdgdgfgmgegdaaaaaaaaaaaaaaachmbaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpffdegpcaaaaaaaaaaaaaaoaaaaaaadhehfgfgchpfbgoghgmgfgpfjgogegdaaaaaaaaaaaaaaachmbaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfgdegpcaaaaaaaaaaaaaapaaaaaaadhehfgfgchpfbgoghgmgfgpfpgfhehegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaajgiodaaaaaeglaaaaaaaaaaaaaaachdcaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaachocaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaachjcaaaaaaaaaaaaaa",
+        "cost_expr_ext_cost": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegfaaaaaaaaaaaaaaabaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaajgepbaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfadegpcaaaaaaaaaaaaaafaaaaaaaihpfahpgdhegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfbdegpcaaaaaaaaaaaaaafaaaaaaajhpfahpgdhegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfddegpcaaaaaaaaaaaaaacaaaaaaagfggegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaabdegoaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfcdegpcaaaaaaaaaaaaaafaaaaaaaehigfgehbgegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaachkdmiadcooijhfeodeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfedegpcaaaaaaaaaaaaaafaaaaaaabgdgdgfgmgegdaaaaaaaaaaaaaaachmbaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpffdegpcaaaaaaaaaaaaaaoaaaaaaadhehfgfgchpfbgoghgmgfgpfjgogegdaaaaaaaaaaaaaaachmbaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfgdegpcaaaaaaaaaaaaaapaaaaaaadhehfgfgchpfbgoghgmgfgpfpgfhehegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaajgiodaaaaaeglaaaaaaaaaaaaaaachobaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaachocaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaachdcaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaachocaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaachjcaaaaaaaaaaaaaa",
+        "cost_expr_ext_cost_0": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegfaaaaaaaaaaaaaaabaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaajgepbaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfadegpcaaaaaaaaaaaaaafaaaaaaaihpfahpgdhegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfbdegpcaaaaaaaaaaaaaafaaaaaaajhpfahpgdhegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfddegpcaaaaaaaaaaaaaacaaaaaaagfggegdaaaaaaaaaaaaaaachbaaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaabdegoaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfcdegpcaaaaaaaaaaaaaafaaaaaaaehigfgehbgegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaachkdmiadcooijhfeodeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfedegpcaaaaaaaaaaaaaafaaaaaaabgdgdgfgmgegdaaaaaaaaaaaaaaachmbaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpffdegpcaaaaaaaaaaaaaaoaaaaaaadhehfgfgchpfbgoghgmgfgpfjgogegdaaaaaaaaaaaaaaachmbaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaaegcaaaaaaaaaaaaaaaegpcaaaaaaaaaaaaaamaaaaaaachfgggfgchfgogdgfgdhpfgdegpcaaaaaaaaaaaaaapaaaaaaadhehfgfgchpfbgoghgmgfgpfpgfhehegbaaaaaaaaaaaaaaaegbaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaegmcaaaaaaaaaaaaaajgiodaaaaaeglaaaaaaaaaaaaaaachobaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaachocaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaachdcaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaachocaaaaaaaaaaaaaaeglaaaaaaaaaaaaaaachjcaaaaaaaaaaaaaa",
         "cost_expr_ext_cost_custom_hess": null,
         "cost_expr_ext_cost_custom_hess_0": null,
         "cost_expr_ext_cost_custom_hess_e": null,
@@ -273,7 +276,7 @@
     "simulink_opts": null,
     "solver_options": {
         "N_horizon": 10,
-        "Tsim": 0.02,
+        "Tsim": 0.5,
         "adaptive_levenberg_marquardt_lam": 5.0,
         "adaptive_levenberg_marquardt_mu0": 0.001,
         "adaptive_levenberg_marquardt_mu_min": 1e-16,
@@ -341,16 +344,16 @@
         "rti_log_residuals": 0,
         "shooting_nodes": [
             0.0,
-            0.02,
-            0.04,
-            0.06,
-            0.08,
-            0.1,
-            0.12000000000000001,
-            0.14,
-            0.16,
-            0.18,
-            0.19999999999999998
+            0.5,
+            1.0,
+            1.5,
+            2.0,
+            2.5,
+            3.0,
+            3.5,
+            4.0,
+            4.5,
+            5.0
         ],
         "sim_method_jac_reuse": [
             0,
@@ -390,18 +393,18 @@
             3,
             3
         ],
-        "tf": 0.2,
+        "tf": 5,
         "time_steps": [
-            0.02,
-            0.02,
-            0.02,
-            0.02,
-            0.02,
-            0.02,
-            0.02,
-            0.02,
-            0.02,
-            0.02
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5,
+            0.5
         ],
         "with_adaptive_levenberg_marquardt": false,
         "with_solution_sens_wrt_params": false,

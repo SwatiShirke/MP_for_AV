@@ -22,6 +22,7 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(carla_msgs REQUIRED)
+find_package(vd_msgs REQUIRED)
 
 # ARM NEON flags
 if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
@@ -47,6 +48,7 @@ set(acados_generated_code "scripts/c_generated_code")
 set(dependencies
   rclcpp
   geometry_msgs
+  vd_msgs
   nav_msgs
   std_msgs
   sensor_msgs
@@ -75,7 +77,7 @@ include_directories(
 
 
 link_directories(${acados_generated_code})
-add_library(nmpc_shared_lib SHARED src/mpc_control_node.cpp src/wrapper.cpp src/nmpc_control.cpp)
+add_library(nmpc_shared_lib SHARED src/nmpc_control_node.cpp src/wrapper.cpp src/nmpc_control.cpp)
 set_target_properties(nmpc_shared_lib PROPERTIES COMPILE_DEFINITIONS "COMPOSITION_BUILDING_DLL")
 ament_target_dependencies(nmpc_shared_lib ${dependencies})
 
@@ -95,7 +97,7 @@ target_link_libraries(nmpc_shared_lib
 ament_export_libraries(nmpc_shared_lib)
 ament_export_dependencies(${dependencies})
 
-add_executable(vd_nmpc_node src/mpc_control_node.cpp)
+add_executable(vd_nmpc_node src/nmpc_control_node.cpp)
 ament_target_dependencies(vd_nmpc_node ${dependencies})
 target_link_libraries(vd_nmpc_node nmpc_shared_lib)
 

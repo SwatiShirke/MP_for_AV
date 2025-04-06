@@ -18,7 +18,8 @@ class a_star:
         #grap = is a dictionary with adjacency list
         #map = is carla map used during collision checking 
         self.graph = graph             
-        #self.node_list = [node for node in self.graph]
+        self.node_list = [node for node in self.graph]
+        print("node list ", self.node_list)
         self.parent_dict = parent_dict
         self.rounded_node_list = {(int(node[0]), int(node[1])) : node for node in graph}
         #for testing
@@ -26,7 +27,7 @@ class a_star:
         # self.kd_tree = sp.KDTree(self.node_list)
         self.nearest_K = 5
         self.resoultion = 0.5
-        self.threshold = 1
+        self.threshold = 1.00
         self.map = in_map
 
     def get_path(self, parent_dict, goal_node, start_node ):
@@ -95,32 +96,59 @@ class a_star:
         self.graph.setdefault(node,[]).append((child_node, dist))
         print("goal added! : ", node)
 
-      
 
-    def add_start(self, node): 
-        #keep moving on the current path and you will find a nearest node
-        current_node = (int(node[0]), int(node[1]))
-        current_loc = carla.Location(node[0], node[1])
-        start_loc = current_loc
-        current_wp = self.map.get_waypoint(current_loc)
-
-        #rounded_node_list = {(int(node[0]), int(node[1])) : node for node in self.node_list}
-        while current_node not in self.rounded_node_list: 
-            next_wp = current_wp.next(1.0)
-            current_wp = next_wp[0]            
-            current_node = (int(current_wp.transform.location.x), int(current_wp.transform.location.y))
-
+    def  nlist_in_vicinity(self, target_node):
+        node_list = [node for node in self.graph if np.linalg.norm(np.array(node) - np.array(target_node)) < self.threshold] 
+        return node_list
         
-        distance = start_loc.distance(current_wp.transform.location) 
-        rounded_node = (round(node[0],2), round(node[1],2))
-        self.graph.setdefault(rounded_node, []).append((self.rounded_node_list[current_node], distance))
-        print("start added")
-        print(self.graph[rounded_node]) 
+
+    def add_start(self, node):
+        if len(self.nlist_in_vicinity(node)):
+            print("start node is already present in the graph")
+            return        
+        current_node = node
+        current_wp = self.map.get_waypoint(carla.Location(current_node[0], current_node[1]))
+        
+        while (not len(self.nlist_in_vicinity(current_node))):            
+            next_wp = current_wp.next(0.25)
+            current_wp = next_wp[0]
+            current_node = (current_wp.transform.location.x, current_wp.transform.location.y)
+            print("current node ", current_node)
+        
+        n_list = self.nlist_in_vicinity(current_node)
+        n_node = n_list[0]
+        distance = np.linalg.norm(np.array(node) - np.array(n_node))
+        self.graph.setdefault(node, []).append((n_node, distance))
+
+        print("added start node")
+        print(node)
+        print("adjacency list :", self.graph[node] )
+        #keep moving on the current path and you will find a nearest node
+        #current_node = (int(node[0]), int(node[1]))
+        # if current_node in self.rounded_node_list:
+        #     print("node is already present in the graph")
+        #     return
+        # current_loc = carla.Location(node[0], node[1])
+        # start_loc = current_loc
+        # current_wp = self.map.get_waypoint(current_loc)        
+        # while current_node not in self.rounded_node_list: 
+        #     next_wp = current_wp.next(0.25)
+        #     current_wp = next_wp[0]            
+        #     current_node = (int(current_wp.transform.location.x), int(current_wp.transform.location.y))        
+        # distance = start_loc.distance(current_wp.transform.location)         
+        # self.graph.setdefault(node, []).append((self.rounded_node_list[current_node], distance))
+        # print("start added")
+        # print(node) 
 
    
-    def a_star(self, start, goal):    
+    def a_star(self, start, goal): 
+
+        start = (round(start[0]), round(start[1] ) )
+        goal =   (round(goal[0]), round(goal[1]))
         self.add_start(start)
         self.add_goal(goal)  
+
+        #print("graph", self.graph)
 
         open_set = heapdict()    
         closed_set = [] 
@@ -137,35 +165,29 @@ class a_star:
         #loop until goal found or queue empty
         while open_set:
             node,cost = open_set.popitem()
-            
+            #print("node popped: ", node)
             closed_set.append(node)
-            if (int(node[0]), int(node[1])) == (int(goal[0]), int(goal[1]) ):
+            if (int(node[0]), int(node[1])) == (int(goal[0]), int(goal[1])):
                 print("path found!")
                 path = self.get_path(parents_dict, goal, start)
                 print(path)
                 return path
             else:              
-                #neighbour_list = [ n for n, dist in self.graph[node]]             
-                neighbour_list = self.graph[node]
-                #print("neighbour_list", neighbour_list)
-                for n, dist in neighbour_list:                
+                            
+                neighbour_list = self.graph[node]                
+                for n, dist in neighbour_list: 
+                                                      
                     if n in closed_set:
                         continue  
-                    
                     
                     new_cost = cost_dict[node] + dist
 
                     (x,y) = n
-                    if new_cost < cost_dict[n]:
-                        
+                    if new_cost < cost_dict[n]:                        
                         cost_dict[n] = new_cost 
                         parents_dict[n] = node
                         total_cost = new_cost + self.cal_heuristic_cost(n, goal)
                         open_set[n] = total_cost
         path = []
-        print("path not found!")
-        #self.show_directed_graph()
-        
+        print("path not found!")              
         return path
-
-    
