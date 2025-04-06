@@ -14,9 +14,10 @@ import networkx as nx
 
 class a_star:
     
-    def __init__(self, graph, in_map, parent_dict):
-        #grap = is a dictionary with adjacency list
+    def __init__(self, grid_map, grid_resolution):
+        #grid_map = 2d np array
         #map = is carla map used during collision checking 
+<<<<<<< Updated upstream
         self.graph = graph             
         self.node_list = [node for node in self.graph]
         print("node list ", self.node_list)
@@ -29,6 +30,12 @@ class a_star:
         self.resoultion = 0.5
         self.threshold = 1.00
         self.map = in_map
+=======
+        self.grid_map = grid_map  
+        self.grid_resolution = grid_resolution      
+        self.threshold = 1
+       
+>>>>>>> Stashed changes
 
     def get_path(self, parent_dict, goal_node, start_node ):
         #print("goal_node", goal_node)
@@ -47,7 +54,17 @@ class a_star:
         dist = np.linalg.norm(np.array(current_node) - np.array(goal_node))           
         return dist    
 
+    def get_neighbours(self, node):
+        x, y = node
+        rows, cols = self.grid_map.shape
+        ## 8 neighbour grid
+        n_nodes = [(x+1, y), (x-1, y), (x, y+1), (x, y-1), (x+1, y+1), (x+1, y-1), (x-1, y-1) (x-1, y+1)]
+        n_list = []
+        for x_val, y_val in n_nodes:
+            if ( x_val >= 0 and x_val < cols and y_val >= 0 and y_val < rows ):
+                n_list.append((x_val,y_val))
 
+<<<<<<< Updated upstream
     def show_directed_graph(self):
         
         graph_rounded = {(round(key[0], 2), round(key[1], 2)) : [(round(val1[0], 2), round(val1[1], 2)) for val1 in val] for key, val in self.graph.items()}
@@ -150,9 +167,17 @@ class a_star:
 
         #print("graph", self.graph)
 
+=======
+        return n_list       
+
+   
+    def a_star(self, start, goal):    
+        goal = (int(goal[0]), int(goal[1]))
+>>>>>>> Stashed changes
         open_set = heapdict()    
         closed_set = [] 
-        cost_dict = {node: float("inf")  for node in self.graph}
+        rows, cols = self.grid_map.shape
+        cost_dict = {(x,y): float("inf")  for x in range(cols) for y in range(rows)}
         parents_dict = {}
         path = []
 
@@ -164,15 +189,22 @@ class a_star:
 
         #loop until goal found or queue empty
         while open_set:
+<<<<<<< Updated upstream
             node,cost = open_set.popitem()
             #print("node popped: ", node)
             closed_set.append(node)
             if (int(node[0]), int(node[1])) == (int(goal[0]), int(goal[1])):
+=======
+            node,cost = open_set.popitem()            
+            closed_set.append(node)
+            if node == goal:
+>>>>>>> Stashed changes
                 print("path found!")
                 path = self.get_path(parents_dict, goal, start)
                 print(path)
                 return path
             else:              
+<<<<<<< Updated upstream
                             
                 neighbour_list = self.graph[node]                
                 for n, dist in neighbour_list: 
@@ -184,10 +216,28 @@ class a_star:
 
                     (x,y) = n
                     if new_cost < cost_dict[n]:                        
+=======
+                neighbour_list = self.get_neighbours(node)                
+                
+                for n in neighbour_list:                
+                    if n in closed_set:
+                        continue  
+                    
+                    
+                    new_cost = cost_dict[node] + self.grid_resolution                    
+                    if new_cost < cost_dict[n]:
+                        
+>>>>>>> Stashed changes
                         cost_dict[n] = new_cost 
                         parents_dict[n] = node
                         total_cost = new_cost + self.cal_heuristic_cost(n, goal)
                         open_set[n] = total_cost
+<<<<<<< Updated upstream
         path = []
         print("path not found!")              
+=======
+        
+        print("path not found!")
+             
+>>>>>>> Stashed changes
         return path

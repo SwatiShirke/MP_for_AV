@@ -28,20 +28,33 @@ class GlobalPlanner(Node):
         self.client.set_timeout(10.0)
         self.world = self.client.get_world()
         self.map = self.world.get_map()
+<<<<<<< Updated upstream
         self.resolution = 1
         self.interpld_resolution = 1.0
+=======
+        self.grid_resolution = 1
+        self.interpld_resolution = 0.5
+>>>>>>> Stashed changes
         self.vehicle = None
         self.get_vehicle()
-        self.graph = {}
-        self.parent_dict = {}
-        self.get_graph()        
+        self.grid_map = None
+        self.get_grid_map()              
         self.T_pred = 0.02 
+
         #for testing
+<<<<<<< Updated upstream
         self.start = None
         self.goal = None 
         self.path = None
         self.path_way_points = []
         self.planner = a_star(self.graph, self.map, self.parent_dict)        
+=======
+        self.start = (-26.00, 130.04)
+        self.goal =  (-70.49, 128.90) 
+        self.path = []      # returned by a* from grid map
+        self.trajectory = []        #(x,y,theta)
+        self.planner = a_star(self.grid_map, self.grid_resolution)        
+>>>>>>> Stashed changes
         self.is_trajectory_generated = False
         self.current_s_len = 0
         self.ref_vel = 10.00 #m/s
@@ -68,6 +81,7 @@ class GlobalPlanner(Node):
             raise RuntimeError(f"Vehicle with ID {self.role_name} not found!")
            
 
+<<<<<<< Updated upstream
     def get_graph(self):
         """generate map from carla"""  
               
@@ -105,8 +119,27 @@ class GlobalPlanner(Node):
             current_wp = next_wp[0]
             path_dist += self.resolution
         return path_dist
+=======
+    def get_grid_map(self):
+        waypoints = self.map.generate_waypoints(distance = self.grid_resolution)        
+        x_val = [wp.transform.location.x for wp in waypoints if wp.lane_type == carla.LaneType.Driving]
+        y_val = [wp.transform.location.y for wp in waypoints if wp.lane_type == carla.LaneType.Driving] 
+        free_points = np.column_stack([x_val,y_val])
+>>>>>>> Stashed changes
 
+        #grid creation
+        x_min, x_max = min(x_val), max(x_val)
+        y_min, y_max = min(y_val), max(y_val)
+        x_lin = np.linspace(x_min, x_max, int((x_max - x_min)/self.grid_resolution)+1)
+        y_lin = np.linspace(y_min, y_max, int((y_max - y_min)/self.grid_resolution)+1)
 
+        X, Y = np.meshgrid(x_lin, y_lin)
+        
+        grid_map = np.ones(X.shape) 
+        for (x_pos,y_pos) in free_points:
+            grid_map[int(abs((y_pos+ abs(y_min)))/self.grid_resolution), int(abs(x_pos+ abs(x_min)) /self.grid_resolution)]  = 0
+        self.grid_map = grid_map  
+        
     def check_if_reached(self, node1, node2):
         if np.linalg.norm(np.array(node1)-np.array(node2) ) <= self.resolution:
             return True
@@ -115,6 +148,7 @@ class GlobalPlanner(Node):
 
     def service_callback(self, request, response):
         self.get_logger().info('started generating global path')
+<<<<<<< Updated upstream
         self.goal = (request.x, request.y) 
         start_loc = self.vehicle.get_transform()
         self.start = (start_loc.location.x, start_loc.location.y)
@@ -127,12 +161,18 @@ class GlobalPlanner(Node):
         self.path_pub.publish(vd_path_msg)
 
         
+=======
+        self.goal = (request.x,request.y)
+        self.path = self.planner.a_star(self.start, self.goal)
+        self.trajectory = self.cal_trajectory()
+>>>>>>> Stashed changes
         self.interploate_path()
-        self.path_kd_tree = sp.cKDTree(self.path)
+        self.path_kd_tree = sp.KDTree(self.path)
         self.is_trajectory_generated = True
         response.message = "Global Path generated!"
         return response
 
+<<<<<<< Updated upstream
     def calculate_path_from_wp(self):
         path = []
         for i in range(len(self.path_way_points)-1):
@@ -172,6 +212,23 @@ class GlobalPlanner(Node):
         y_val = self.path[:, 1]
         yaw_val = self.path[:, 2]        
         #print("x_vale ", x_val)
+=======
+    def cal_trajectory(self):
+        trajectory = []
+        for node in self.path:         
+            location = carla.Location(node[0], node[1])
+            wp = self.map.get_waypoint(location)
+            location_on_road = (wp.transform.location.x, wp.transform.location.y, wp.tranform.rotation.yaw)
+            trajectory.append(location_on_road) 
+        return trajectory
+        
+
+    def interploate_path(self):        
+        x_val = [x for x,y,yaw in self.path]
+        y_val = [y for x,y,yaw in self.path]
+        yaw_val = [yaw for x,y,yaw in self.path]
+
+>>>>>>> Stashed changes
         #calculate track length
         s_len = [0]
         s_point =0
@@ -188,6 +245,10 @@ class GlobalPlanner(Node):
         self.yaw_interpld = CubicSpline(s_len, yaw_val)
         self.s_len = s_len
 
+<<<<<<< Updated upstream
+=======
+        
+>>>>>>> Stashed changes
 
     def publish_odometry(self):        
         self.vehicle_transform = self.vehicle.get_transform()
@@ -269,10 +330,14 @@ class GlobalPlanner(Node):
         #print("current loc of vehicle", x,y )
         _, index = self.path_kd_tree.query([x,y,yaw], 1)
         s_init = self.s_len[index]
+<<<<<<< Updated upstream
         waypoints = [] 
         if (self.longitudinal_velocity == 0):
             self.longitudinal_velocity = self.init_vel
 
+=======
+        waypoints = []             
+>>>>>>> Stashed changes
         for i in range(1, self.N+1):            
             s_new = s_init + i * self.longitudinal_velocity * (self.Tf /self.N)
             x = self.x_interpld(s_new)
@@ -293,9 +358,9 @@ class GlobalPlanner(Node):
             self.err_pub.publish(float_msg)
 
 
+
     def timer_callback(self):
-        a = 1 + 2
-        
+               
         if self.is_trajectory_generated:
             """Publish odometry and trajectory data."""
             # =======================
