@@ -8,10 +8,10 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/empty.hpp>
-// #include "vd_msgs/msg/vd_control_cmd.hpp"
-// #include "vd_msgs/msg/v_dpose.hpp"
-// #include "vd_msgs/msg/v_dtraj.hpp"
-// #include "vd_msgs/msg/v_dstate.hpp"
+#include "vd_msgs/msg/vd_control_cmd.hpp"
+#include "vd_msgs/msg/v_dpose.hpp"
+#include "vd_msgs/msg/v_dtraj.hpp"
+#include "vd_msgs/msg/v_dstate.hpp"
 #include "carla_msgs/msg/carla_ego_vehicle_control.hpp"
 //#include "utils.hpp"
 namespace nmpc_control_nodelet
@@ -55,7 +55,7 @@ namespace nmpc_control_nodelet
 
     clock_ = rclcpp::Clock();
     pre_odom_quat_ << 1.0, 0.0, 0.0, 0.0;
-    std::cout << "debug breakpont 2";
+    //std::cout << "debug breakpont 2";
     //set qos
     auto qos_profile_ = this->create_custom_qos();
     //punlsihers
@@ -144,22 +144,14 @@ void NMPCControlNodelet::referenceCallback(const nav_msgs::msg::Path::SharedPtr 
     auto iterator(filt_reference_msg->poses.begin());
     for (int i=0; i < kSamples; i++)
     { 
-      
-      //std::cout<< " x " << iterator->pose.position.x << " y " << iterator->pose.position.y << " psi " << iterator->pose.orientation.x << '\n';
-      
-      // std::cout << "inside pl controller"<< '\n';
-      // std::cout << iterator->position.x << iterator->position.y << iterator->position.z<< '\n';  
+       
       reference_states.col(i) << iterator->pose.position.x,
                                   iterator->pose.position.y, 
                                   iterator->pose.orientation.x,
                                   iterator->pose.orientation.w;
                                   
                                  
-                                  
-      // R_curve = L / std::tan(iterator->psi);
-      // steer_angle_in = std::atan(L / (R_curve + W / 2));
-      // steer_angle_out = std::atan(L / (R_curve - W / 2));
-      
+    
       reference_inputs.col(i) << 0, 0, 0;
       iterator++;
     }
@@ -195,8 +187,7 @@ void NMPCControlNodelet::referenceCallback(const nav_msgs::msg::Path::SharedPtr 
 
   
   // run controller at reference frequency
-  std::cout <<"running mpc controller now"<< '\n';
-  
+  //std::cout <<"running mpc controller now"<< '\n';  
   controller_.run();
 
   // publish control and predicted path
@@ -223,11 +214,14 @@ void NMPCControlNodelet::odomCallback(const nav_msgs::msg::Odometry::SharedPtr o
 }
   
 void NMPCControlNodelet::publishControl()
-{
+{ 
+  //std::cout << "here inside control" << std::endl;
   Eigen::Matrix<double, kInputSize, 1> pred_input = controller_.getPredictedInput();
   carla_msgs::msg::CarlaEgoVehicleControl vd_control_msg;
   vd_control_msg.header.stamp = clock_.now();
   //vd_control_ms.header.frame_id = frame_id_;
+  //std::cout << "throttle" << pred_input(0) << std::endl;
+  
   if (pred_input(0) >= 0)
   {
     vd_control_msg.throttle = pred_input(0) /8.5 ;
@@ -240,7 +234,7 @@ void NMPCControlNodelet::publishControl()
     vd_control_msg.steer = (pred_input(1) + pred_input(2))/(2 * 0.7);
     vd_control_msg.brake = -1 * pred_input(0) / 8.5;
   }
-  std::cout<< "pred_input" << pred_input << '\n';
+  //std::cout<< "pred_input" << pred_input << '\n';
   pub_control_cmd_->publish(vd_control_msg);
 
 }

@@ -3,4 +3,4 @@ This repo consist of code for real time motion planning for Autonomous Vehicle w
 
 #start planner
 
-ros2 service call /global_plan_srv vd_msgs/srv/PlannerSrv ""{x: 5.0, y: 10.0}""
+ros2 service call /global_plan_srv vd_msgs/srv/PlannerSrv "{x: 19.39, y: 130.46}"
