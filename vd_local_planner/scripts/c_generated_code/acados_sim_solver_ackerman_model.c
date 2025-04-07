@@ -73,7 +73,7 @@ int ackerman_model_acados_sim_create(ackerman_model_sim_solver_capsule * capsule
     const int np = ACKERMAN_MODEL_NP;
     bool tmp_bool;
 
-    double Tsim = 0.5;
+    double Tsim = 0.2;
 
     
     // explicit ode

@@ -144,6 +144,7 @@ void NMPCControlNodelet::referenceCallback(const nav_msgs::msg::Path::SharedPtr 
     auto iterator(filt_reference_msg->poses.begin());
     for (int i=0; i < kSamples; i++)
     { 
+      //std::cout <<iterator->pose.position.x << " " << iterator->pose.position.y << std::endl;
        
       reference_states.col(i) << iterator->pose.position.x,
                                   iterator->pose.position.y, 
@@ -166,8 +167,7 @@ void NMPCControlNodelet::referenceCallback(const nav_msgs::msg::Path::SharedPtr 
     
     
     reference_inputs = (Eigen::Matrix<double, kInputSize, 1>() << 0,0,0).finished().replicate(1, kSamples);
-     
-    
+        
     }
   
   else 
@@ -234,7 +234,7 @@ void NMPCControlNodelet::publishControl()
     vd_control_msg.steer = (pred_input(1) + pred_input(2))/(2 * 0.7);
     vd_control_msg.brake = -1 * pred_input(0) / 8.5;
   }
-  //std::cout<< "pred_input" << pred_input << '\n';
+  std::cout<< "pred_input" << pred_input << '\n';
   pub_control_cmd_->publish(vd_control_msg);
 
 }
