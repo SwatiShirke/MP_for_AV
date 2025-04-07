@@ -14,21 +14,13 @@ import networkx as nx
 
 class a_star:
     
-    def __init__(self, graph, in_map, parent_dict):
-        #grap = is a dictionary with adjacency list
+    def __init__(self, grid_map, grid_resolution, offset):
+        #grid_map = 2d np array
         #map = is carla map used during collision checking 
-        self.graph = graph             
-        self.node_list = [node for node in self.graph]
-        print("node list ", self.node_list)
-        self.parent_dict = parent_dict
-        self.rounded_node_list = {(int(node[0]), int(node[1])) : node for node in graph}
-        #for testing
-        # print(self.node_list)
-        # self.kd_tree = sp.KDTree(self.node_list)
-        self.nearest_K = 5
-        self.resoultion = 0.5
-        self.threshold = 1.00
-        self.map = in_map
+        self.grid_map = grid_map  
+        self.grid_resolution = grid_resolution      
+        self.threshold = 1
+        self.offset = offset 
 
     def get_path(self, parent_dict, goal_node, start_node ):
         #print("goal_node", goal_node)
@@ -47,112 +39,33 @@ class a_star:
         dist = np.linalg.norm(np.array(current_node) - np.array(goal_node))           
         return dist    
 
-
-    def show_directed_graph(self):
-        
-        graph_rounded = {(round(key[0], 2), round(key[1], 2)) : [(round(val1[0], 2), round(val1[1], 2)) for val1 in val] for key, val in self.graph.items()}
-        
-        # Create a directed graph (DiGraph)
-        G = nx.DiGraph()
-        # Add edges to the DiGraph based on the dictionary
-        for node, neighbors in graph_rounded.items():
-            for neighbor in neighbors:
-                G.add_edge(node, neighbor)
-
-        # Define layout (positions for nodes)
-        pos = {node: node for node in graph_rounded} 
-
-        # Create a new position dictionary with slight offset for the labels
-        pos_labels = {key: (value[0] +2, value[1] + 1) for key, value in pos.items()}  # Offset labels by 0.05
-
-        # Draw the graph with directed edges (arrows)
-        plt.figure(figsize=(8, 8))
-        nx.draw_networkx_nodes(G, pos, node_size=500, node_color='darkblue')  # Use cyan for nodes
-        nx.draw_networkx_edges(G, pos, edgelist=G.edges(), width=2, edge_color='black', arrowstyle='->', arrowsize=30)  # Arrow in the middle with curved edges
-        nx.draw_networkx_labels(G, pos_labels, font_size=10, font_family="sans-serif")
-
-        # Show the plot
-        plt.title("Directed Graph with Arrows")
-        plt.axis('off')  # Hide axes
-        #plt.show()
-        plt.savefig("road_graph.png", format="PNG")
-
-
-    def add_goal(self, node):        
-        current_node = (int(node[0]), int(node[1]))
-        current_loc = carla.Location(node[0], node[1])
-        start_loc = current_loc
-        current_wp = self.map.get_waypoint(current_loc)
-        
-        while current_node not in self.rounded_node_list: 
-            next_wp = current_wp.next(1.0)
-            current_wp = next_wp[0]            
-            current_node = (int(current_wp.transform.location.x), int(current_wp.transform.location.y))
-        child_node = self.rounded_node_list[current_node]
-        parent = self.parent_dict[child_node]
-        dist = np.linalg.norm(np.array(parent) - np.array(node))        
-        self.graph.setdefault(parent, []).append((node, dist))
-        dist = np.linalg.norm(np.array(child_node) - np.array(node))        
-        self.graph.setdefault(node,[]).append((child_node, dist))
-        print("goal added! : ", node)
-
-
-    def  nlist_in_vicinity(self, target_node):
-        node_list = [node for node in self.graph if np.linalg.norm(np.array(node) - np.array(target_node)) < self.threshold] 
-        return node_list
-        
-
-    def add_start(self, node):
-        if len(self.nlist_in_vicinity(node)):
-            print("start node is already present in the graph")
-            return        
-        current_node = node
-        current_wp = self.map.get_waypoint(carla.Location(current_node[0], current_node[1]))
-        
-        while (not len(self.nlist_in_vicinity(current_node))):            
-            next_wp = current_wp.next(0.25)
-            current_wp = next_wp[0]
-            current_node = (current_wp.transform.location.x, current_wp.transform.location.y)
-            print("current node ", current_node)
-        
-        n_list = self.nlist_in_vicinity(current_node)
-        n_node = n_list[0]
-        distance = np.linalg.norm(np.array(node) - np.array(n_node))
-        self.graph.setdefault(node, []).append((n_node, distance))
-
-        print("added start node")
+    def get_neighbours(self, node):
+        x_off, y_off = self.offset
+        x, y = node
         print(node)
-        print("adjacency list :", self.graph[node] )
-        #keep moving on the current path and you will find a nearest node
-        #current_node = (int(node[0]), int(node[1]))
-        # if current_node in self.rounded_node_list:
-        #     print("node is already present in the graph")
-        #     return
-        # current_loc = carla.Location(node[0], node[1])
-        # start_loc = current_loc
-        # current_wp = self.map.get_waypoint(current_loc)        
-        # while current_node not in self.rounded_node_list: 
-        #     next_wp = current_wp.next(0.25)
-        #     current_wp = next_wp[0]            
-        #     current_node = (int(current_wp.transform.location.x), int(current_wp.transform.location.y))        
-        # distance = start_loc.distance(current_wp.transform.location)         
-        # self.graph.setdefault(node, []).append((self.rounded_node_list[current_node], distance))
-        # print("start added")
-        # print(node) 
+        print(x,y)
+        rows, cols = self.grid_map.shape
+        ## 8 neighbour grid
+        n_nodes = [(x+1, y), (x-1, y), (x, y+1), (x, y-1), (x+1, y+1), (x+1, y-1), (x-1, y-1), (x-1, y+1)]
+        n_list = []
+        for x_val, y_val in n_nodes:
+            if ( x_val >= x_off and x_val < cols-x_off and y_val >= y_off and y_val < rows - y_off ):
+                n_list.append((x_val,y_val))
+
+        return n_list       
 
    
-    def a_star(self, start, goal): 
+    def a_star(self, start, goal):         
+        goal = (int(goal[0]), int(goal[1]))
+        start = (int(start[0]), int(start[1]) )
 
-        start = (round(start[0]), round(start[1] ) )
-        goal =   (round(goal[0]), round(goal[1]))
-        self.add_start(start)
-        self.add_goal(goal)  
-
-        #print("graph", self.graph)
+        print("start", start)
+        print("goal", goal)
 
         open_set = heapdict()    
         closed_set = [] 
-        cost_dict = {node: float("inf")  for node in self.graph}
+        rows, cols = self.grid_map.shape
+        cost_dict = {(x,y): float("inf")  for x in range(self.offset[0], cols - self.offset[0]) for y in range(self.offset[1], rows - self.offset[1])}
         parents_dict = {}
         path = []
 
@@ -164,30 +77,29 @@ class a_star:
 
         #loop until goal found or queue empty
         while open_set:
-            node,cost = open_set.popitem()
-            #print("node popped: ", node)
+            node,cost = open_set.popitem() 
+            print("popped node", node)           
             closed_set.append(node)
-            if (int(node[0]), int(node[1])) == (int(goal[0]), int(goal[1])):
+            if node == goal:
                 print("path found!")
                 path = self.get_path(parents_dict, goal, start)
                 print(path)
                 return path
             else:              
-                            
-                neighbour_list = self.graph[node]                
-                for n, dist in neighbour_list: 
-                                                      
+                neighbour_list = self.get_neighbours(node)    
+                print("n list", neighbour_list)
+                for n in neighbour_list:                
                     if n in closed_set:
                         continue  
                     
-                    new_cost = cost_dict[node] + dist
-
-                    (x,y) = n
-                    if new_cost < cost_dict[n]:                        
+                    x,y = n
+                    new_cost = cost_dict[node] + self.grid_resolution                    
+                    if self.grid_map[y - self.offset[1],x - self.offset[0]] == 0 and  new_cost < cost_dict[n]:
+                        
                         cost_dict[n] = new_cost 
                         parents_dict[n] = node
                         total_cost = new_cost + self.cal_heuristic_cost(n, goal)
                         open_set[n] = total_cost
-        path = []
-        print("path not found!")              
+        
+        print("path not found!")             
         return path
