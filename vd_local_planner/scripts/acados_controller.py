@@ -98,7 +98,7 @@ def acados_controller(N, Tf, lf, lr):
     Q_mat = unscale * ca.vertcat(100, 100,   100, 100)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
     Q_emat =  unscale * ca.vertcat(1000, 1000,  1000, 100) 
-    control_rate_weight = ca.vertcat(2000, 1000, 1000)
+    control_rate_weight = ca.vertcat(1000, 1000, 1000)  
     state_rate_weight = ca.vertcat(0, 0, 100, 0)
     prev_in = ca.vertcat(0,0,0)
     prev_state = ca.vertcat(0,0,0,0)
