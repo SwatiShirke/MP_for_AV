@@ -19,6 +19,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VDControlCMD.msg"
   "msg/VDPath.msg"
   "srv/PlannerSrv.srv"
+  "msg/VDInfo.msg"
+  "msg/VDList.msg"
   DEPENDENCIES std_msgs # Add packages that above messages depend on, in this case geometry_msgs for Sphere.msg
 )
 

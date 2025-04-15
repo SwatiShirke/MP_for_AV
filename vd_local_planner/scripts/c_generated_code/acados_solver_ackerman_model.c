@@ -39,6 +39,7 @@
 
 // example specific
 #include "ackerman_model_model/ackerman_model_model.h"
+#include "ackerman_model_constraints/ackerman_model_constraints.h"
 #include "ackerman_model_cost/ackerman_model_cost.h"
 
 
@@ -318,6 +319,17 @@ void ackerman_model_acados_create_setup_functions(ackerman_model_solver_capsule*
         capsule->__CAPSULE_FNC__.casadi_work = & __MODEL_BASE_FNC__ ## _work; \
         external_function_external_param_casadi_create(&capsule->__CAPSULE_FNC__ ); \
     } while(false)
+    // constraints.constr_type == "BGH" and dims.nh > 0
+    capsule->nl_constr_h_fun_jac = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*(N-1));
+    for (int i = 0; i < N-1; i++) {
+        MAP_CASADI_FNC(nl_constr_h_fun_jac[i], ackerman_model_constr_h_fun_jac_uxt_zt);
+    }
+    capsule->nl_constr_h_fun = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*(N-1));
+    for (int i = 0; i < N-1; i++) {
+        MAP_CASADI_FNC(nl_constr_h_fun[i], ackerman_model_constr_h_fun);
+    }
+    
+
     // external cost
     MAP_CASADI_FNC(ext_cost_0_fun, ackerman_model_cost_ext_cost_0_fun);
     MAP_CASADI_FNC(ext_cost_0_fun_jac, ackerman_model_cost_ext_cost_0_fun_jac);
@@ -558,6 +570,39 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
 
 
 
+    // set up nonlinear constraints for stage 1 to N-1
+    double* luh = calloc(2*NH, sizeof(double));
+    double* lh = luh;
+    double* uh = luh + NH;
+
+    
+    lh[11] = -10000;
+    lh[12] = -10000;
+
+    
+    uh[0] = 10000;
+    uh[1] = 10000;
+    uh[2] = 10000;
+    uh[3] = 10000;
+    uh[4] = 10000;
+    uh[5] = 10000;
+    uh[6] = 10000;
+    uh[7] = 10000;
+    uh[8] = 10000;
+    uh[11] = 1;
+    uh[12] = 1;
+
+    for (int i = 1; i < N; i++)
+    {
+        ocp_nlp_constraints_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "nl_constr_h_fun_jac",
+                                      &capsule->nl_constr_h_fun_jac[i-1]);
+        ocp_nlp_constraints_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "nl_constr_h_fun",
+                                      &capsule->nl_constr_h_fun[i-1]);
+        
+        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "lh", lh);
+        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "uh", uh);
+    }
+    free(luh);
 
 
 
@@ -943,6 +988,13 @@ int ackerman_model_acados_free(ackerman_model_solver_capsule* capsule)
     
 
     // constraints
+    for (int i = 0; i < N-1; i++)
+    {
+        external_function_external_param_casadi_free(&capsule->nl_constr_h_fun_jac[i]);
+        external_function_external_param_casadi_free(&capsule->nl_constr_h_fun[i]);
+    }
+    free(capsule->nl_constr_h_fun_jac);
+    free(capsule->nl_constr_h_fun);
 
     return 0;
 }

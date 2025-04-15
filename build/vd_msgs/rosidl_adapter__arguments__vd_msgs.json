@@ -1,0 +1,13 @@
+{
+  "package_name": "vd_msgs",
+  "non_idl_tuples": [
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs:msg/VDpose.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs:msg/VDstate.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs:msg/VDtraj.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs:msg/VDControlCMD.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs:msg/VDPath.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs:srv/PlannerSrv.srv",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs:msg/VDInfo.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs:msg/VDList.msg"
+  ]
+}

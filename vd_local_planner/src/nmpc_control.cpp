@@ -11,10 +11,7 @@ NMPCControl::NMPCControl()
     predicted_inputs_(Eigen::Matrix<double, kInputSize, kSamples>::Zero()),
     solve_from_scratch_(true)
 {
-  // initialize quaternion w to 1
-  //current_state_(6) = 1.0;
-  //reference_states_.row(6).setOnes();
-  //predicted_states_.row(6).setOnes();
+ 
 }
 
 void NMPCControl::setState(const Eigen::Matrix<double, kStateSize, 1> &state) { current_state_.block(0, 0, 4, 1) = state.block(0, 0, 4, 1); }
@@ -35,7 +32,7 @@ void NMPCControl::run()
 
     if (solve_from_scratch_)
   {
-    std::cout << "Solving NMPC with hover as initial guess.\n";
+    std::cout << "Solving NMPC with initial guess.\n";
     wrapper_.prepare(current_state_);
     solve_from_scratch_ = false;
   }

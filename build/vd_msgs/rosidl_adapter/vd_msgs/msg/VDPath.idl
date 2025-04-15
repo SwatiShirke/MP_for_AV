@@ -1,0 +1,14 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from vd_msgs/msg/VDPath.msg
+// generated code does not contain a copyright notice
+
+
+module vd_msgs {
+  module msg {
+    struct VDPath {
+      sequence<float> x_val;
+
+      sequence<float> y_val;
+    };
+  };
+};

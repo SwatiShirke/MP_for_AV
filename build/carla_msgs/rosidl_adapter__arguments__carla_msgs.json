@@ -1,0 +1,26 @@
+{
+  "package_name": "carla_msgs",
+  "non_idl_tuples": [
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaBoundingBox.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaEgoVehicleControl.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaEgoVehicleStatus.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaEgoVehicleInfoWheel.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaEgoVehicleInfo.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaCollisionEvent.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaLaneInvasionEvent.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaWorldInfo.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaActorInfo.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaActorList.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaControl.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaStatus.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaTrafficLightInfo.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaTrafficLightInfoList.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaTrafficLightStatus.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaTrafficLightStatusList.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaWalkerControl.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:msg/CarlaWeatherParameters.msg",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:srv/SpawnObject.srv",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:srv/DestroyObject.srv",
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/ros-carla-msgs:srv/GetBlueprints.srv"
+  ]
+}

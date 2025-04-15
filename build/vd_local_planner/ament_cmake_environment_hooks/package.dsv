@@ -1,0 +1,4 @@
+source;share/vd_local_planner/local_setup.bash
+source;share/vd_local_planner/local_setup.dsv
+source;share/vd_local_planner/local_setup.sh
+source;share/vd_local_planner/local_setup.zsh

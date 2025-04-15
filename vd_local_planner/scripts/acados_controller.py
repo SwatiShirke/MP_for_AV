@@ -3,11 +3,13 @@ from ackerman_model import ackerman_model
 import numpy as np
 import casadi as ca
 from scipy.spatial.transform import Rotation as R
+from CBF_constraints import CBF_constraints
+from geometric_utils import get_polytopes
+from ament_index_python.packages import get_package_share_directory 
+import os
+import sys
+from vd_config import read_param
 
-#from utils import ackerman_model
-#import yaml 
-# import ipdb
-# import sys
 
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
@@ -60,14 +62,18 @@ def get_constraints(x_array, prev_state, yaw_rate, u_aaray, prev_in, steer_rate)
     h_list = ca.vertcat( steer1_constraint, steer2_constraint)
     return h_list
 
-def acados_controller(N, Tf, lf, lr):
-    #model configs param
-    # N = params.N
-    # Tf = params.Tf
-    
+
+def get_loc_list(x_in, L, W, pl_margin):
+    obj_list = []
+    x,y = x_in[0], x_in[1]
+    obj_list.append((x, y, 0, L, W))
+    obj_list.append((x+ 1.0, y+ 1.0, 0, L, W))
+    return obj_list
+
+def acados_controller(N, Tf, lf, lr, track_width, pl_margin, d_safe):    
     # create ocp object to formulate the OCP
     ocp = AcadosOcp()
-    # set model    
+      
     min_accel = -8.5
     max_accel = +2.5
     min_str_angle_in= -0.7
@@ -115,17 +121,13 @@ def acados_controller(N, Tf, lf, lr):
 
     ocp.cost.cost_type = 'EXTERNAL'
     ocp.model.cost_expr_ext_cost = state_error + input_error 
-    ocp.model.cost_expr_ext_cost_0 = state_error  + input_error     
-    
-    
+    ocp.model.cost_expr_ext_cost_0 = state_error  + input_error      
 
     state_error = cal_state_cost(x_array, ref_array, Q_emat, prev_state, state_rate_weight)
     quat_error = calculate_quat_cost(x_array[2],ref_array[2], Q_mat[2]  )
     ocp.cost.cost_type_e = 'EXTERNAL'
     ocp.model.cost_expr_ext_cost_e = state_error 
 
-    
-    
     # set constraints
     #constraints on control input    
     ocp.constraints.lbu = np.array([min_accel, min_str_angle_in, min_str_angle_out])
@@ -139,21 +141,23 @@ def acados_controller(N, Tf, lf, lr):
     ocp.constraints.lbx = np.array([-2* np.pi ,vel_min])
     ocp.constraints.ubx = np.array([2 * np.pi, vel_max])
     ocp.constraints.idxbx = np.array([2,3] )
-    # ocp.constraints.lbu = np.array([dthrottle_min, ddelta_min])
-    # ocp.constraints.ubu = np.array([dthrottle_max, ddelta_max])
 
-    # set inequlaity constraints
-    # h_list = get_constraints(x_array, prev_state, yaw_rate, u_aaray, prev_in, steer_rate)
-    # ocp.model.con_h_expr = h_list
-    # ocp.dims.nh = h_list.shape[0]
-    # ocp.constraints.lh = np.array([0,0]) #np.array([0,0,0])        # yaw rate, delta rate constraints
-    # ocp.constraints.uh =   np.array([0.001, 0.001])#np.array([yaw_rate, steer_rate,state_error])             # Upper bound 
-    # ocp.model.lh = np.array([0,0]) # np.array([0,0,0])            # lower bound
-    # ocp.model.uh = np.array([0.001, 0.001]) #np.array([yaw_rate, steer_rate,state_error])  
+    
+    loc_list = get_loc_list(x_array, lf + lr , track_width, pl_margin)     
+    CBF_obj = CBF_constraints(loc_list, x_array, u_aaray, Tf/N, lf+lr, d_safe, pl_margin )
+    #CBF_constraints.warm_start()
+    h_list, h_lb_list, h_ub_list = CBF_obj.get_cbf_constraints() 
+    ocp.model.con_h_expr =h_list
+    ocp.dims.nh = h_list.shape[0]
+    ocp.constraints.lh = h_lb_list         
+    ocp.constraints.uh = h_ub_list            
+    ocp.model.lh = h_lb_list       
+    ocp.model.uh = h_ub_list
+
 
     ##update last states and input for rate control
     prev_in =  u_aaray 
-    prev_state = x_array
+    prev_state = x_array 
 
     # set QP solver and integration
     ocp.solver_options.tf = Tf
@@ -175,9 +179,20 @@ def acados_controller(N, Tf, lf, lr):
 
 
 if __name__ == "__main__":
-    N = 10
-    Tf = 2
-    lf = 2.56/2
-    lr = 2.56/2
-    #L =  2.5654
-    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr ) 
+    config_path = get_package_share_directory("vd_config") 
+    vd_param_path =  os.path.join(config_path,'config', sys.argv[1])
+    control_param_path = os.path.join(config_path, 'config', sys.argv[2])
+    read_param_obj = read_param.read_params()
+    control_params = read_param_obj.read_params(control_param_path, "controller_params" )
+    vd_params = read_param_obj.read_params(vd_param_path, "VD_params")
+
+
+    N = control_params.N
+    Tf = control_params.Tf
+    pl_margin = control_params.polytope_margin
+    d_safe = control_params.d_safe
+    lf = vd_params.lf
+    lr = vd_params.lr
+    # print(type(lr))
+    track_width = vd_params.track_width
+    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr, track_width, pl_margin, d_safe) 

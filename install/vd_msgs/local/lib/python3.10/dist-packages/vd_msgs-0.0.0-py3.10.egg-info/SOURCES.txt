@@ -1,0 +1,6 @@
+setup.py
+vd_msgs/__init__.py
+vd_msgs.egg-info/PKG-INFO
+vd_msgs.egg-info/SOURCES.txt
+vd_msgs.egg-info/dependency_links.txt
+vd_msgs.egg-info/top_level.txt

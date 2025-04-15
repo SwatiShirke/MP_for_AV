@@ -23,6 +23,9 @@ find_package(tf2_ros REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(carla_msgs REQUIRED)
 find_package(vd_msgs REQUIRED)
+find_package(casadi REQUIRED)
+
+
 
 # ARM NEON flags
 if ("${CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
@@ -42,8 +45,15 @@ set(acados_path "/home/swati/acados")
 set(acados_lib ${acados_path}/lib) 
 
 
+
 #set acados c code path
 set(acados_generated_code "scripts/c_generated_code")
+set(SHARED_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/libcbf_solver.so)
+
+set(casadi_lib_path "$ENV{HOME}/.casadi_cpp/lib")
+set(casadi_include_path "$ENV{HOME}/.casadi_cpp/include")
+set(ipopt_lib_path "$ENV{HOME}/.local/lib/python3.10/site-packages/casadi")
+set(ipopt_include_path "$ENV{HOME}/.local/lib/python3.10/site-packages/casadi/include/alpaqa/ipopt")
 
 set(dependencies
   rclcpp
@@ -60,8 +70,6 @@ set(dependencies
   carla_msgs
 )
 
-
-
 include_directories(
   "include"
   ${EIGEN3_INCLUDE_DIR}
@@ -73,11 +81,13 @@ include_directories(
   ${acados_path}/external
   ${acados_path}/external/blasfeo/include
   ${acados_path}/external/hpipm/include
+  ${casadi_include_path}
+  ${ipopt_include_path}
 )
 
 
 link_directories(${acados_generated_code})
-add_library(nmpc_shared_lib SHARED src/nmpc_control_node.cpp src/wrapper.cpp src/nmpc_control.cpp)
+add_library(nmpc_shared_lib SHARED src/nmpc_control_node.cpp src/wrapper.cpp src/nmpc_control.cpp src/cbf_solver.cpp )
 set_target_properties(nmpc_shared_lib PROPERTIES COMPILE_DEFINITIONS "COMPOSITION_BUILDING_DLL")
 ament_target_dependencies(nmpc_shared_lib ${dependencies})
 
@@ -86,11 +96,16 @@ install( FILES scripts/c_generated_code/libacados_ocp_solver_ackerman_model.so
 DESTINATION lib
 )
 
+install(FILES scripts/libcbf_solver.so DESTINATION lib)
 
-target_link_libraries(nmpc_shared_lib
+target_link_libraries(nmpc_shared_lib  
   libacados_ocp_solver_ackerman_model.so
   ${YAML_CPP_LIBRARIES}  
   ${acados_lib}/libacados.so
+  ${casadi_lib_path}/libcasadi.so
+  ${ipopt_lib_path}/libipopt.so
+  
+  ${SHARED_LIBRARIES} 
 )
 
 #rclcpp_components_register_nodes(nmpc_shared_lib "nmpc_control_nodelet::NMPCControlNodelet")

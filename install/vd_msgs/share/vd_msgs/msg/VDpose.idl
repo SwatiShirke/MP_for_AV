@@ -1,0 +1,20 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from vd_msgs/msg/VDpose.msg
+// generated code does not contain a copyright notice
+
+
+module vd_msgs {
+  module msg {
+    struct VDpose {
+      double s;
+
+      double x;
+
+      double y;
+
+      double psi;
+
+      double vf;
+    };
+  };
+};

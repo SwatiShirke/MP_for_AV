@@ -1,0 +1,17 @@
+// generated from rosidl_adapter/resource/srv.idl.em
+// with input from vd_msgs/srv/PlannerSrv.srv
+// generated code does not contain a copyright notice
+
+
+module vd_msgs {
+  module srv {
+    struct PlannerSrv_Request {
+      float x;
+
+      float y;
+    };
+    struct PlannerSrv_Response {
+      string message;
+    };
+  };
+};

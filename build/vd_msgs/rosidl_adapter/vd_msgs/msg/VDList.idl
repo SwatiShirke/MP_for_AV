@@ -1,0 +1,13 @@
+// generated from rosidl_adapter/resource/msg.idl.em
+// with input from vd_msgs/msg/VDList.msg
+// generated code does not contain a copyright notice
+
+#include "vd_msgs/msg/VDInfo.idl"
+
+module vd_msgs {
+  module msg {
+    struct VDList {
+      sequence<vd_msgs::msg::VDInfo> vdlist;
+    };
+  };
+};
