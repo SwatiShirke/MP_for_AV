@@ -63,7 +63,7 @@ class CBF_constraints():
         R_bot, P_bot = self.get_robot_pose() 
         ##rotate robot mat
         A_bot = ca.mtimes(A_bot, ca.transpose(R_bot))
-        B_bot = ca.mtimes(ca.mtimes(A_bot, ca.transpose(R_bot)), P_bot) + B_bot 
+        B_bot = ca.mtimes(ca.mtimes(A_bot, ca.transpose(R_bot)), P_bot) + B_bot
         hx0_list = []
         lamb_bot_list = []
         lamb_obj_list = []
@@ -74,7 +74,7 @@ class CBF_constraints():
             point1 = ca.SX.sym("point1",A_bot.shape[-1],1)
             point2 = ca.SX.sym("point2",A_obj.shape[-1],1)            
             x = ca.vertcat(point1, point2, x)
-            cost=0
+            cost=0   
             dist_vec = point1-point2
             cost = dist_vec.T@dist_vec 
 

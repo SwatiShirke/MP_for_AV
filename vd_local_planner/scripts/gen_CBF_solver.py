@@ -23,15 +23,17 @@ def export_nlp_solver():
         ca.reshape(A_obs, -1, 1),
         ca.reshape(B_obs, -1, 1)
         )
+    cost=0   
+    dist_vec = point1-point2
+    cost = dist_vec.T@dist_vec
 
-    dist = ca.norm_2(point1 - point2)  
-
-    const1 = A_pl @ point1 - B_pl   
-    const2 = A_obs @ point2 - B_obs
+    const1 = ca.mtimes(A_pl, point1) - B_pl   
+    const2 = ca.mtimes(A_obs , point2)- B_obs
     g = ca.vertcat(const1, const2)
 
-    nlp = {'f': dist, 'x': x, 'g' : g , 'p' : p }
+    nlp = {'f': cost, 'x': x, 'g' : g , 'p' : p }
     solver = ca.nlpsol('cbf_solver', 'ipopt', nlp) 
+    #solver(lbg=-ca.inf,ubg=0)
     solver.generate("cbf_solver.cpp", {"with_header": True,  "cpp": True})
 
     

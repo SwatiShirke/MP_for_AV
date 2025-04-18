@@ -64,8 +64,11 @@ class VD_polytope
 
     std::pair< Eigen::Matrix<double, m_bot, n_bot>, Eigen::Matrix<double, m_bot, 1> > get_matrices(void)
     {
-        this->A_bot << -1, 0,  0, -1,   1, 0,   0, 1;
-        this->B_bot << -L/2, -W/2, L/2, W/2;
+        this->A_bot << -1,0, 
+                        0,  -1,
+                        1, 0,   
+                        0, 1;
+        this->B_bot << L/2, W/2, L/2, W/2;
         return std::make_pair(this-> A_bot, this-> B_bot);
     }
   

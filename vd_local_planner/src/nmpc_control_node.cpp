@@ -14,12 +14,14 @@
 #include "vd_msgs/msg/v_dstate.hpp"
 #include "carla_msgs/msg/carla_ego_vehicle_control.hpp"
 #include "vd_msgs/msg/vd_list.hpp"  
+
 #include <casadi/casadi.hpp>
 #include <vd_local_planner/polytopes.h>
 #include "vd_local_planner/cbf_solver.h"
 using namespace casadi;
 #include <vector>
-//#include "utils.hpp" 
+#include <cmath>
+
 namespace nmpc_control_nodelet
 {
 
@@ -31,8 +33,6 @@ namespace nmpc_control_nodelet
     frame_id_("simulator"),
     set_pre_odom_quat_(false)
     {
-  
-
     clock_ = rclcpp::Clock();
     pre_odom_quat_ << 1.0, 0.0, 0.0, 0.0;
     //std::cout << "debug breakpont 2";
@@ -49,12 +49,12 @@ namespace nmpc_control_nodelet
     sub_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
       "/carla/ego_vehicle/odometry", qos_profile_, std::bind(&NMPCControlNodelet::odomCallback, this, std::placeholders::_1));
     sub_vd_list_ = this->create_subscription<vd_msgs::msg::VDList>(
-      "neighbour_VDs", 10, std::bind(&NMPCControlNodelet::VD_list_callback, this, std::placeholders::_1));
+      "neighbour_VDs", qos_profile_, std::bind(&NMPCControlNodelet::VD_list_callback, this, std::placeholders::_1));
     
     VD_ptr =std::make_shared<VD_polytope>(L, W);    
     std::pair<Eigen::Matrix<double, m_bot, n_bot >, Eigen::Matrix<double, m_bot, 1 >>VD_poly = VD_ptr->get_matrices();   
-    auto A_bot = VD_poly.first;
-    auto B_bot = VD_poly.second;    
+    this->A_bot = VD_poly.first;    
+    this->B_bot = VD_poly.second;  
     
     }
 
@@ -63,12 +63,8 @@ namespace nmpc_control_nodelet
   private:
     NMPCControl controller_;
     rclcpp::Clock clock_;
-    double mass_ = 0.278;
-    double gravity_ = 9.81;
-    double hover_thrust_ = mass_ * gravity_;
-    //double Eigen::Matrix<double, 3, 3> inertia_matrix_
-    Eigen::Matrix<double, 3,3> mass_matrix_ = mass_ * Eigen::MatrixXd::Identity(3,3);
-     
+        
+    
     // from odom callback
     std::string frame_id_;
     Eigen::Vector4d pre_odom_quat_;
@@ -83,11 +79,14 @@ namespace nmpc_control_nodelet
     void referenceCallback(const nav_msgs::msg::Path::SharedPtr reference_msg);
     void odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg);
     void VD_list_callback(const vd_msgs::msg::VDList::SharedPtr VD_list_msg);
+
     void Cal_CBF_guess(void);
-    int call_solver(float& cbf_result, const Eigen::Matrix<double, m_bot, n_bot>& A_bot, const Eigen::Matrix<double, m_bot, 1> B_bot, 
-      const Eigen::Matrix<double, m_obj, n_obj> A_obj, const Eigen::Matrix<double, m_obj, 1> B_obj);
-    
+    int call_solver( double& results , const Eigen::Matrix<double, m_bot, n_bot>& A_bot, const Eigen::Matrix<double, m_bot, 1> B_bot, 
+      const Eigen::Matrix<double, m_obj, n_obj> A_obj, const Eigen::Matrix<double, m_obj, 1> B_obj, const Eigen::Vector4d points);    
     std::vector<std::vector<float>> vd_list; 
+
+
+
     rclcpp::QoS create_custom_qos();
     rclcpp::Publisher<carla_msgs::msg::CarlaEgoVehicleControl>::SharedPtr pub_control_cmd_;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_ref_traj_;
@@ -98,18 +97,15 @@ namespace nmpc_control_nodelet
     rclcpp::Subscription<vd_msgs::msg::VDList>::SharedPtr sub_vd_list_;
 
     //VD polytope
-    float L = 2.56;
-    float W = 2.0;
+    float L = 4.56;
+    float W = 2.08;
     std::shared_ptr<VD_polytope> VD_ptr;
     Eigen::Matrix<double, m_bot, n_bot > A_bot;
-    Eigen::Matrix<double, m_bot, 1 > B_bot;  
-
-   
+    Eigen::Matrix<double, m_bot, 1 > B_bot;    
     
     
  };
 
- 
 
 //class functions
 Eigen::Matrix<double,kStateSize, 1> NMPCControlNodelet::get_vd_current_state()
@@ -149,7 +145,7 @@ void NMPCControlNodelet::referenceCallback(const nav_msgs::msg::Path::SharedPtr 
     auto iterator(filt_reference_msg->poses.begin());
     for (int i=0; i < kSamples; i++)
     { 
-      std::cout << iterator->pose.position.x << std::endl;    
+      //std::cout << iterator->pose.position.x << std::endl;    
       reference_states.col(i) << iterator->pose.position.x,
                                   iterator->pose.position.y, 
                                   iterator->pose.orientation.x,
@@ -186,7 +182,7 @@ void NMPCControlNodelet::referenceCallback(const nav_msgs::msg::Path::SharedPtr 
     }
   }
   
-  //Cal_CBF_guess();
+  Cal_CBF_guess();
 
   controller_.setReferenceStates(reference_states);
   controller_.setReferenceInputs(reference_inputs);
@@ -202,63 +198,121 @@ void NMPCControlNodelet::referenceCallback(const nav_msgs::msg::Path::SharedPtr 
   publishPrediction();
 }
 
+
 void NMPCControlNodelet::Cal_CBF_guess(void)
 { 
-  Eigen::Matrix<double, m_obj, n_obj> A_obj;
-  Eigen::Matrix<double , m_obj, 1> B_obj;
-  A_obj << -1, 0, 0, -1, 1, 0, 0, 1;
-  float x, y, theta, length, width;
-  float result; 
-
-
-  // call solver to find intial guess for CBF
-  for(auto vd_vec : vd_list)
-  {
-    x = vd_vec[0];
-    y = vd_vec[1];
-    theta = vd_vec[2];
-    length = vd_vec[3];
-    width = vd_vec[4];
-    B_obj <<  -x + length/2, -y + width/2, x + length/2, y + width/2;
-    float results;
-    call_solver(results, A_bot, B_bot, A_obj, B_obj );
-  }
   
-//   casadi::Function solver = nlpsol("cbf_solver", "ipopt", "libcbf_solver.so");
+  //vd information 
+  Eigen::Vector2d vd_pos;
+  Eigen::Matrix<double, n_bot, n_bot > R_bot;
+  Eigen::Vector2d obj_pos;
+  Eigen::Matrix<double, n_obj, n_obj > R_obj;
+
+  float vd_theta = this->vd_current_state(2);     
+  R_bot << cos(vd_theta),  -sin(vd_theta), 
+           sin(vd_theta), cos(vd_theta);  
+  vd_pos << vd_current_state(0), vd_current_state(1);
+  
+  std::cout << "A_bot" << A_bot << std::endl;
+  std::cout << "B_bot" << B_bot << std::endl;
+  std::cout << "vd_pos" << vd_pos << std::endl;
+  std::cout << "vd_theta" << vd_theta << std::endl;
+  std::cout << "R_bot" << R_bot << std::endl;
+
+
+  auto A_bot_world = A_bot * R_bot.transpose(); 
+  auto B_bot_world = (A_bot * R_bot.transpose()) * vd_pos + B_bot;
+
+  //polytope info
+  Eigen::Matrix<double, m_obj, n_obj> A_obj;
+  Eigen::Matrix<double , m_obj, 1> B_obj;  
+  Eigen::Vector4d points;                             //concatenated point 1 and 2 
+  A_obj << -1, 0, 
+            0, -1, 
+            1, 0, 
+            0, 1;                                    //normal vectors
+            
+  float obj_x, obj_y, obj_theta, obj_length, obj_width;                   
+  double results;
+  // call solver to find intial guess for CBF
+
+  std::cout << "vd_list_size" << vd_list.size() << std::endl;
+
+  for(auto vd_vec : vd_list)
+  {  
+    obj_x = vd_vec[0];
+    obj_y = vd_vec[1];
+    obj_theta = vd_vec[2];
+    obj_length = vd_vec[3];
+    obj_width = vd_vec[4];
+    points << vd_pos(0),vd_pos(1) , obj_x, obj_y; 
+    R_obj << cos(obj_theta),  -sin(obj_theta), 
+             sin(obj_theta), cos(obj_theta);  
+    obj_pos << obj_x, obj_y; 
+    B_obj <<  obj_length/2, obj_width/2, obj_length/2, obj_width/2;     
+    std::cout << "A_obj" << A_obj << std::endl;
+    std::cout << "B_obj" << B_obj << std::endl;
+    std::cout << "obj_pos" << obj_pos << std::endl;
+    std::cout << "obj_theta" << obj_theta << std::endl;
+    std::cout << "R_obj" << R_obj << std::endl;    
+      
+    //find obstacle polytope in world frame
+    auto A_obj_world = A_obj * R_obj.transpose();
+    auto B_obj_world =(A_obj * R_obj.transpose() * obj_pos ) + B_obj; 
+    auto status = call_solver(results, A_bot_world, B_bot_world, A_obj_world, B_obj_world, points);
+    std::cout << "here" << std::endl;
+  } 
 
  }
 
-int NMPCControlNodelet::call_solver(float& cbf_result, const Eigen::Matrix<double, m_bot, n_bot>& A_bot, const Eigen::Matrix<double, m_bot, 1> B_bot, 
-  const Eigen::Matrix<double, m_obj, n_obj> A_obj, const Eigen::Matrix<double, m_obj, 1> B_obj) 
-  {  
-  const casadi_real* arg[2];
-  casadi_real* res[1];
-  casadi_real w[cbf_solver_SZ_W] = {0};
-  casadi_int iw[cbf_solver_SZ_IW] = {};
-  
-  Eigen::Vector4d points = Eigen::Vector4d::Zero(4);   // points 1 and 2 concatenated, each has form (x,y). This is input for the nlp solver.
-                                              // passing inital values ad all zeros.
-  
-  std::vector<double> vec; 
-  vec.reserve(A_bot.size()+ B_bot.size() + A_obj.size() + B_obj.size());
-  vec.insert(vec.end(), A_bot.data(), A_bot.data() + A_bot.size());
-  vec.insert(vec.end(), B_bot.data(), B_bot.data() + B_bot.size());
-  vec.insert(vec.end(), A_obj.data(), A_obj.data() + A_obj.size());
-  vec.insert(vec.end(), B_obj.data(), B_obj.data() + B_obj.size());                                    
-                                                                                          
-  arg[0] = points.data();
-  arg[1] = vec.data();  
-  
-  casadi_real output_result = 0.0;
-  res[0] = &output_result;
+int NMPCControlNodelet::call_solver(double& results , const Eigen::Matrix<double, m_bot, n_bot>& A_bot, const Eigen::Matrix<double, m_bot, 1> B_bot, 
+  const Eigen::Matrix<double, m_obj, n_obj> A_obj, const Eigen::Matrix<double, m_obj, 1> B_obj, const Eigen::Vector4d points) 
+  { 
+    
+    const casadi_real* arg[6];    
+    casadi_real* res[6];
+    casadi_real w[cbf_solver_SZ_W] = {};
+    casadi_int iw[cbf_solver_SZ_IW] = {};    
+   
+    std::vector<double> vec;
+    vec.reserve(A_bot.size()+ B_bot.size() + A_obj.size() + B_obj.size());
+    vec.insert(vec.end(), A_bot.data(), A_bot.data() + A_bot.size());   
+    vec.insert(vec.end(), B_bot.data(), B_bot.data() + B_bot.size());
+    vec.insert(vec.end(), A_obj.data(), A_obj.data() + A_obj.size());
+    vec.insert(vec.end(), B_obj.data(), B_obj.data() + B_obj.size());   
+    
+    Eigen::Vector4d lbx = -1 * casadi::inf * Eigen::Vector4d::Ones();
+    Eigen::Vector4d ubx = casadi::inf * Eigen::Vector4d::Ones();
+    Eigen::VectorXd lbg = -1 * casadi::inf * Eigen::VectorXd::Ones(8);
+    Eigen::VectorXd ubg = Eigen::VectorXd::Zero(8);
 
-  int status = cbf_solver(arg, res, iw, w, 0);
+        
+    Eigen::Vector4d res_points;                     // refer cbf_solver.cpp file to know input output
+    casadi_real cost;
+    Eigen::VectorXd res_g(8);
+    Eigen::Vector4d lam_x;
+    Eigen::VectorXd lam_g(8);
+    Eigen::VectorXd lam_p(24);
+    
+    arg[0] = points.data();  
+    arg[1] =  vec.data(); 
+    arg[2] = lbx.data();
+    arg[3] = ubx.data();
+    arg[4]  = lbg.data();
+    arg[5]  = ubg.data();     
+    res[0] = res_points.data();
+    res[1] = &cost;
+    res[2] = res_g.data();
+    res[3] = lam_x.data();
+    res[4] = lam_g.data();
+    res[5] = lam_p.data();
+    int status = cbf_solver(arg, res, iw, w, 0);
+    results = ca.sqrt(cost);
+    
+    std::cout << "status" << status << std::endl;
+    std::cout << "distance "<<results << std::endl;
+    return status;}
 
-  cbf_result = output_result;
-  std::cout << status << std::endl;
-  std::cout << res << std::endl;
-  return status;
-}
 
 void NMPCControlNodelet::odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg)
 {
@@ -268,27 +322,20 @@ void NMPCControlNodelet::odomCallback(const nav_msgs::msg::Odometry::SharedPtr o
   state(1) = odom_msg->pose.pose.position.y;
   state(2) = odom_msg->pose.pose.orientation.x;
   state(3) = odom_msg->twist.twist.linear.x;
- 
-  
-  this->vd_current_state = state;
-  
-  //std::cout << "state" <<  state << '\n';
-  // std::cout << state << '\n';
+  this->vd_current_state = state;  
   controller_.setState(state);
 }
   
 void NMPCControlNodelet::publishControl()
 { 
-  //std::cout << "here inside control" << std::endl;
   Eigen::Matrix<double, kInputSize, 1> pred_input = controller_.getPredictedInput();
   carla_msgs::msg::CarlaEgoVehicleControl vd_control_msg;
   vd_control_msg.header.stamp = clock_.now();
-  //vd_control_ms.header.frame_id = frame_id_;
-  std::cout << pred_input << std::endl;
+  //vd_control_ms.header.frame_id = frame_id_;  
   
   if (pred_input(0) >= 0)
   {
-    vd_control_msg.throttle = pred_input(0) /8.5 ;
+    vd_control_msg.throttle = 0; //pred_input(0)/8.5 ;
     vd_control_msg.steer = (pred_input(1) + pred_input(2))/ (2 * 0.7) ; //40 degree steering angle 
     vd_control_msg.brake = 0;
   }
@@ -296,9 +343,10 @@ void NMPCControlNodelet::publishControl()
   {
     vd_control_msg.throttle = 0;
     vd_control_msg.steer = (pred_input(1) + pred_input(2))/(2 * 0.7);
-    vd_control_msg.brake = -1 * pred_input(0) / 8.5;
+    vd_control_msg.brake = 0; //-1 *(pred_input(0) ) / 8.5;
   }
-  //std::cout<< "pred_input" << pred_input << '\n';
+  std::cout<< "pred_input" << pred_input << '\n';
+  //RCLCPP_INFO(this->get_logger(), pred_input(0));
   pub_control_cmd_->publish(vd_control_msg);
 
 }
@@ -337,6 +385,7 @@ void NMPCControlNodelet::publishPrediction()
   geometry_msgs::msg::PoseStamped pose;
   for (int i=0; i < kSamples; i++)
   { 
+    
     //std::cout << " pred x " << reference_states(0,i) << " pred_y " << reference_states(1,i) << " pred_yaw " << reference_states(2,i) << " pred_vel " << reference_states(3,i) << '\n';
     pose.header.stamp = clock_.now();
     pose.header.frame_id = frame_id_;
@@ -352,22 +401,25 @@ void NMPCControlNodelet::publishPrediction()
   pub_pred_traj_->publish(path_msg);
 }
 
+
 void NMPCControlNodelet::VD_list_callback(const vd_msgs::msg::VDList::SharedPtr VD_list_msg)
 { 
   auto iterator = VD_list_msg->vdlist.begin();
+  this->vd_list.clear();
+  
 
   while (iterator != VD_list_msg->vdlist.end())
   {
     this->vd_list.push_back({iterator->x, iterator->y, iterator->yaw, iterator->length, iterator->width});
-    std::cout << iterator->x << iterator->y << iterator->yaw << iterator->length << iterator->width;
+    //std::cout << iterator->x << iterator->y << iterator->yaw << iterator->length << iterator->width << std::endl;
+    ++iterator;
   }
+  
 
-  // for (auto vd_msg : VD_list_msg->vdlist )
-  // {
-  //   this->vd_list.push_back({vd_msg.x, vd_msg.y, vd_msg.yaw, vd_msg.length, vd_msg.width});
-  // }
+ 
 
 }
+
 
 }// namespace nodelet ends here
 

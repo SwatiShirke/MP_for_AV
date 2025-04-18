@@ -8,6 +8,8 @@ class VD_params:
     lr : float  #dist from center to rear axel
     track_width : float  #trackwidth
     mass : float #kg
+    L : float
+    W : float
 
 @dataclass
 class Controller_params:
@@ -20,6 +22,8 @@ class Controller_params:
 class Planner_params:
     grid_res : float # grid resolution in meters 
     buffer_grid : int # no of buffer grids added on each side of grid map
+    KNN : int          ## no of surrounding obstacles to be considered in polytope constraints, this also used in mpc 
+                       ## controller setup
 
 
 

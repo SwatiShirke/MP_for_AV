@@ -1,6 +1,0 @@
-config_paths:
-  vd_path : "vd_param.yaml" 
-  controller_path : "controller_param.yaml"
-  planner_pth : "planner_config.yaml" 
-  
-

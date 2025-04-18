@@ -40,20 +40,22 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fopenmp -O3")
 
 # Set the acados source path from bashrc
-#set(acados_path $ENV{ACADOS_SOURCE_DIR})
+
 set(acados_path "/home/swati/acados")
 set(acados_lib ${acados_path}/lib) 
-
-
-
-#set acados c code path
-set(acados_generated_code "scripts/c_generated_code")
-set(SHARED_LIBRARIES ${CMAKE_CURRENT_SOURCE_DIR}/scripts/libcbf_solver.so)
-
 set(casadi_lib_path "$ENV{HOME}/.casadi_cpp/lib")
 set(casadi_include_path "$ENV{HOME}/.casadi_cpp/include")
-set(ipopt_lib_path "$ENV{HOME}/.local/lib/python3.10/site-packages/casadi")
-set(ipopt_include_path "$ENV{HOME}/.local/lib/python3.10/site-packages/casadi/include/alpaqa/ipopt")
+set(hsl_path "/opt/hsl/ma27")
+set(ipopt_include_path "/usr/local/include/coin-or")
+set(ipopt_lib_path /usr/local/lib)
+
+
+
+#set all paths for req libs so  and include
+set(acados_generated_code "scripts/c_generated_code")
+set(cbf_solver_lib_path ${CMAKE_CURRENT_SOURCE_DIR}/scripts)
+
+
 
 set(dependencies
   rclcpp
@@ -83,6 +85,7 @@ include_directories(
   ${acados_path}/external/hpipm/include
   ${casadi_include_path}
   ${ipopt_include_path}
+ 
 )
 
 
@@ -98,14 +101,15 @@ DESTINATION lib
 
 install(FILES scripts/libcbf_solver.so DESTINATION lib)
 
+
 target_link_libraries(nmpc_shared_lib  
   libacados_ocp_solver_ackerman_model.so
   ${YAML_CPP_LIBRARIES}  
   ${acados_lib}/libacados.so
   ${casadi_lib_path}/libcasadi.so
   ${ipopt_lib_path}/libipopt.so
-  
-  ${SHARED_LIBRARIES} 
+  ${hsl_path}/libhsl.so    
+  ${cbf_solver_lib_path}/libcbf_solver.so 
 )
 
 #rclcpp_components_register_nodes(nmpc_shared_lib "nmpc_control_nodelet::NMPCControlNodelet")
@@ -114,7 +118,9 @@ ament_export_dependencies(${dependencies})
 
 add_executable(vd_nmpc_node src/nmpc_control_node.cpp)
 ament_target_dependencies(vd_nmpc_node ${dependencies})
-target_link_libraries(vd_nmpc_node nmpc_shared_lib)
+target_link_libraries(vd_nmpc_node nmpc_shared_lib 
+
+ )
 
 # Install targets
 install(TARGETS  

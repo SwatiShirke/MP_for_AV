@@ -16,6 +16,8 @@ import time
 from vd_msgs.msg import VDInfo, VDList 
 
 
+
+
 class GlobalPlanner(Node):
     def __init__(self):
         super().__init__('global_planner')
@@ -35,7 +37,8 @@ class GlobalPlanner(Node):
         self.get_vehicle()
         self.grid_map = None
         self.offset = (0,0)
-        self.get_grid_map()              
+        self.get_grid_map()  
+        self.KNN = 5                    #used while calulating nearest objects to be passed to the controller            
          
 
         #for testing
@@ -46,7 +49,7 @@ class GlobalPlanner(Node):
         self.planner = a_star(self.grid_map, self.grid_resolution, self.offset)        
         self.is_trajectory_generated = False
         self.current_s_len = 0
-        self.ref_vel = 10.00 #m/s
+        self.ref_vel = 20.00 #m/s
         self.path_kd_tree = None
         self.init_vel = 10.00 #m/s used for predicting future points
         self.radius = 10 
@@ -54,10 +57,10 @@ class GlobalPlanner(Node):
         ##pub sub
         self.path_pub = self.create_publisher(VDPath, "global_path", 10)
         self.srv = self.create_service(PlannerSrv, "global_plan_srv", self.service_callback)
-        self.odom_pub = self.create_publisher(Odometry, '/carla/ego_vehicle/odometry', 10)
-        self.waypoints_pub = self.create_publisher(Path, '/carla/ego_vehicle/waypoints', 10)
-        self.timer = self.create_timer(self.time_period, self.timer_callback)
-        self.vd_list_pub = self.create_publisher(VDList, "neighbour_VDs", 10)
+        self.odom_pub = self.create_publisher(Odometry, '/carla/ego_vehicle/odometry', 1)
+        self.waypoints_pub = self.create_publisher(Path, '/carla/ego_vehicle/waypoints', 1)
+        self.timer = self.create_timer(self.time_period, self.timer_callback)         
+        self.vd_list_pub = self.create_publisher(VDList, "neighbour_VDs", 1)
 
 
     def get_vehicle(self):             
@@ -102,7 +105,8 @@ class GlobalPlanner(Node):
             return False
 
     def service_callback(self, request, response):
-        self.get_logger().info('started generating global path')
+        print("inside service call")
+        #self.get_logger().info('started generating global path')
         x,y, yaw, vel = self.get_current_state()
         self.start = (x,y)
         self.goal = (request.x,request.y)
@@ -114,12 +118,12 @@ class GlobalPlanner(Node):
         self.trajectory = self.cal_trajectory()
         self.interploate_path()
         self.path_kd_tree = sp.KDTree(self.path)
-        self.is_trajectory_generated = True
-        response.message = "Global Path generated!"
-        
+        self.is_trajectory_generated = True        
+        response.message = "Global Path generated!"        
         return response
 
     def cal_trajectory(self):
+        
         trajectory = []
         for node in self.path:         
             location = carla.Location(node[0], node[1])
@@ -129,7 +133,8 @@ class GlobalPlanner(Node):
         return trajectory
         
 
-    def interploate_path(self):               
+    def interploate_path(self): 
+                     
         x_val = [x for x,y,yaw in self.trajectory]
         y_val = [y for x,y,yaw in self.trajectory]
         yaw_val = [yaw for x,y,yaw in self.trajectory]
@@ -160,7 +165,9 @@ class GlobalPlanner(Node):
         self.path_pub.publish(vd_path_msg)
 
     def get_current_state(self):               
-        self.vehicle_transform = self.vehicle.get_transform()    
+        self.vehicle_transform = self.vehicle.get_transform()  
+        bb = self.vehicle.bounding_box 
+        
         
         # Velocity in longitudinal and lateral directions
         vehicle_velocity = self.vehicle.get_velocity()
@@ -172,11 +179,11 @@ class GlobalPlanner(Node):
         x = self.vehicle_transform.location.x
         y = self.vehicle_transform.location.y        
         yaw = self.vehicle_transform.rotation.yaw 
+        print("current state", x, y, yaw, longitudinal_velocity )
         return (x, y, yaw, longitudinal_velocity)
 
     def publish_odometry(self): 
         x,y, yaw, vel = self.get_current_state()
-
         odom_msg = Odometry()
         current_time = self.sim_clock.now()
         #print(current_time) 
@@ -184,9 +191,9 @@ class GlobalPlanner(Node):
         #odom_msg.header.stamp = self.get_clock().now().to_msg()
         odom_msg.header.frame_id = 'map'
 
-        # Position
+        #Position 
         odom_msg.pose.pose.position.x = x
-        odom_msg.pose.pose.position.y = y
+        odom_msg.pose.pose.position.y = y 
         yaw = (math.radians(yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi  # MPC range of Yaw - -2*pi to +2 *pi
         odom_msg.pose.pose.orientation.x = yaw
 
@@ -198,8 +205,8 @@ class GlobalPlanner(Node):
         #Retrieve waypoints        
         waypoints = self.get_n_waypoints()
 
-        # print("*******************printing waypoints***************************")
-        # print(waypoints)
+        #print("*******************printing waypoints***************************")
+        #print(waypoints)
         #Create PoseArray for waypoints
         path_msg = Path()
         current_time = self.sim_clock.now()        
@@ -231,8 +238,7 @@ class GlobalPlanner(Node):
 
     
     def get_n_waypoints(self):
-        x,y, yaw, vel = self.get_current_state()
-        
+        x,y, yaw, vel = self.get_current_state()        
         vel = self.ref_vel
         #print("current loc of vehicle", x,y )
         _, index = self.path_kd_tree.query([x,y], 1)
@@ -240,13 +246,13 @@ class GlobalPlanner(Node):
         
         waypoints = []             
         for i in range(1, self.N+1):  
-            dist = max(i * vel * (self.Tf /self.N), 1)         
+            dist = max(i * vel * (self.Tf /self.N), 5)         
             s_new = s_init + dist
             x = self.x_interpld(s_new)
             y = self.y_interpld(s_new)
             yaw = self.yaw_interpld(s_new)
             waypoints.append((x,y,yaw))
-            print("pred point ", (x,y, yaw))
+            #print(x,y,yaw)          
             
         return waypoints    
 
@@ -274,28 +280,30 @@ class GlobalPlanner(Node):
                 vd_transform = vehicle.get_transform()
                 vd_msg = VDInfo()                  
                 vd_msg.x= vd_transform.location.x
-                vd_msg.y= vd_transform.location.y
-                vd_msg.yaw= vd_transform.rotation.yaw 
+                vd_msg.y= vd_transform.location.y                
+                vd_msg.yaw= (math.radians(vd_transform.rotation.yaw ) + 2*np.pi) % (4*np.pi) - 2*np.pi
                 bb = vehicle.bounding_box
                 vd_msg.length= bb.extent.x * 2
                 vd_msg.width = bb.extent.y * 2 
+                print("vd_msg", vd_msg)
                 nearby_vehicles.append(vd_msg)  
-        vd_list_msg.vdlist = nearby_vehicles                            
+        vd_list_msg.vdlist = nearby_vehicles   
+        print("nearby_vehicles size", len(nearby_vehicles))                         
         self.vd_list_pub.publish(vd_list_msg)        
 
 
     def timer_callback(self):
-                       
+        
         if self.is_trajectory_generated:
             """Publish odometry and trajectory data."""
-            # =======================
+            # ======================= 
             # Publish Odometry
             # =======================
             #publish global path to rosbag data saver, this path is not used by MPC           
             
-            self.publish_odometry()
+            self.publish_odometry()        
 
-            #self.publish_neighbours()
+            self.publish_neighbours()
 
             #cal nd publish norm error 
             #self.cal_error()
@@ -304,7 +312,7 @@ class GlobalPlanner(Node):
             # =======================
             self.publish_waypoints()
 
- 
+
 def main(args=None):
     rclpy.init(args=args)
     planner_node = GlobalPlanner()

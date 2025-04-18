@@ -33,4 +33,4 @@ extern "C" int cbf_solver_work_bytes(casadi_int *sz_arg, casadi_int* sz_res, cas
 #define cbf_solver_SZ_ARG 12
 #define cbf_solver_SZ_RES 10
 #define cbf_solver_SZ_IW 0
-#define cbf_solver_SZ_W 111
+#define cbf_solver_SZ_W 106

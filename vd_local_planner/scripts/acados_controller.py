@@ -67,10 +67,11 @@ def get_loc_list(x_in, L, W, pl_margin):
     obj_list = []
     x,y = x_in[0], x_in[1]
     obj_list.append((x, y, 0, L, W))
-    obj_list.append((x+ 1.0, y+ 1.0, 0, L, W))
+    obj_list.append((x+ 2.0, y+ 2.0, 0, L, W))
     return obj_list
 
-def acados_controller(N, Tf, lf, lr, track_width, pl_margin, d_safe):    
+
+def acados_controller(N, Tf, lf, lr, track_width, L, W,  pl_margin, d_safe):    
     # create ocp object to formulate the OCP
     ocp = AcadosOcp()
       
@@ -101,10 +102,10 @@ def acados_controller(N, Tf, lf, lr, track_width, pl_margin, d_safe):
     unscale = 1
     #cost matricesq
     # x, y, yaw, pitch, roll, vel
-    Q_mat = unscale * ca.vertcat(100, 100,   100, 100)
+    Q_mat = unscale * ca.vertcat(100,100,100, 100)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
     Q_emat =  unscale * ca.vertcat(1000, 1000,  1000, 100) 
-    control_rate_weight = ca.vertcat(2000, 1000, 1000)
+    control_rate_weight = ca.vertcat(1000, 1000, 1000)
     state_rate_weight = ca.vertcat(0, 0, 100, 0)
     prev_in = ca.vertcat(0,0,0)
     prev_state = ca.vertcat(0,0,0,0)
@@ -143,7 +144,7 @@ def acados_controller(N, Tf, lf, lr, track_width, pl_margin, d_safe):
     ocp.constraints.idxbx = np.array([2,3] )
 
     
-    loc_list = get_loc_list(x_array, lf + lr , track_width, pl_margin)     
+    loc_list = get_loc_list(x_array, L , W, pl_margin)     
     CBF_obj = CBF_constraints(loc_list, x_array, u_aaray, Tf/N, lf+lr, d_safe, pl_margin )
     #CBF_constraints.warm_start()
     h_list, h_lb_list, h_ub_list = CBF_obj.get_cbf_constraints() 
@@ -177,7 +178,6 @@ def acados_controller(N, Tf, lf, lr, track_width, pl_margin, d_safe):
     return model, acados_solver, acados_integrator
 
 
-
 if __name__ == "__main__":
     config_path = get_package_share_directory("vd_config") 
     vd_param_path =  os.path.join(config_path,'config', sys.argv[1])
@@ -193,6 +193,10 @@ if __name__ == "__main__":
     d_safe = control_params.d_safe
     lf = vd_params.lf
     lr = vd_params.lr
-    # print(type(lr))
     track_width = vd_params.track_width
-    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr, track_width, pl_margin, d_safe) 
+    L = vd_params.L
+    W = vd_params.W
+
+    
+    
+    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr, track_width, L, W, pl_margin, d_safe) 

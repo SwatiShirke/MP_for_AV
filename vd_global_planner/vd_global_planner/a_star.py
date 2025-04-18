@@ -80,9 +80,9 @@ class a_star:
             #print("popped node", node)           
             closed_set.append(node)
             if node == goal:
-                print("path found!")
+                #print("path found!")
                 path = self.get_path(parents_dict, goal, start)
-                print(path)
+                #print(path)
                 return path
             else:              
                 neighbour_list = self.get_neighbours(node)    
@@ -100,5 +100,5 @@ class a_star:
                         total_cost = new_cost + self.cal_heuristic_cost(n, goal)
                         open_set[n] = total_cost
         
-        print("path not found!")             
+        #print("path not found!")             
         return path

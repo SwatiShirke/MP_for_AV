@@ -22,7 +22,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-          'vd_golbal_planner  = vd_global_planner.a_star_node:main'
+          'vd_global_planner  = vd_global_planner.a_star_node:main'
         ],
     },
 )
