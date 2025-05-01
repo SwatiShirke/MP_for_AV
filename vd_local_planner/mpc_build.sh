@@ -10,12 +10,13 @@ cd src/MP_for_AV/vd_config/config
 config_file="main_config.yaml" 
 vd_params_path=$(yq e '.config_paths.vd_path' $config_file)
 control_params_path=$(yq e '.config_paths.controller_path' $config_file)
+planner_param_path=$(yq e '.config_paths.planner_path'  $config_file)
 
 cd ../..
 cd vd_local_planner/scripts
 source ~/acados/mpcenv/bin/activate
 
-python3 acados_controller.py $vd_params_path $control_params_path
+python3 acados_controller.py $vd_params_path $control_params_path $planner_param_path
 
 cd ..
 cp scripts/c_generated_code/ackerman_model_model/ackerman_model_model.h include/vd_local_planner

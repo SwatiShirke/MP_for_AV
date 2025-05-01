@@ -52,7 +52,8 @@ namespace nmpc_control_nodelet
     static constexpr int kStateSize = ACKERMAN_MODEL_NX;
     static constexpr int kInputSize = ACKERMAN_MODEL_NU;
     static constexpr int kSamples = N;
-    static constexpr int yRefSize = ACKERMAN_MODEL_NX + ACKERMAN_MODEL_NU;
+    static constexpr int kCBF_params = NP - (NX +NU);
+    static constexpr int yRefSize = NP;
 
     struct solver_output
     {
@@ -77,8 +78,8 @@ namespace nmpc_control_nodelet
       double x0[NX];
       double x[NX * (N)];
       double u[NU * N];
-      double yref[(NX + NU) * N];
-      double yref_e[(NX + NU)];
+      double yref[(yRefSize) * N];
+      double yref_e[(yRefSize)];
       #if (NY > 0)
       
         double W[NY * NY];
@@ -95,12 +96,14 @@ namespace nmpc_control_nodelet
     public:
     NMPCWrapper();
     NMPCWrapper(const Eigen::VectorXd Q_, const Eigen::VectorXd R_,
-              const Eigen::VectorXd lbu_, const Eigen::VectorXd ubu_);
+               const Eigen::VectorXd lbu_, const Eigen::VectorXd ubu_);
 
     void setTrajectory(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, kSamples>> states,
-                       const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> inputs);
+                       const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> inputs,
+                       const Eigen::Ref<const Eigen::Matrix<double, kCBF_params,kSamples>> cbf_params);
     
-    bool prepare(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, 1>> state);
+    bool prepare(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, 1>> state,
+      const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> init_inputs);
     bool update(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, 1>> state);
     void getStates(Eigen::Matrix<double, kStateSize, kSamples> &return_state);
     void getInputs(Eigen::Matrix<double, kInputSize, kSamples> &return_input);
@@ -136,7 +139,7 @@ namespace nmpc_control_nodelet
     Eigen::Map<Eigen::Matrix<double, kInputSize, kSamples, Eigen::ColMajor>> acados_inputs_in_{acados_in.u};
     Eigen::Map<Eigen::Matrix<double, kStateSize, kSamples, Eigen::ColMajor>> acados_states_{acados_out.x_out};
     Eigen::Map<Eigen::Matrix<double, kInputSize, kSamples, Eigen::ColMajor>> acados_inputs_{acados_out.u_out};
-    Eigen::Matrix<real_t, kInputSize, 1> kVDInput_ = (Eigen::Matrix<real_t, kInputSize, 1>() << 0,0,0).finished();
+    Eigen::Matrix<real_t, kInputSize, 1> kVDInput_ = Eigen::Matrix<real_t, kInputSize, 1>::Zero();
     };
 
 }// namespace control nodelet ends here

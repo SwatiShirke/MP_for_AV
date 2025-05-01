@@ -38,11 +38,11 @@
 
 #define ACKERMAN_MODEL_NX     4
 #define ACKERMAN_MODEL_NZ     0
-#define ACKERMAN_MODEL_NU     3
-#define ACKERMAN_MODEL_NP     0
+#define ACKERMAN_MODEL_NU     44
+#define ACKERMAN_MODEL_NP     80
 #define ACKERMAN_MODEL_NBX    0
 #define ACKERMAN_MODEL_NBX0   4
-#define ACKERMAN_MODEL_NBU    3
+#define ACKERMAN_MODEL_NBU    43
 #define ACKERMAN_MODEL_NSBX   0
 #define ACKERMAN_MODEL_NSBU   0
 #define ACKERMAN_MODEL_NSH    0
@@ -60,11 +60,11 @@
 #define ACKERMAN_MODEL_NG     0
 #define ACKERMAN_MODEL_NBXN   0
 #define ACKERMAN_MODEL_NGN    0
-#define ACKERMAN_MODEL_NY0    7
-#define ACKERMAN_MODEL_NY     7
-#define ACKERMAN_MODEL_NYN    4
+#define ACKERMAN_MODEL_NY0    0
+#define ACKERMAN_MODEL_NY     0
+#define ACKERMAN_MODEL_NYN    0
 #define ACKERMAN_MODEL_N      10
-#define ACKERMAN_MODEL_NH     13
+#define ACKERMAN_MODEL_NH     12
 #define ACKERMAN_MODEL_NHN    0
 #define ACKERMAN_MODEL_NH0    0
 #define ACKERMAN_MODEL_NPHI0  0
@@ -104,21 +104,25 @@ typedef struct ackerman_model_solver_capsule
 
     // cost
 
-    external_function_external_param_casadi *cost_y_fun;
-    external_function_external_param_casadi *cost_y_fun_jac_ut_xt;
-    external_function_external_param_casadi *cost_y_hess;
+    external_function_external_param_casadi *ext_cost_fun;
+    external_function_external_param_casadi *ext_cost_fun_jac;
+    external_function_external_param_casadi *ext_cost_fun_jac_hess;
 
 
 
-    external_function_external_param_casadi cost_y_0_fun;
-    external_function_external_param_casadi cost_y_0_fun_jac_ut_xt;
-    external_function_external_param_casadi cost_y_0_hess;
+
+
+    external_function_external_param_casadi ext_cost_0_fun;
+    external_function_external_param_casadi ext_cost_0_fun_jac;
+    external_function_external_param_casadi ext_cost_0_fun_jac_hess;
 
 
 
-    external_function_external_param_casadi cost_y_e_fun;
-    external_function_external_param_casadi cost_y_e_fun_jac_ut_xt;
-    external_function_external_param_casadi cost_y_e_hess;
+
+    external_function_external_param_casadi ext_cost_e_fun;
+    external_function_external_param_casadi ext_cost_e_fun_jac;
+    external_function_external_param_casadi ext_cost_e_fun_jac_hess;
+
 
 
     // constraints

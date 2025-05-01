@@ -331,7 +331,14 @@ class World(object):
         vehicle_bp = self.world.get_blueprint_library().find('vehicle.mini.cooper')       
         self.test_vehicle = self.world.spawn_actor(vehicle_bp, transform)
 
-        print(self.player.attributes)
+        #  # Spawn a single ego vehicle (Lincoln MKZ)
+        # # print(type(spawn_points[1]))        
+        # transform = carla.Transform(carla.Location(x=-54, y=26), carla.Rotation(yaw=180)) 
+        # # vehicle_bp = random.choice(vehicle_blueprints) 
+        # vehicle_bp = self.world.get_blueprint_library().find('vehicle.mini.cooper')       
+        # self.test_vehicle2 = self.world.spawn_actor(vehicle_bp, transform)
+
+        # print(self.player.attributes)
 
         # Set up the sensors.
         self.collision_sensor = CollisionSensor(self.player, self.hud)

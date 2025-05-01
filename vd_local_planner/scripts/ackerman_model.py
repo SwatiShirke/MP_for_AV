@@ -2,7 +2,8 @@ from casadi import *
 from acados_template import AcadosModel
 
 
-def ackerman_model(lf, lr):
+def ackerman_model(lf, lr, KNN):
+    polytope_params_n = 6    
     model_name = "ackerman_model"
     model = AcadosModel()   
 
@@ -29,8 +30,11 @@ def ackerman_model(lf, lr):
     accel = SX.sym("accel")
     steer_angle_in = SX.sym("steer_angle_in")
     steer_angle_out = SX.sym("steer_angle_out")
+    lambda_val = SX.sym("lambda_bot",40, 1 )
+    omega = SX.sym("omega")
+    
     delta = (steer_angle_in + steer_angle_out)/2
-    u = vertcat(accel, steer_angle_in, steer_angle_out)
+    u = vertcat(accel, steer_angle_in, steer_angle_out, lambda_val, omega)
 
     beta = arctan(lr / (lf + lr) * tan(delta))
     
@@ -49,7 +53,7 @@ def ackerman_model(lf, lr):
     model.x0 = np.array([0.0,0,0,0])
     nx = model.x.rows()
     nu = model.u.rows()    
-    reference_param = SX.sym('references', (nx + nu), 1) # instead of yaw angle, we are getting quaternions
+    reference_param = SX.sym('references', (nx + nu) + (1+ polytope_params_n * KNN + 1 ), 1) # instead of yaw angle, we are getting quaternions
     model.p = reference_param
     model.name = model_name
 

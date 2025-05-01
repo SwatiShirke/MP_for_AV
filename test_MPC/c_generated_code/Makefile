@@ -45,15 +45,21 @@ MODEL_OBJ := $(MODEL_SRC:.c=.o)
 OCP_SRC=
 OCP_SRC+= ackerman_model_constraints/ackerman_model_constr_h_fun_jac_uxt_zt.c
 OCP_SRC+= ackerman_model_constraints/ackerman_model_constr_h_fun.c
-OCP_SRC+= ackerman_model_cost/ackerman_model_cost_y_0_fun.c
-OCP_SRC+= ackerman_model_cost/ackerman_model_cost_y_0_fun_jac_ut_xt.c
-OCP_SRC+= ackerman_model_cost/ackerman_model_cost_y_0_hess.c
-OCP_SRC+= ackerman_model_cost/ackerman_model_cost_y_fun.c
-OCP_SRC+= ackerman_model_cost/ackerman_model_cost_y_fun_jac_ut_xt.c
-OCP_SRC+= ackerman_model_cost/ackerman_model_cost_y_hess.c
-OCP_SRC+= ackerman_model_cost/ackerman_model_cost_y_e_fun.c
-OCP_SRC+= ackerman_model_cost/ackerman_model_cost_y_e_fun_jac_ut_xt.c
-OCP_SRC+= ackerman_model_cost/ackerman_model_cost_y_e_hess.c
+OCP_SRC+= ackerman_model_cost/ackerman_model_cost_ext_cost_0_fun.c
+OCP_SRC+= ackerman_model_cost/ackerman_model_cost_ext_cost_0_fun_jac.c
+OCP_SRC+= ackerman_model_cost/ackerman_model_cost_ext_cost_0_fun_jac_hess.c
+
+
+OCP_SRC+= ackerman_model_cost/ackerman_model_cost_ext_cost_fun.c
+OCP_SRC+= ackerman_model_cost/ackerman_model_cost_ext_cost_fun_jac.c
+OCP_SRC+= ackerman_model_cost/ackerman_model_cost_ext_cost_fun_jac_hess.c
+
+
+OCP_SRC+= ackerman_model_cost/ackerman_model_cost_ext_cost_e_fun.c
+OCP_SRC+= ackerman_model_cost/ackerman_model_cost_ext_cost_e_fun_jac.c
+OCP_SRC+= ackerman_model_cost/ackerman_model_cost_ext_cost_e_fun_jac_hess.c
+
+
 
 OCP_SRC+= acados_solver_ackerman_model.c
 OCP_OBJ := $(OCP_SRC:.c=.o)

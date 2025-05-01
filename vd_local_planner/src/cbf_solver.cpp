@@ -14,8 +14,8 @@
   #define CASADI_PREFIX(ID) cbf_solver_ ## ID
 #endif
 
-#include <math.h>
 #include <cmath>
+
 #include <coin-or/IpStdCInterface.h>
 
 #ifndef casadi_real

@@ -518,6 +518,46 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
     idxbu[0] = 0;
     idxbu[1] = 1;
     idxbu[2] = 2;
+    idxbu[3] = 3;
+    idxbu[4] = 4;
+    idxbu[5] = 5;
+    idxbu[6] = 6;
+    idxbu[7] = 7;
+    idxbu[8] = 8;
+    idxbu[9] = 9;
+    idxbu[10] = 10;
+    idxbu[11] = 11;
+    idxbu[12] = 12;
+    idxbu[13] = 13;
+    idxbu[14] = 14;
+    idxbu[15] = 15;
+    idxbu[16] = 16;
+    idxbu[17] = 17;
+    idxbu[18] = 18;
+    idxbu[19] = 19;
+    idxbu[20] = 20;
+    idxbu[21] = 21;
+    idxbu[22] = 22;
+    idxbu[23] = 23;
+    idxbu[24] = 24;
+    idxbu[25] = 25;
+    idxbu[26] = 26;
+    idxbu[27] = 27;
+    idxbu[28] = 28;
+    idxbu[29] = 29;
+    idxbu[30] = 30;
+    idxbu[31] = 31;
+    idxbu[32] = 32;
+    idxbu[33] = 33;
+    idxbu[34] = 34;
+    idxbu[35] = 35;
+    idxbu[36] = 36;
+    idxbu[37] = 37;
+    idxbu[38] = 38;
+    idxbu[39] = 39;
+    idxbu[40] = 40;
+    idxbu[41] = 41;
+    idxbu[42] = 42;
     double* lubu = calloc(2*NBU, sizeof(double));
     double* lbu = lubu;
     double* ubu = lubu + NBU;
@@ -528,6 +568,46 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
     ubu[1] = 0.7;
     lbu[2] = -0.7;
     ubu[2] = 0.7;
+    ubu[3] = 1000;
+    ubu[4] = 1000;
+    ubu[5] = 1000;
+    ubu[6] = 1000;
+    ubu[7] = 1000;
+    ubu[8] = 1000;
+    ubu[9] = 1000;
+    ubu[10] = 1000;
+    ubu[11] = 1000;
+    ubu[12] = 1000;
+    ubu[13] = 1000;
+    ubu[14] = 1000;
+    ubu[15] = 1000;
+    ubu[16] = 1000;
+    ubu[17] = 1000;
+    ubu[18] = 1000;
+    ubu[19] = 1000;
+    ubu[20] = 1000;
+    ubu[21] = 1000;
+    ubu[22] = 1000;
+    ubu[23] = 1000;
+    ubu[24] = 1000;
+    ubu[25] = 1000;
+    ubu[26] = 1000;
+    ubu[27] = 1000;
+    ubu[28] = 1000;
+    ubu[29] = 1000;
+    ubu[30] = 1000;
+    ubu[31] = 1000;
+    ubu[32] = 1000;
+    ubu[33] = 1000;
+    ubu[34] = 1000;
+    ubu[35] = 1000;
+    ubu[36] = 1000;
+    ubu[37] = 1000;
+    ubu[38] = 1000;
+    ubu[39] = 1000;
+    ubu[40] = 1000;
+    ubu[41] = 1000;
+    ubu[42] = 1000;
 
     for (int i = 0; i < N; i++)
     {
@@ -576,21 +656,17 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
     double* uh = luh + NH;
 
     
-    lh[11] = -10000;
-    lh[12] = -10000;
 
     
-    uh[0] = 10000;
-    uh[1] = 10000;
-    uh[2] = 10000;
-    uh[3] = 10000;
-    uh[4] = 10000;
-    uh[5] = 10000;
-    uh[6] = 10000;
-    uh[7] = 10000;
-    uh[8] = 10000;
-    uh[11] = 1;
-    uh[12] = 1;
+    uh[0] = 100000000000;
+    uh[1] = 100000000000;
+    uh[2] = 100000000000;
+    uh[3] = 100000000000;
+    uh[4] = 100000000000;
+    uh[5] = 100000000000;
+    uh[6] = 100000000000;
+    uh[7] = 100000000000;
+    uh[8] = 100000000000;
 
     for (int i = 1; i < N; i++)
     {
@@ -898,7 +974,7 @@ int ackerman_model_acados_update_params(ackerman_model_solver_capsule* capsule, 
 {
     int solver_status = 0;
 
-    int casadi_np = 7;
+    int casadi_np = 80;
     if (casadi_np != np) {
         printf("acados_update_params: trying to set %i parameters for external functions."
             " External function has %i parameters. Exiting.\n", np, casadi_np);

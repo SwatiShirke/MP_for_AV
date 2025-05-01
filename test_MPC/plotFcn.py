@@ -4,6 +4,7 @@ from time2spatial import transformProj2Orig,transformOrig2Proj
 from matplotlib import cm
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.patches import Rectangle
 
 def plotTrackProj(simX,filename='LMS_Track.txt', T_opt=None):
     # load track
@@ -96,22 +97,25 @@ def plotalat(simX,simU, t):
     plt.ylabel('alat[m/s^2]')
 
 
-def plot_followed_traj( x, y, xref, yref):
-    
-    # plt.plot(x,y, '-', color = 'r')
-    # plt.plot(xref, yref, 'x', 'b')
-    
+def plot_followed_traj(x, y, xref, yref, x_obj, y_obj, L, W):
     plt.figure()
-    plt.plot(x, y, 'b-', label='followed')      # 'b-' for blue line
-    plt.plot(xref, yref, 'rx', label='reference')  # 'rx' for red markers (no line)
+    plt.plot(x, y, 'b-', label='followed')         # Blue trajectory line
+    plt.plot(xref, yref, 'rx', label='reference')  # Red reference points
+
+    # Add rectangle centered at (x_obj, y_obj)
+    bottom_left_x = x_obj - L / 2
+    bottom_left_y = y_obj - W / 2
+    rect = Rectangle((bottom_left_x, bottom_left_y), L, W,
+                     linewidth=2, edgecolor='g', facecolor='none', label='Object')
+
+    plt.gca().add_patch(rect)
+
     plt.legend()
     plt.ylabel('y in m', fontsize=14)
     plt.xlabel('x in m', fontsize=14)
     plt.title('2D trajectory plot', fontsize=16)
+    plt.axis('equal')
+    plt.grid(True)
     plt.show()
-
-
-    #plt.plot(s,t)
-    #plt.show()
 
 

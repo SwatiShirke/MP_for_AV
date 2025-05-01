@@ -38,7 +38,7 @@ class GlobalPlanner(Node):
         self.grid_map = None
         self.offset = (0,0)
         self.get_grid_map()  
-        self.KNN = 5                    #used while calulating nearest objects to be passed to the controller            
+        self.KNN = 1                    #used while calulating nearest objects to be passed to the controller            
          
 
         #for testing
@@ -52,7 +52,7 @@ class GlobalPlanner(Node):
         self.ref_vel = 20.00 #m/s
         self.path_kd_tree = None
         self.init_vel = 10.00 #m/s used for predicting future points
-        self.radius = 10 
+        self.radius = 15      ##vicinity to search KNN
         
         ##pub sub
         self.path_pub = self.create_publisher(VDPath, "global_path", 10)
@@ -266,6 +266,12 @@ class GlobalPlanner(Node):
             self.err_pub.publish(float_msg)
 
     def publish_neighbours(self):
+        # first find neighbours within a specificed radius and then filter KNN 
+        # created a ros message to list of KNN 
+        # for each vehcile, info = x, y,theta, length, width
+        # this is sent to mpc controller, it is used for polytopes creation by ROS nmpc control cpp node
+        # KNN value is set in yaml file of the planner
+
         vd_list_msg = VDList()
         nearby_vehicles = []
         ego_loc = self.vehicle.get_location()
@@ -273,22 +279,39 @@ class GlobalPlanner(Node):
         for vehicle in all_vehicles:
             if vehicle.id == self.ego_vehicle_ID:
                 continue  # skip self
-            
+
             dist = ego_loc.distance(vehicle.get_location())
-            if dist <= self.radius:
-                
+            if dist <= self.radius:                
                 vd_transform = vehicle.get_transform()
-                vd_msg = VDInfo()                  
-                vd_msg.x= vd_transform.location.x
-                vd_msg.y= vd_transform.location.y                
-                vd_msg.yaw= (math.radians(vd_transform.rotation.yaw ) + 2*np.pi) % (4*np.pi) - 2*np.pi
+                x, y = vd_transform.location.x, vd_transform.location.y
+                theta = (math.radians(vd_transform.rotation.yaw ) + 2*np.pi) % (4*np.pi) - 2*np.pi
                 bb = vehicle.bounding_box
-                vd_msg.length= bb.extent.x * 2
-                vd_msg.width = bb.extent.y * 2 
-                print("vd_msg", vd_msg)
-                nearby_vehicles.append(vd_msg)  
-        vd_list_msg.vdlist = nearby_vehicles   
-        print("nearby_vehicles size", len(nearby_vehicles))                         
+                L = bb.extent.x * 2
+                W = bb.extent.y * 2
+                nearby_vehicles.append([x,y,theta, L, W, dist])
+                 
+        ##sort nearest neighbours
+        nn_vehicle_array = np.array(nearby_vehicles)
+        sorted_array = sorted( nn_vehicle_array, key = lambda x : x[-1] )
+        
+        try:
+            KNN_array = sorted_array[0:self.KNN]
+        except:
+            KNN_array = sorted_array
+        
+        vd_list = []
+        for vec in KNN_array:
+            vd_msg = VDInfo()                  
+            vd_msg.x= vec[0]
+            vd_msg.y= vec[1]              
+            vd_msg.yaw= vec[2]           
+            vd_msg.length=vec[3]
+            vd_msg.width = vec[4]
+            #print("vd_msg", vd_msg)
+            vd_list.append(vd_msg) 
+        
+        vd_list_msg.vdlist = vd_list   
+        #print("nearby_vehicles", vd_list)                         
         self.vd_list_pub.publish(vd_list_msg)        
 
 

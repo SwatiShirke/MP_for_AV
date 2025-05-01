@@ -9,72 +9,11 @@ from ament_index_python.packages import get_package_share_directory
 import os
 import sys
 from vd_config import read_param
+from utils import cal_state_cost, cal_input_cost, get_loc_list
 
-
-def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
-    pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
-    vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
-    yaw_cost =  ( 1 - np.cos(ref_vec[2] - state_vec[2]))**2  * weights[2]
-    cost = (pos_cost + vel_cost ) + yaw_cost
-    #state_change_cost = ca.fabs(prev_state[2] - state_vec[2]) < 0.035
-    #ipdb.set_trace()    
-    return cost 
-
-
-
-def cal_input_cost(input_vec, ref_vec, weights, prev_in, control_rate_weight):
-    cost = ca.dot((ref_vec - input_vec)**2, weights)      
-    rate_cost = ca.dot((prev_in - input_vec)**2, control_rate_weight)
-    return cost + rate_cost
-
-# x, y, qw, qx,qy,qz, v, acc, del1, del2
-def calculate_quat_cost(current_yaw, ref_yaw, weight):
-    current_quat = ca.vertcat(ca.cos(current_yaw/2), 0, 0, ca.sin(current_yaw/2))
-    ref_quat = ca.vertcat(ca.cos(ref_yaw/2), 0, 0, ca.sin(ref_yaw/2))
-    
-    weights = ca.vertcat(weight, 0,0 )
-    qk = ref_quat
-    qd = current_quat 
-    q_aux = ca.vertcat(
-     qd[0] * qk[0] + qd[1] * qk[1] + qd[2] * qk[2] + qd[3] * qk[3],
-    -qd[1] * qk[0] + qd[0] * qk[1] + qd[3] * qk[2] - qd[2] * qk[3],
-    -qd[2] * qk[0] - qd[3] * qk[1] + qd[0] * qk[2] + qd[1] * qk[3],
-    -qd[3] * qk[0] + qd[2] * qk[1] - qd[1] * qk[2] + qd[0] * qk[3]
-    )
-
-    q_att_denom = ca.sqrt(q_aux[0] * q_aux[0] + q_aux[3] * q_aux[3] + 1e-3)
-    q_att = ca.vertcat(
-      q_aux[0] * q_aux[1] - q_aux[2] * q_aux[3],
-      q_aux[0] * q_aux[2] + q_aux[1] * q_aux[3],
-      q_aux[3]) / q_att_denom
-    
-   
-    cost = ca.transpose(q_att) @ ca.diag(weights) @ q_att
-    
-    return cost
-
-
-def get_constraints(x_array, prev_state, yaw_rate, u_aaray, prev_in, steer_rate):
-    h_list = []    
-    #yaw_const = ca.fabs(x_array[2] - prev_state[2])
-    steer1_constraint = ca.fabs(u_aaray[1] - prev_in[1])
-    steer2_constraint = ca.fabs(u_aaray[2] - prev_in[2])
-    h_list = ca.vertcat( steer1_constraint, steer2_constraint)
-    return h_list
-
-
-def get_loc_list(x_in, L, W, pl_margin):
-    obj_list = []
-    x,y = x_in[0], x_in[1]
-    obj_list.append((x, y, 0, L, W))
-    obj_list.append((x+ 2.0, y+ 2.0, 0, L, W))
-    return obj_list
-
-
-def acados_controller(N, Tf, lf, lr, track_width, L, W,  pl_margin, d_safe):    
+def acados_controller(N, Tf, lf, lr, track_width, L, W,  pl_margin, d_safe, KNN):    
     # create ocp object to formulate the OCP
-    ocp = AcadosOcp()
-      
+    ocp = AcadosOcp()      
     min_accel = -8.5
     max_accel = +2.5
     min_str_angle_in= -0.7
@@ -85,8 +24,9 @@ def acados_controller(N, Tf, lf, lr, track_width, L, W,  pl_margin, d_safe):
     vel_max = 30
     steer_rate = 0.01   #2.866242038 deg /sec
     yaw_rate = 0.1
+    gamma = 0.8
 
-    model = ackerman_model(lf, lr)
+    model = ackerman_model(lf, lr, KNN)
     ocp.model = model
     
     ocp.dims.np = ocp.model.p.size()[0]
@@ -115,45 +55,50 @@ def acados_controller(N, Tf, lf, lr, track_width, L, W,  pl_margin, d_safe):
     ref_array = model.p  # x, y, qw, qx,qy,qz, v, acc, del1, del2
 
 
-    state_error = cal_state_cost(x_array, ref_array, Q_mat, prev_state, state_rate_weight )
-    quat_error = calculate_quat_cost(x_array[2],ref_array[2], Q_mat[2] )
-    input_error = cal_input_cost(u_aaray, ref_array[4:7], R_mat, prev_in, control_rate_weight)  
+    state_error = cal_state_cost(x_array, ref_array, Q_mat, prev_state, state_rate_weight)    
+    input_error = cal_input_cost(u_aaray[0:3], ref_array[4:7], R_mat, prev_in, control_rate_weight)  
     
 
     ocp.cost.cost_type = 'EXTERNAL'
     ocp.model.cost_expr_ext_cost = state_error + input_error 
     ocp.model.cost_expr_ext_cost_0 = state_error  + input_error      
 
-    state_error = cal_state_cost(x_array, ref_array, Q_emat, prev_state, state_rate_weight)
-    quat_error = calculate_quat_cost(x_array[2],ref_array[2], Q_mat[2]  )
+    state_error = cal_state_cost(x_array, ref_array, Q_emat, prev_state, state_rate_weight)    
     ocp.cost.cost_type_e = 'EXTERNAL'
     ocp.model.cost_expr_ext_cost_e = state_error 
 
     # set constraints
-    #constraints on control input    
-    ocp.constraints.lbu = np.array([min_accel, min_str_angle_in, min_str_angle_out])
-    ocp.constraints.ubu = np.array([max_accel, max_str_angle_in, max_str_angle_out])
-    ocp.constraints.idxbu = np.array([0, 1, 2])
+    #constraints on control input 
+    lbx = np.zeros(nu-1)
+    lbx[0:3] = min_accel, min_str_angle_in, min_str_angle_out
+    ubx = np.ones(nu-1) * 1000
+    ubx[0:3] = max_accel, max_str_angle_in, max_str_angle_out
+    indices = np.arange(nu-1)
+    # lbx = np.array([min_accel, min_str_angle_in, min_str_angle_out])
+    # ubx = np.array([max_accel, max_str_angle_in, max_str_angle_out])
+    # indices = np.array([0,1,2])
+    ocp.constraints.lbu = lbx
+    ocp.constraints.ubu = ubx 
+    ocp.constraints.idxbu = indices  
 
     #initial state contraints
     ocp.constraints.x0 = np.array([0, 0, 0, 0] )
 
     #lower and upper bound constraints on states - velocity and angular velocities
+  
     ocp.constraints.lbx = np.array([-2* np.pi ,vel_min])
     ocp.constraints.ubx = np.array([2 * np.pi, vel_max])
-    ocp.constraints.idxbx = np.array([2,3] )
-
-    
-    loc_list = get_loc_list(x_array, L , W, pl_margin)     
-    CBF_obj = CBF_constraints(loc_list, x_array, u_aaray, Tf/N, lf+lr, d_safe, pl_margin )
-    #CBF_constraints.warm_start()
-    h_list, h_lb_list, h_ub_list = CBF_obj.get_cbf_constraints() 
+    ocp.constraints.idxbx = np.array([2,3] )   
+        
+    CBF_obj = CBF_constraints( Tf/N, L, W , d_safe, pl_margin, nx, nu)    
+    #CBF_obj.external_warm_start()
+    h_list, h_lb_list, h_ub_list = CBF_obj.get_cbf_constraints(model.x, model.u, model.p) 
     ocp.model.con_h_expr =h_list
-    ocp.dims.nh = h_list.shape[0]
+    ocp.dims.nh = len(h_lb_list)
     ocp.constraints.lh = h_lb_list         
     ocp.constraints.uh = h_ub_list            
     ocp.model.lh = h_lb_list       
-    ocp.model.uh = h_ub_list
+    ocp.model.uh = h_ub_list 
 
 
     ##update last states and input for rate control
@@ -182,9 +127,12 @@ if __name__ == "__main__":
     config_path = get_package_share_directory("vd_config") 
     vd_param_path =  os.path.join(config_path,'config', sys.argv[1])
     control_param_path = os.path.join(config_path, 'config', sys.argv[2])
+    planner_param_path = os.path.join(config_path, 'config', sys.argv[3])
+
     read_param_obj = read_param.read_params()
     control_params = read_param_obj.read_params(control_param_path, "controller_params" )
     vd_params = read_param_obj.read_params(vd_param_path, "VD_params")
+    planner_param = read_param_obj.read_params(planner_param_path, "planner_params")
 
 
     N = control_params.N
@@ -196,7 +144,9 @@ if __name__ == "__main__":
     track_width = vd_params.track_width
     L = vd_params.L
     W = vd_params.W
+    KNN = planner_param.KNN
+
 
     
     
-    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr, track_width, L, W, pl_margin, d_safe) 
+    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr, track_width, L, W, pl_margin, d_safe, KNN) 

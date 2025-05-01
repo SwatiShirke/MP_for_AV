@@ -5,6 +5,8 @@ import casadi as ca
 from CBF_constraints import CBF_constraints
 from geometric_utils import get_polytopes
 import sys
+from utils import cal_state_cost, cal_input_cost, get_loc_list
+
  
 no_obj = 1
 poly_row = 4
@@ -12,30 +14,15 @@ poly_col = 2
 W = 2
 
 
-# def warm_start():
-#     h_x0 = ca.SX.sym("hx_0", no_obj, 1 )
-#     h_x0 = np.ones(no_obj) 
-
-#     omega_list = ca.SX.sym("omega_list", no_obj, 1 )
-#     omega_list = np.ones(no_obj)
-
-#     lam_obj  = ca.SX.sym("lam_obj", no_obj * poly_row, 1 )
-#     lam_obj = np.ones((no_obj * poly_row, 1))
-#     lam_R = ca.SX.sym("lam_R", no_obj * poly_row, 1 )
-#     lam_R = np.ones( (no_obj * poly_row)) 
-#     return h_x0, lam_obj, lam_R 
-
-
 def get_loc_list(x_in, L, W):
-
     obj_list = []
     x,y = x_in[0], x_in[1]
     obj_list.append((x, y, 0, L, W))
     obj_list.append((x+0.001, y + 0.001, 0, L, W))
-    return obj_list
+    return obj_list 
 
 
-def acados_controller(N, Tf, L):
+def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     #model configs param
     # N = params.N
     # Tf = params.Tf
@@ -55,8 +42,10 @@ def acados_controller(N, Tf, L):
     ddelta_min = -0.5    
     ddelta_max = 0.5
 
-    model = ackerman_model(L)
+    model = ackerman_model(L, KNN)
     ocp.model = model
+    ocp.dims.np = ocp.model.p.size()[0]
+    ocp.parameter_values = np.zeros(ocp.dims.np)
     
     #ipdb.set_trace()
     nx = model.x.rows()
@@ -77,30 +66,47 @@ def acados_controller(N, Tf, L):
      
     # path cost
     #smooth u transition
-    u_last = ca.SX.sym("u_last")
-    ocp.cost.cost_type = 'NONLINEAR_LS'
-    ocp.cost.yref = np.array([0.,0,0,0,0,0, 0] )
-    del_error = ca.vertcat(model.x, model.u)- ocp.cost.yref
-    u_delta = u_last - ocp.model.u
-    
-    #print(loss)
-    #print(u_delta)
-    ocp.model.cost_y_expr =  ca.vertcat(model.x, model.u)- ocp.cost.yref #ca.vertcat(del_error, u_delta)
-    #ocp.cost.yref = np.zeros((nx+nu,))    
-    ocp.cost.W = unscale * ca.diagcat(Q_mat, R_mat).full()
+    # u_last = ca.SX.sym("u_last")
+    # ocp.cost.cost_type = 'NONLINEAR_LS'
+    # ocp.cost.yref = np.array([0.,0,0,0,0,0, 0] )
+    # del_error = ca.vertcat(model.x, model.u)- ocp.cost.yref
+    # u_delta = u_last - ocp.model.u
 
-    # terminal cost
-    ocp.cost.cost_type_e = 'NONLINEAR_LS'
-    ocp.cost.yref_e = np.array([0., 0, 0, 0])
-    cost = model.x - ocp.cost.yref_e
-    ocp.model.cost_y_expr_e = cost #model.x # 
-    ocp.cost.W_e = unscale * Q_emat
+    #cost matricesq
+    # x, y, yaw, pitch, roll, vel
+    Q_mat = unscale * ca.vertcat(100,100,100, 100)
+    R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
+    Q_emat =  unscale * ca.vertcat(1000, 1000,  1000, 100) 
+    control_rate_weight = ca.vertcat(1000, 1000, 1000)
+    state_rate_weight = ca.vertcat(0, 0, 100, 0)
+    prev_in = ca.vertcat(0,0,0)
+    prev_state = ca.vertcat(0,0,0,0)
+
+    x_array = model.x
+    u_aaray = model.u 
+    ref_array = model.p  # x, y, qw, qx,qy,qz, v, acc, del1, del2
+
+    state_error = cal_state_cost(x_array, ref_array, Q_mat, prev_state, state_rate_weight)    
+    input_error = cal_input_cost(u_aaray[0:3], ref_array[4:7], R_mat, prev_in, control_rate_weight) 
+    
+    ocp.cost.cost_type = 'EXTERNAL'
+    ocp.model.cost_expr_ext_cost = state_error + input_error 
+    ocp.model.cost_expr_ext_cost_0 = state_error  + input_error      
+
+    state_error = cal_state_cost(x_array, ref_array, Q_emat, prev_state, state_rate_weight)    
+    ocp.cost.cost_type_e = 'EXTERNAL'
+    ocp.model.cost_expr_ext_cost_e = state_error 
     
     # set constraints
-    #constraints on control input    
-    ocp.constraints.lbu = np.array([min_vel, min_str_angle_in, min_str_angle_out])
-    ocp.constraints.ubu = np.array([max_vel, max_str_angle_in, max_str_angle_out])
-    ocp.constraints.idxbu = np.array([0,1,2])
+    #constraints on control input  
+    lbx = np.zeros(nu-1)
+    lbx[0:3] = min_vel, min_str_angle_in, min_str_angle_out
+    ubx = np.ones(nu-1) * 1000
+    ubx[0:3] = max_vel, max_str_angle_in, max_str_angle_out
+    indices = np.arange(nu-1)  
+    ocp.constraints.lbu = lbx
+    ocp.constraints.ubu = ubx
+    ocp.constraints.idxbu = indices 
 
     #initial state contraints
     ocp.constraints.x0 = np.array([0, 0, 0, 0] )
@@ -115,21 +121,22 @@ def acados_controller(N, Tf, L):
     loc_list = get_loc_list(model.x, L, W) 
     x = model.x   
     u = model.u
-    CBF_obj = CBF_constraints(loc_list, x, u, Tf/N, L )
-    #CBF_constraints.warm_start()
-    h_list, h_lb_list, h_ub_list = CBF_obj.get_cbf_constraints() 
 
-    print("printing sizes")
-    print(h_list.shape)
+    CBF_obj = CBF_constraints( Tf/N, L, W , d_safe, pl_margin, nx, nu )   
+    #CBF_obj.external_warm_start()
+    h_list, h_lb_list, h_ub_list = CBF_obj.get_cbf_constraints(model.x, model.u, model.p) 
 
-    print("lh ")
-    print(h_lb_list.shape)
+    # print("printing sizes")
+    # print(h_list.shape)
 
-    print("uh")
-    print(h_ub_list.shape)
+    # print("lh ")
+    # print(h_lb_list.shape)
+
+    # print("uh")
+    # print(h_ub_list.shape)
 
     ocp.model.con_h_expr =h_list
-    ocp.dims.nh = h_list.shape[0]
+    ocp.dims.nh = len(h_lb_list)
     ocp.constraints.lh = h_lb_list          # lower bound
     ocp.constraints.uh = h_ub_list            # Upper bound 
     ocp.model.lh = h_lb_list         # lower bound

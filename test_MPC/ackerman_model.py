@@ -3,7 +3,8 @@ from tracks.readDataFcn import getTrack
 from acados_template import AcadosModel
 
 
-def ackerman_model(L, track="LMS_Track.txt"):
+def ackerman_model(L, KNN, track="LMS_Track.txt"):
+    polytope_params_n = 6    
     model_name = "ackerman_model"
     model = AcadosModel()   
 
@@ -29,9 +30,13 @@ def ackerman_model(L, track="LMS_Track.txt"):
     #steer_rate = SX.sym("steer_rate")
     steer_angle_in = SX.sym("steer_angle_in")
     steer_angle_out = SX.sym("steer_angle_out")
-    delta = (steer_angle_in + steer_angle_out)/2
-    u = vertcat(Vf, steer_angle_in, steer_angle_out)
+
+    lambda_val = SX.sym("lambda_bot",40, 1 )
+    omega = SX.sym("omega")
     
+    delta = (steer_angle_in + steer_angle_out)/2
+    u = vertcat(Vf, steer_angle_in, steer_angle_out, lambda_val, omega)
+       
     #system dynamics/kinematics
     f_expl =vertcat(Vf * np.cos(theta),
                     Vf * np.sin(theta),
@@ -39,16 +44,15 @@ def ackerman_model(L, track="LMS_Track.txt"):
                     #steer_rate,
                     Vf )
     
-    p = []
-
     model.f_impl_expr = x_dot - f_expl
     model.f_expl_expr = f_expl
     model.x = x
     model.xdot = x_dot
     model.u = u
     model.x0 = np.array([0.,0,0,0])
-    # model.z = z
-    model.p = p
+    nx = model.x.rows()
+    nu = model.u.rows()   
+    reference_param = SX.sym('references', (nx + nu) + (1+ polytope_params_n * KNN + 1 ), 1) # instead of yaw angle, we are getting quaternions
+    model.p = reference_param   
     model.name = model_name
-
     return model

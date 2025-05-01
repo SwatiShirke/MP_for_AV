@@ -27,24 +27,28 @@ nlp_out = ackerman_model_acados_get_nlp_out(acados_ocp_capsule);
 nlp_solver = ackerman_model_acados_get_nlp_solver(acados_ocp_capsule);
 nlp_opts = ackerman_model_acados_get_nlp_opts(acados_ocp_capsule);
 
-//not sure if needed 
+
 Eigen::Matrix<double, kStateSize, 1> VD_state(Eigen::Matrix<double, kStateSize, 1>::Zero());
+
 // hover_state(6) = 1.0;
 
-//Q: kHover not defined before, defined in init; but constructor would be called first
-//Q: ocp_nlp_constraints_model_set - did not find the definition
+
 //initialize states x and xN and input u
 acados_initial_state_ = VD_state.template cast<double>();
 acados_states_ = VD_state.replicate(1, kSamples).template cast<double>();
 acados_inputs_ = kVDInput_.replicate(1, kSamples).template cast<double>();
+acados_inputs_in_ = kVDInput_.replicate(1, kSamples).template cast<double>();
 ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
 ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
+
+
 
 std::cout << "I am at bp 1"<< '\n';
 
 //initialize references y and yN.
 acados_reference_states_.block(0, 0, kStateSize, kSamples) = VD_state.replicate(1, kSamples).template cast<double>();
 acados_reference_states_.block(kStateSize, 0, kInputSize, kSamples) = kVDInput_.replicate(1, kSamples);
+
 // std::cout << acados_reference_states_ << '\n';
 // std::cout << "" << '\n';
 // std::cout << "" << '\n';
@@ -57,12 +61,13 @@ void NMPCWrapper::initStates()
 {
 Eigen::Matrix<double, kStateSize, 1> VD_state(Eigen::Matrix<double, kStateSize, 1>::Zero());
   //hover_state(6) = 1.0;
-  kVDInput_ = (Eigen::Matrix<real_t, kInputSize, 1>() << 0.0, 0.0, 0.0).finished();
+  kVDInput_ = Eigen::Matrix<real_t, kInputSize, 1>::Zero();
 
   // initialize states x and xN and input u.
   acados_initial_state_ = VD_state.template cast<double>();
   acados_states_ = VD_state.replicate(1, kSamples).template cast<double>();
   acados_inputs_ = kVDInput_.replicate(1, kSamples).template cast<double>();
+  acados_inputs_in_ = kVDInput_.replicate(1, kSamples).template cast<double>();
 
   ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
   ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
@@ -76,25 +81,35 @@ Eigen::Matrix<double, kStateSize, 1> VD_state(Eigen::Matrix<double, kStateSize, 
 }
 
 void NMPCWrapper::setTrajectory(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, kSamples>> states,
-                                const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> inputs)
+                                const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> inputs,
+                                const Eigen::Ref<const Eigen::Matrix<double, kCBF_params,kSamples>> cbf_params
+                                
+                              )
 {
   //std::cout << "I am at bp 3"<< '\n';
   acados_reference_states_.block(0, 0, kStateSize, kSamples) = states.block(0, 0, kStateSize, kSamples).template cast<double>();
   acados_reference_states_.block(kStateSize, 0, kInputSize, kSamples) = inputs.block(0, 0, kInputSize, kSamples).template cast<double>();
+  acados_reference_states_.block(kStateSize + kInputSize,0 ,kCBF_params, kSamples) = cbf_params.block(0,0 , kCBF_params,kSamples).template cast<double>();
   acados_reference_end_state_.segment(0, kStateSize) = states.col(kSamples - 1).template cast<double>();
 }
 
-bool NMPCWrapper::prepare(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, 1>> state)
+bool NMPCWrapper::prepare(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, 1>> state,
+                          const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> init_inputs)
 {
   acados_states_ = state.replicate(1, kSamples).template cast<double>();
-  acados_inputs_ = kVDInput_.replicate(1, kSamples).template cast<double>();
+  acados_inputs_ = kVDInput_.replicate(1,kSamples).template cast<double>();
+
+  //acados_inputs_in_ = init_inputs;
+  
   for (int i = 0; i <= N; i++) {
       ocp_nlp_out_set(nlp_config, nlp_dims, nlp_out, i, "x", acados_out.x_out + i * NX);
   }
   for (int i = 0; i < N; i++) {
       ocp_nlp_out_set(nlp_config, nlp_dims, nlp_out, i, "u", acados_out.u_out + i * NU);
   }
-  return true;
+  ocp_nlp_out_set(nlp_config, nlp_dims, nlp_out, 0, "u", const_cast<double*>(init_inputs.col(0).data()));
+  
+  return true; 
 }
 
 
@@ -109,9 +124,12 @@ bool NMPCWrapper::update(const Eigen::Ref<const Eigen::Matrix<double, kStateSize
   // Setting initial state
   acados_initial_state_ = state.template cast<double>();
 
+
   ocp_nlp_out_set(nlp_config, nlp_dims, nlp_out, 0, "x", acados_in.x0);
   ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "lbx", acados_in.x0);
   ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "ubx", acados_in.x0);
+
+  
 
   // for loop to set yref
   // loop over horizon and assign to each shooting node a segment of the acados_in.yref

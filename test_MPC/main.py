@@ -7,10 +7,10 @@ from tracks.readDataFcn import getTrack
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 import ipdb
-
+from utils import get_loc_list, warm_start
 
 #read and track and interpolate
-track = "sine.txt"
+track = "line.txt"
 [Sref, Xref, Yref, Yawref,Kapparef] = getTrack(track)
 Xref_s = interp1d(Sref,Xref, kind='cubic', fill_value="extrapolate")
 Yref_s = interp1d(Sref, Yref, kind='cubic', fill_value="extrapolate")
@@ -18,18 +18,21 @@ Yawref_s = interp1d(Sref, Yawref, kind='cubic', fill_value="extrapolate")
 
 Tf = 10    # time step
 N = 10     # prediction horizon
-T = 500.00  # maximum simulation time[s]
+T = 1000.00  # maximum simulation time[s]
 sref_N = 10  # reference for final reference progress
-L = 1.5     # wheebase in m
+L = 2     # wheebase in m
+W = 1
+d_safe = 0.2
+pl_margin = 0.1
+KNN = 5
 
 #load model
-model, acados_solver, acados_integrator = acados_controller(N, Tf, L )
+model, acados_solver, acados_integrator = acados_controller(N, Tf, L, pl_margin, d_safe, KNN )
 #dimensions
 nx = model.x.rows()
 nu = model.u.rows()
 ny = nx + nu
 Nsim = int(T / Tf)
-
 
 # initialize data structs
 simX = np.zeros((Nsim +1, nx))
@@ -42,35 +45,51 @@ s0 = x0[3]
 tcomp_sum = 0
 tcomp_max = 0
 ineterpol_exit_flag = False
+gamma = 0.8
+gamma_array = np.array([ gamma**(i+1) for i in range(N)])
+x_obj = np.array([Xref[20], Yref[20], Yawref[20], Sref[10]])
 
 #simulate
 for i in range(Nsim):
     if simX[i, 3] > Sref[-1]:
         break
-    # update reference    
-    # if i == 0: 
-    #     vel = simU[0, 0] 
-    # else:
-    #     vel = simU[i-1, 0]     
-    #sref = s0 + (vel * Tf * N)  #for velocity based prediction 
     
-    sref = s0 + sref_N           #for distance based prediction
+    #print("VD pose ", simX[i])
+    object_list = get_loc_list( L, W, x_obj)
+    hx_0, h_lambda_bot, h_lambda_obj = warm_start(L, W, simX[i], object_list )
+    print("hx_0", (hx_0[0])) 
+    print("h_lambda_bot", h_lambda_bot)
+    print("h_lambda_obj", h_lambda_obj) 
+
+    sref = s0 + sref_N  
+    yref = np.zeros(80)                      # state 4, input - 3 for control - 30 params, gamma = 1
     for j in range(N):        
         sref_ij = s0 + (sref - s0) * j / N
         x_ref = Xref_s(sref_ij)
         y_ref = Yref_s(sref_ij)
-        yaw_ref = Yawref_s(sref_ij)
-        yref=np.array([x_ref,y_ref,yaw_ref,sref_ij, 0, 0, 0])
-        acados_solver.set(j, "yref", yref)
-
+        yaw_ref = Yawref_s(sref_ij)        
+        yref[0:4] =[x_ref,y_ref,yaw_ref,sref_ij]
+        if len(object_list):
+            yref[7:12] = [object_list[0,0], object_list[0,1], object_list[0,2], object_list[0,3], object_list[0,4]]
+            yref[12] = hx_0[0]
+            yref[-1] = gamma_array[j] 
+        acados_solver.set(j, "p", yref)
         
-    x_ref = Xref_s(sref)
+    x_ref = Xref_s(sref) 
     y_ref = Yref_s(sref)
     yaw_ref = Yawref_s(sref)
-    yref_N = np.array([x_ref,y_ref,yaw_ref, sref])       
-    acados_solver.set(N, "yref", yref_N)
+    yref_N = np.zeros(80)
+    yref_N[0:4] = np.array([x_ref,y_ref,yaw_ref, sref])       
+    acados_solver.set(N, "p", yref_N)
     acados_solver.set(0, "lbx", simX[i, :])
     acados_solver.set(0, "ubx", simX[i, :])
+    
+    u0 = np.zeros((44,1))
+    u0[3:7] = h_lambda_bot[0]
+    u0[7: 11] = h_lambda_obj[0]
+    acados_solver.set(0, "u", u0)
+
+
     # solve ocp
     t = time.time()
     status = acados_solver.solve()
@@ -79,30 +98,24 @@ for i in range(Nsim):
 
     elapsed = time.time() - t
 
-    # get solution
-    #simX[i, :] = acados_solver.get(0, "x")
-    simU[i, :] = acados_solver.get(0, "u")
-        
+    
+    #get solution
+    simU[i, :] = acados_solver.get(0, "u")   
     #print("u")
     simX[i+1, :] = acados_integrator.simulate(x=simX[i, :], u=simU[i,:])
 
-    #print(acados_solver.get_cost())
-    #print(simU[i, :])
-    #print("predicted")
-    #print(simX[i+1, :])
     s0 = simX[i+1, 3] #x0[4] #sref
 
     # manage timings
     tcomp_sum += elapsed
     if elapsed > tcomp_max:
         tcomp_max = elapsed
-
     
 #Plot Results
 tracked_traj = simX[0:i, :]
 t = np.linspace(0.0, Nsim+1, Nsim+1)
 plotRes(simX, simU, t)
-plot_followed_traj(tracked_traj[:,0], tracked_traj[:,1], Xref, Yref)
+plot_followed_traj(tracked_traj[:,0], tracked_traj[:,1], Xref, Yref, x_obj[0], x_obj[1], L, W)
 
 
 # Print some stats
