@@ -65,7 +65,7 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
 
      
     # path cost
-    #smooth u transition
+    # smooth u transition
     # u_last = ca.SX.sym("u_last")
     # ocp.cost.cost_type = 'NONLINEAR_LS'
     # ocp.cost.yref = np.array([0.,0,0,0,0,0, 0] )
@@ -76,8 +76,8 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     # x, y, yaw, pitch, roll, vel
     Q_mat = unscale * ca.vertcat(100,100,100, 100)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
-    Q_emat =  unscale * ca.vertcat(1000, 1000,  1000, 100) 
-    control_rate_weight = ca.vertcat(1000, 1000, 1000)
+    Q_emat =  unscale * ca.vertcat(1000,1000,1000, 100) 
+    control_rate_weight = ca.vertcat(1000,1000,1000)
     state_rate_weight = ca.vertcat(0, 0, 100, 0)
     prev_in = ca.vertcat(0,0,0)
     prev_state = ca.vertcat(0,0,0,0)
@@ -99,11 +99,11 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     
     # set constraints
     #constraints on control input  
-    lbx = np.zeros(nu-1)
-    lbx[0:3] = min_vel, min_str_angle_in, min_str_angle_out
-    ubx = np.ones(nu-1) * 1000
+    lbx = np.zeros(nu)
+    lbx[0:3] = min_vel, min_str_angle_in, min_str_angle_out    
+    ubx = np.ones(nu) * 100
     ubx[0:3] = max_vel, max_str_angle_in, max_str_angle_out
-    indices = np.arange(nu-1)  
+    indices = np.arange(nu)  
     ocp.constraints.lbu = lbx
     ocp.constraints.ubu = ubx
     ocp.constraints.idxbu = indices 

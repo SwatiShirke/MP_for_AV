@@ -28,6 +28,18 @@ def create_polytope( L, W):
         B_mat = np.array([L/2, W/2, L/2, W/2])
         return A_mat, B_mat
 
+# def create_polytope(L, W, origin):
+#         x = origin[0]
+#         y = origin[1]
+#         A_mat = np.array([[-1,0], [0, -1], [1, 0], [0, 1]])
+#         B_mat = np.array([-x + L/2, -y + W/2, x + L/2, y +W/2])
+#         return A_mat, B_mat
+
+# def create_vd_polytope( L, W):       
+#         A_mat = np.array([[-1,0], [0, -1], [1, 0], [0, 1]])
+#         B_mat = np.array([L/2,  W/2,L/2, W/2])
+#         return A_mat, B_mat
+
 def get_transofrmation( x,y, theta):
     obj_pos = np.array([x, y])
     R_obj = np.array([[ca.cos(theta), -ca.sin(theta)],
@@ -39,11 +51,18 @@ def warm_start( L, W, x_current, object_list):
         print("starting warm start")
         A_bot, B_bot = create_polytope(L, W) 
         P_bot, R_bot = get_transofrmation(x_current[0], x_current[1], x_current[2])
-        A_bot = ca.mtimes(A_bot, ca.transpose(R_bot))
-        B_bot = ca.mtimes(ca.mtimes(A_bot, ca.transpose(R_bot)), P_bot) + B_bot
 
         # print("A_bot", A_bot)
         # print("B_bot", B_bot)
+
+
+        # print("P_bot", P_bot )
+        # print("R_bot", R_bot)
+        A_bot = ca.mtimes(A_bot, ca.transpose(R_bot))
+        B_bot = ca.mtimes(ca.mtimes(A_bot, ca.transpose(R_bot)), P_bot) + B_bot
+
+        # print("A_bot_W", A_bot)
+        # print("B_bot_W", B_bot)
                 
         hx0_list = []
         lamb_bot_list = []
@@ -54,13 +73,14 @@ def warm_start( L, W, x_current, object_list):
             #print("x_obj, y_obj, theta_obj, L, W", x_obj, y_obj, theta_obj, L, W)
             A_obj, B_obj = create_polytope(L, W)
             P_obj, R_obj = get_transofrmation(x_obj, y_obj, theta_obj)
+            # print("A_obj", A_obj)
+            # print("B_obj", B_obj)
             # print("P_obj", P_obj)
             # print("R_obj", R_obj)
             A_obj = ca.mtimes(A_obj, ca.transpose(R_obj))
             B_obj = ca.mtimes(ca.mtimes(A_obj, ca.transpose(R_obj)), P_obj) + B_obj
 
-
-            # print(A_obj)
+            # print(A_obj, A_obj)
             # print("B_obj", B_obj)
             point1 = ca.SX.sym("point1",A_bot.shape[-1],1)
             point2 = ca.SX.sym("point2",A_obj.shape[-1],1)            
@@ -80,7 +100,7 @@ def warm_start( L, W, x_current, object_list):
             option = {"verbose": False, "ipopt.print_level": 0, "print_time": 0}
             solver = ca.nlpsol("solver","ipopt",nlp,option) 
 
-            sol = solver(lbg=-ca.inf,ubg=0)
+            sol = solver(lbg=-100,ubg=0)
             opt_x = sol["x"]
             opt_dist = ca.norm_2(opt_x[0:2]- opt_x[2:4]) #sol['f']
             #print(opt_dist)

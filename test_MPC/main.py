@@ -19,7 +19,7 @@ Yawref_s = interp1d(Sref, Yawref, kind='cubic', fill_value="extrapolate")
 Tf = 10    # time step
 N = 10     # prediction horizon
 T = 1000.00  # maximum simulation time[s]
-sref_N = 10  # reference for final reference progress
+sref_N = 5  # reference for final reference progress
 L = 2     # wheebase in m
 W = 1
 d_safe = 0.2
@@ -45,9 +45,10 @@ s0 = x0[3]
 tcomp_sum = 0
 tcomp_max = 0
 ineterpol_exit_flag = False
-gamma = 0.8
-gamma_array = np.array([ gamma**(i+1) for i in range(N)])
-x_obj = np.array([Xref[20], Yref[20], Yawref[20], Sref[10]])
+gamma = 0.5
+gamma_array = np.array([ gamma**(i) for i in range(N)])
+#x_obj = np.array([Xref[30], Yref[30], Yawref[30], Sref[30]])
+x_obj = np.array([Xref[50], Yref[50] + 0.5, Yawref[30], Sref[30]])
 
 #simulate
 for i in range(Nsim):
@@ -60,9 +61,10 @@ for i in range(Nsim):
     print("hx_0", (hx_0[0])) 
     print("h_lambda_bot", h_lambda_bot)
     print("h_lambda_obj", h_lambda_obj) 
+    
 
     sref = s0 + sref_N  
-    yref = np.zeros(80)                      # state 4, input - 3 for control - 30 params, gamma = 1
+    yref = np.zeros(80)                      # state 4, input - 3 + 41 lambda+omega input +for control - 30 params, gamma = 1
     for j in range(N):        
         sref_ij = s0 + (sref - s0) * j / N
         x_ref = Xref_s(sref_ij)
