@@ -116,6 +116,17 @@ def plot_followed_traj(x, y, xref, yref, x_obj, y_obj, L, W):
     plt.title('2D trajectory plot', fontsize=16)
     plt.axis('equal')
     plt.grid(True)
+    # plt.show()
+
+
+def plot_hx0(t, hx0):
+    plt.figure()
+    plt.plot(t, hx0, 'b-', label='followed')         # Blue trajectory line
+    
+    plt.legend()
+    plt.ylabel('y in m', fontsize=14)
+    plt.xlabel('x in m', fontsize=14)
+    plt.title('2D trajectory plot', fontsize=16)
+    plt.axis('equal')
+    plt.grid(True)
     plt.show()
-
-

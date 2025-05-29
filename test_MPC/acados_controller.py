@@ -6,13 +6,11 @@ from CBF_constraints import CBF_constraints
 from geometric_utils import get_polytopes
 import sys
 from utils import cal_state_cost, cal_input_cost, get_loc_list
-
  
 no_obj = 1
 poly_row = 4
 poly_col = 2
-W = 2
-
+W = 2 
 
 def get_loc_list(x_in, L, W):
     obj_list = []
@@ -74,11 +72,11 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
 
     #cost matricesq
     # x, y, yaw, pitch, roll, vel
-    Q_mat = unscale * ca.vertcat(100,100,100, 100)
+    Q_mat = unscale * ca.vertcat(10, 10,10,10)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
-    Q_emat =  unscale * ca.vertcat(1000,1000,1000, 100) 
-    control_rate_weight = ca.vertcat(1000,1000,1000)
-    state_rate_weight = ca.vertcat(0, 0, 100, 0)
+    Q_emat =  unscale * ca.vertcat(100,100,100, 100) 
+    control_rate_weight = ca.vertcat(100,100,100)
+    state_rate_weight = ca.vertcat(0, 0, 10, 0)
     prev_in = ca.vertcat(0,0,0)
     prev_state = ca.vertcat(0,0,0,0)
 
@@ -99,22 +97,25 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     
     # set constraints
     #constraints on control input  
-    lbx = np.zeros(nu)
-    lbx[0:3] = min_vel, min_str_angle_in, min_str_angle_out    
-    ubx = np.ones(nu) * 100
-    ubx[0:3] = max_vel, max_str_angle_in, max_str_angle_out
-    indices = np.arange(nu)  
-    ocp.constraints.lbu = lbx
-    ocp.constraints.ubu = ubx
+    no_u = 3
+    lbu = np.zeros(no_u)
+    lbu[0:3] = min_vel, min_str_angle_in, min_str_angle_out    
+    ubu = np.ones(no_u) * 1000
+    ubu[0:3] = max_vel, max_str_angle_in, max_str_angle_out
+    #ubu[-1] = 10
+    indices = np.arange(no_u)  
+
+    ocp.constraints.lbu = lbu
+    ocp.constraints.ubu = ubu
     ocp.constraints.idxbu = indices 
 
     #initial state contraints
     ocp.constraints.x0 = np.array([0, 0, 0, 0] )
 
     #lower and upper bound constraints on states - velocity and angular velocities
-    ocp.constraints.lbx = np.array([])
-    ocp.constraints.ubx = np.array([])
-    ocp.constraints.idxbx = np.array([] )
+    ocp.constraints.lbx = np.array([-2 * ca.pi])
+    ocp.constraints.ubx = np.array([2 * ca.pi])
+    ocp.constraints.idxbx = np.array([2] )
 
 
     W = 2.0
@@ -122,19 +123,12 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     x = model.x   
     u = model.u
 
-    CBF_obj = CBF_constraints( Tf/N, L, W , d_safe, pl_margin, nx, nu )   
+    CBF_obj = CBF_constraints( Tf/N, L, W , d_safe, pl_margin, nx, nu)   
     #CBF_obj.external_warm_start()
     h_list, h_lb_list, h_ub_list = CBF_obj.get_cbf_constraints(model.x, model.u, model.p) 
 
-    # print("printing sizes")
-    # print(h_list.shape)
-
-    # print("lh ")
-    # print(h_lb_list.shape)
-
-    # print("uh")
-    # print(h_ub_list.shape)
-
+   
+    
     ocp.model.con_h_expr =h_list
     ocp.dims.nh = len(h_lb_list)
     ocp.constraints.lh = h_lb_list          # lower bound
@@ -142,17 +136,19 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     ocp.model.lh = h_lb_list         # lower bound
     ocp.model.uh = h_ub_list
 
-
+    
     # set QP solver and integration
+    #ocp.constraints.constr_type = 'BGH'
     ocp.solver_options.tf = Tf
     #ocp.solver_options.qp_solver = 'FULL_CONDENSING_QPOASES'
     ocp.solver_options.qp_solver = "PARTIAL_CONDENSING_HPIPM"
-    ocp.solver_options.nlp_solver_type = "SQP_RTI"
-    ocp.solver_options.hessian_approx = "GAUSS_NEWTON"
+    ocp.solver_options.nlp_solver_type =   'SQP' #'SQP_RTI'
+    ocp.solver_options.hessian_approx =    "EXACT"  #"GAUSS_NEWTON" 
     ocp.solver_options.integrator_type = "ERK"
-    ocp.solver_options.sim_method_num_stages = 4
-    ocp.solver_options.sim_method_num_steps = 3
-    ocp.solver_options.qp_solver_warm_start = 1
+    ocp.solver_options.sim_method_num_stages = 4    
+    #ocp.solver_options.qp_solver_warm_start = 1
+    ocp.solver_options.regularize_method     = 'CONVEXIFY' #'PROJECT' 
+    ocp.solver_options.levenberg_marquardt = 1e-6# Example value
 
 
     # create solver

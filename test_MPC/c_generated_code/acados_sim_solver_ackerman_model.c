@@ -104,6 +104,15 @@ int ackerman_model_acados_sim_create(ackerman_model_sim_solver_capsule * capsule
     capsule->sim_expl_ode_fun_casadi->casadi_sparsity_out = &ackerman_model_expl_ode_fun_sparsity_out;
     capsule->sim_expl_ode_fun_casadi->casadi_work = &ackerman_model_expl_ode_fun_work;
     external_function_param_casadi_create(capsule->sim_expl_ode_fun_casadi, np);
+    capsule->sim_expl_ode_hess = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
+    // external_function_param_casadi impl_dae_jac_x_xdot_u_z;
+    capsule->sim_expl_ode_hess->casadi_fun = &ackerman_model_expl_ode_hess;
+    capsule->sim_expl_ode_hess->casadi_work = &ackerman_model_expl_ode_hess_work;
+    capsule->sim_expl_ode_hess->casadi_sparsity_in = &ackerman_model_expl_ode_hess_sparsity_in;
+    capsule->sim_expl_ode_hess->casadi_sparsity_out = &ackerman_model_expl_ode_hess_sparsity_out;
+    capsule->sim_expl_ode_hess->casadi_n_in = &ackerman_model_expl_ode_hess_n_in;
+    capsule->sim_expl_ode_hess->casadi_n_out = &ackerman_model_expl_ode_hess_n_out;
+    external_function_param_casadi_create(capsule->sim_expl_ode_hess, np);
 
     
 
@@ -136,7 +145,7 @@ int ackerman_model_acados_sim_create(ackerman_model_sim_solver_capsule * capsule
  
     tmp_int = 4;
     sim_opts_set(ackerman_model_sim_config, ackerman_model_sim_opts, "num_stages", &tmp_int);
-    tmp_int = 3;
+    tmp_int = 1;
     sim_opts_set(ackerman_model_sim_config, ackerman_model_sim_opts, "num_steps", &tmp_int);
     tmp_bool = 0;
     sim_opts_set(ackerman_model_sim_config, ackerman_model_sim_opts, "jac_reuse", &tmp_bool);
@@ -158,6 +167,8 @@ int ackerman_model_acados_sim_create(ackerman_model_sim_solver_capsule * capsule
                  "expl_vde_adj", capsule->sim_vde_adj_casadi);
     ackerman_model_sim_config->model_set(ackerman_model_sim_in->model,
                  "expl_ode_fun", capsule->sim_expl_ode_fun_casadi);
+    ackerman_model_sim_config->model_set(ackerman_model_sim_in->model,
+                "expl_ode_hess", capsule->sim_expl_ode_hess);
 
     // sim solver
     sim_solver *ackerman_model_sim_solver = sim_solver_create(ackerman_model_sim_config,
@@ -250,6 +261,8 @@ int ackerman_model_acados_sim_free(ackerman_model_sim_solver_capsule *capsule)
     free(capsule->sim_forw_vde_casadi);
     free(capsule->sim_vde_adj_casadi);
     free(capsule->sim_expl_ode_fun_casadi);
+    external_function_param_casadi_free(capsule->sim_expl_ode_hess);
+    free(capsule->sim_expl_ode_hess);
 
     return 0;
 }
@@ -268,6 +281,7 @@ int ackerman_model_acados_sim_update_params(ackerman_model_sim_solver_capsule *c
     capsule->sim_forw_vde_casadi[0].set_param(capsule->sim_forw_vde_casadi, p);
     capsule->sim_vde_adj_casadi[0].set_param(capsule->sim_vde_adj_casadi, p);
     capsule->sim_expl_ode_fun_casadi[0].set_param(capsule->sim_expl_ode_fun_casadi, p);
+    capsule->sim_expl_ode_hess[0].set_param(capsule->sim_expl_ode_hess, p);
 
     return status;
 }
