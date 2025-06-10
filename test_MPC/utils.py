@@ -3,15 +3,15 @@ import numpy as np
 
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
-    vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
+    #dist_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
     yaw_cost =  ( 1 - np.cos(ref_vec[2] - state_vec[2]))**2  * weights[2]
-    cost = (pos_cost + vel_cost ) + yaw_cost
+    cost = pos_cost + yaw_cost #+ dist_cost
     #state_change_cost = ca.fabs(prev_state[2] - state_vec[2]) < 0.035
     #ipdb.set_trace()    
     return cost 
 
 def cal_input_cost(input_vec, ref_vec, weights, prev_in, control_rate_weight, ):
-    cost = ca.dot((ref_vec- input_vec)**2, weights)      
+    cost = ca.dot((ref_vec[0]- input_vec[0])**2, weights[0])      
     #rate_cost = ca.dot((prev_in - input_vec)**2, control_rate_weight)
     return cost #+ rate_cost 
 
@@ -38,13 +38,71 @@ def get_transofrmation( x,y, theta):
     return obj_pos.reshape(2,1), R_obj.reshape(2,2)
 
 
+def get_dist_region_to_region(L, W, x_current, object_list): 
+    print("starting warm start")
+    A_bot, B_bot = create_polytope(L, W) 
+    P_bot, R_bot = get_transofrmation(x_current[0], x_current[1], x_current[2])
+    #print("P_bot", P_bot )
+    # print("R_bot", R_bot)
+    A_bot = ca.mtimes(A_bot, ca.transpose(R_bot))
+    B_bot = ca.mtimes(ca.mtimes(A_bot, ca.transpose(R_bot)), P_bot) + B_bot
+    # print("A_bot_W", A_bot)
+    # print("B_bot_W", B_bot)
+            
+    hx0_list = []
+    lamb_bot_list = []
+    lamb_obj_list = []
+    
+    for i in range(len(object_list)):
+        x_obj, y_obj, theta_obj, L, W = object_list[i]
+        #print("x_obj, y_obj, theta_obj, L, W", x_obj, y_obj, theta_obj, L, W)
+        A_obj, B_obj = create_polytope(L, W)
+        P_obj, R_obj = get_transofrmation(x_obj, y_obj, theta_obj)
+        # print("A_obj", A_obj)
+        # print("B_obj", B_obj)
+        # print("P_obj", P_obj)
+        # print("R_obj", R_obj)
+        A_obj = ca.mtimes(A_obj, ca.transpose(R_obj))
+        B_obj = ca.mtimes(ca.mtimes(A_obj, ca.transpose(R_obj)), P_obj) + B_obj
+
+    opti = ca.Opti()
+    # variables and cost
+    point1 = opti.variable(A_bot.shape[-1], 1)
+    point2 = opti.variable(A_obj.shape[-1], 1)
+    cost = 0
+    # constraints
+    constraint1 = ca.mtimes(A_bot, point1) <= B_bot
+    constraint2 = ca.mtimes(A_obj, point2) <= B_obj
+    opti.subject_to(constraint1)
+    opti.subject_to(constraint2)
+    dist_vec = point1 - point2
+    cost += ca.mtimes(dist_vec.T, dist_vec)
+    # solve optimization
+    opti.minimize(cost)
+    option = {"verbose": False, "ipopt.print_level": 0, "print_time": 0}
+    opti.solver("ipopt", option)
+    opt_sol = opti.solve()
+    # minimum distance & dual variables
+    dist = opt_sol.value(ca.norm_2(dist_vec))
+    if dist > 0:
+        lamb_bot = opt_sol.value(opti.dual(constraint1)) / (2 * dist)
+        lamb_obj = opt_sol.value(opti.dual(constraint2)) / (2 * dist)
+    else:
+        lamb_bot = np.zeros(shape=(A_bot.shape[0],1))
+        lamb_obj = np.zeros(shape=(A_obj.shape[0],1))
+
+    hx0_list.append(dist)
+    lamb_bot_list.append(lamb_bot )
+    lamb_obj_list.append(lamb_obj)
+    cbf_h = -ca.mtimes(ca.transpose(B_bot), lamb_bot) - ca.mtimes(ca.transpose(B_obj),lamb_obj) 
+    print("inside warm start cbf_h", cbf_h)
+    return hx0_list, lamb_bot_list, lamb_obj_list
+
+
 def warm_start( L, W, x_current, object_list):
         print("starting warm start")
         A_bot, B_bot = create_polytope(L, W) 
         P_bot, R_bot = get_transofrmation(x_current[0], x_current[1], x_current[2])
-
-        # print("A_bot", A_bot)
-        # print("B_bot", B_bot)
 
 
         #print("P_bot", P_bot )
@@ -93,6 +151,7 @@ def warm_start( L, W, x_current, object_list):
 
             sol = solver(lbg=-np.inf,ubg=0)
             opt_x = sol["x"]
+            print("opt_x", opt_x)
             opt_dist = ca.norm_2(opt_x[0:2]- opt_x[2:4]) #sol['f']
             #print(opt_dist)
             lamb_g = sol["lam_g"]
@@ -100,10 +159,10 @@ def warm_start( L, W, x_current, object_list):
             lamb_obj = lamb_g[A_obj.shape[0]:]
 
             if opt_dist>0:
-                # lamb_bot = lamb_bot/2*opt_dist
-                # lamb_obj = lamb_obj/2*opt_dist
                 lamb_bot = lamb_bot/2*opt_dist
                 lamb_obj = lamb_obj/2*opt_dist
+                # lamb_bot =  0.125 * lamb_bot
+                # lamb_obj = 0.125 * lamb_obj
             
             else:
                 # opt_dist=-1
@@ -124,7 +183,10 @@ def RK_45(x_current, u_current, Ts, L):
         k2 = vd_kinematic_model(x_current + (Ts/2 * k1), u_current, L )
         k3 = vd_kinematic_model(x_current + (Ts/2 * k2), u_current, L)
         k4 = vd_kinematic_model(x_current + (Ts * k3), u_current, L)
-        x_next = x_current + 1/ 6 * (k1 +2*k2 +2*k3 +k4)* Ts
+        dt = 1/ 6 * (k1 + 2*k2 + 2*k3 + k4)
+        print("dt", dt)
+        x_next = x_current + dt * Ts 
+        
         return x_next 
 
 def vd_kinematic_model(x_state, u_current, L ):
@@ -150,7 +212,7 @@ def print_cbf_constraints( x_current, u_current, params, L, W, margin_dist, Ts, 
             params_WINDOW = 6 
             lambda_WINDOW = 8 
             input_offset = 3
-            param_offset = nx + nu + 1            
+            param_offset = nx + nu + 1                     
             polytope_row = 4
 
             #self.obj_list - list of polytope objects, first element is VD obj
@@ -180,6 +242,8 @@ def print_cbf_constraints( x_current, u_current, params, L, W, margin_dist, Ts, 
                 obj_W = obj_info_array[4] 
                 cost = obj_info_array[5] 
 
+                print(obj_info_array)
+                print("cost", cost)
 
                 A_obj, B_obj = create_polytope(obj_L, obj_W)            
                 P_obj, R_obj = get_transofrmation(obj_x, obj_y, obj_theta)                         

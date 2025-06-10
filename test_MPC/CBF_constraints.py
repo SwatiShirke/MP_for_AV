@@ -16,7 +16,7 @@ class CBF_constraints():
         self.L = L
         self.W = W
         self.Ts = Ts         
-        self.margin_dist = 0.0
+        self.margin_dist = pl_margin
         # ##call wamr start
         # self.warm_start()
         self.inf = 10e10    
@@ -27,12 +27,6 @@ class CBF_constraints():
         self.input_offset = 3
         self.param_offset = NX + NU + 1
          
-
-    def create_location_list(self, params):        
-        offset= self.NX + self.NU +1    
-        for i in range(self.no_object):
-            self.loc_list.append(params[(offset + i * self.Window_size) : offset + (i * self.Window_size) + self.Window_size ])
-        print(self.loc_list)
 
     def create_sim_var(self):        
         ##create sim variables for lambda values, so that will get chnaged by optimizer in all shooting node
@@ -165,32 +159,35 @@ class CBF_constraints():
         theta_dt = vel / self.L * ca.tan(steer)    
         dist_dt = vel
         dt = ca.vertcat(x_dt, y_dt, theta_dt, dist_dt)
-        return dt
+        return dt 
 
-    def RK_45(self):
+    def RK_45(self): 
         k1 = self.vd_kinematic_model(self.x_current) 
         k2 = self.vd_kinematic_model(self.x_current + (self.Ts/2 * k1) )
         k3 = self.vd_kinematic_model(self.x_current + (self.Ts/2 * k2))
         k4 = self.vd_kinematic_model(self.x_current + (self.Ts * k3))
-        x_next = self.x_current + 1/ 6 * (k1 +2*k2 +2*k3 +k4)* self.Ts
-        return x_next
+        dt = 1/ 6 * (k1 + 2*k2 + 2*k3 + k4)
+        #print("dt", dt)
+        x_next = self.x_current + dt * self.Ts 
+        return x_next 
 
     def get_cbf_constraints(self, x_current, u_current, params):
             # x = , x, y, theta, vel        
             # accel, steer left, steer right, 40 values in sequence (lambda bot + lambda_ob ) * no of objetc 
             self.x_current = x_current  
             self.u_current = u_current
-            self.params = params 
-
-            #self.obj_list - list of polytope objects, first element is VD obj
+            self.params = params             
             h_list = []
             h_lb_list = []
             h_ub_list = []
             A_bot, B_bot = self.create_polytope(self.L, self.W)
-            #P_bot, R_bot = self.get_transofrmation(x_current[0], x_current[1], x_current[2])
+            
             ##implement RK-45 here 
             x_next = self.RK_45()
             P_bot, R_bot = self.get_transofrmation(x_next[0], x_next[1], x_next[2])
+            
+            print("x_current", x_current)
+            print("x_next", x_next)
             # print("here")
             # print("P_bot", P_bot)
             # print("R_bot", R_bot)
@@ -208,6 +205,8 @@ class CBF_constraints():
                 obj_W = obj_info_array[4] 
                 cost = obj_info_array[5] 
 
+                # print("cost", cost)
+                # print("obj_info_array", obj_info_array)
 
                 A_obj, B_obj = self.create_polytope(obj_L, obj_W)            
                 P_obj, R_obj = self.get_transofrmation(obj_x, obj_y, obj_theta)            
@@ -226,31 +225,37 @@ class CBF_constraints():
                 #print(lamb_bot)
                 h_list  = ca.vertcat(h_list, lamb_bot) 
                 h_lb_list = np.concatenate((h_lb_list, np.zeros(self.polytope_row)))
-                h_ub_list = np.concatenate((h_ub_list,  np.ones(self.polytope_row) * 10000))
+                h_ub_list = np.concatenate((h_ub_list,  np.ones(self.polytope_row) * 10))
 
                 
                 h_list  = ca.vertcat(h_list, lamb_obj)
                 h_lb_list = np.concatenate((h_lb_list, np.zeros(self.polytope_row)))
-                h_ub_list = np.concatenate((h_ub_list,  np.ones(self.polytope_row)* 10000))          
+                h_ub_list = np.concatenate((h_ub_list,  np.ones(self.polytope_row)* 10))          
 
                 #main cbf constraint forward invariance
                 # cbf_h = -ca.mtimes(ca.transpose(B_bot), lamb_bot) + ca.mtimes((ca.mtimes(A_obj, P_bot)  - B_obj).T,lamb_obj)
                 # - omega * self.gamma * (hx_0- self.margin_dist) - self.margin_dist
 
+                print("lamb_bot", lamb_bot)
+                print("lamb_obj", lamb_obj)
             
                 #- omega * self.gamma * (hx_0- self.margin_dist) + self.margin_dist
-                cbf_h = -ca.mtimes(ca.transpose(B_bot_world), lamb_bot) - ca.mtimes(ca.transpose(B_obj_world),lamb_obj) - omega * self.gamma * (hx_0)  + self.margin_dist
-                h_list  = ca.vertcat(h_list, cbf_h)
+                cbf_h = -ca.mtimes(ca.transpose(B_bot_world), lamb_bot) - ca.mtimes(ca.transpose(B_obj_world),lamb_obj) - omega * self.gamma * (hx_0) 
+                h_list  = ca.vertcat(h_list,cbf_h)
                 h_lb_list = np.concatenate((h_lb_list, np.zeros(1))) 
-                h_ub_list = np.concatenate((h_ub_list,  np.ones(1)*10))               
-                
+                h_ub_list = np.concatenate((h_ub_list,  np.ones(1)*10)) 
+                print("hx_next", -ca.mtimes(ca.transpose(B_bot_world), lamb_bot) - ca.mtimes(ca.transpose(B_obj_world),lamb_obj) )                
+                print("omega", omega)
+                print("gamma", self.gamma)
+                print("- omega * self.gamma * (hx_0)", - omega * self.gamma * (hx_0)) 
+                print("cbf_h", cbf_h) 
 
                 #cbf_eq_h = ca.mtimes(A_bot.T, lamb_bot) + ca.mtimes(ca.mtimes(R_bot.T,A_obj.T), lamb_obj)  
                 cbf_eq_h =  ca.mtimes(A_bot_world.T, lamb_bot) + ca.mtimes(A_obj_world.T, lamb_obj)
                 h_list  = ca.vertcat(h_list, cbf_eq_h) 
                 h_lb_list = np.concatenate((h_lb_list, np.zeros(2)))
                 h_ub_list = np.concatenate((h_ub_list,  np.zeros(2)))                  
-                
+                print("cbf_eq_h", cbf_eq_h) 
 
                 #temp_cbf_equ= ca.mtimes( A_obj.T, lamb_obj) 
                 temp_cbf_equ= ca.mtimes( A_obj_world.T, lamb_obj) 
@@ -258,7 +263,7 @@ class CBF_constraints():
                 h_list  = ca.vertcat(h_list, cbf_eq_2)
                 h_lb_list = np.append(h_lb_list, 0)
                 h_ub_list = np.append(h_ub_list,  1)
-
+                print("cbf_eq_2", cbf_eq_2) 
 
                 h_list = ca.vertcat(h_list,omega)                
                 h_lb_list = np.append(h_lb_list, 0)

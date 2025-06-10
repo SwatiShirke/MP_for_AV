@@ -30,7 +30,6 @@ def ackerman_model(L, KNN, track="LMS_Track.txt"):
     #steer_rate = SX.sym("steer_rate")
     steer_angle_in = SX.sym("steer_angle_in")
     steer_angle_out = SX.sym("steer_angle_out")
-
     lambda_val = SX.sym("lambda_bot",40, 1 )
     omega = SX.sym("omega")
     

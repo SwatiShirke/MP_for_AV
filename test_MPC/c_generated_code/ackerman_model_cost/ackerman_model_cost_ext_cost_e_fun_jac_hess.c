@@ -59,12 +59,12 @@ static const casadi_int casadi_s0[8] = {4, 1, 0, 4, 0, 1, 2, 3};
 static const casadi_int casadi_s1[3] = {0, 0, 0};
 static const casadi_int casadi_s2[84] = {80, 1, 0, 80, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79};
 static const casadi_int casadi_s3[5] = {1, 1, 0, 1, 0};
-static const casadi_int casadi_s4[11] = {4, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3};
+static const casadi_int casadi_s4[9] = {4, 4, 0, 1, 2, 2, 2, 0, 1};
 static const casadi_int casadi_s5[7] = {0, 4, 0, 0, 0, 0, 0};
 
-/* ackerman_model_cost_ext_cost_e_fun_jac_hess:(i0[4],i1[],i2[],i3[80])->(o0,o1[4],o2[4x4,4nz],o3[],o4[0x4]) */
+/* ackerman_model_cost_ext_cost_e_fun_jac_hess:(i0[4],i1[],i2[],i3[80])->(o0,o1[4],o2[4x4,2nz],o3[],o4[0x4]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
-  casadi_real a0, a1, a2, a3, a4, a5, a6, a7;
+  casadi_real a0, a1, a2, a3, a4;
   a0=100.;
   a1=arg[3]? arg[3][0] : 0;
   a2=arg[0]? arg[0][0] : 0;
@@ -77,52 +77,21 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   a4=casadi_sq(a3);
   a4=(a0*a4);
   a2=(a2+a4);
-  a4=arg[3]? arg[3][3] : 0;
-  a5=arg[0]? arg[0][3] : 0;
-  a4=(a4-a5);
-  a5=casadi_sq(a4);
-  a5=(a0*a5);
-  a2=(a2+a5);
-  a5=1.;
-  a6=arg[3]? arg[3][2] : 0;
-  a7=arg[0]? arg[0][2] : 0;
-  a6=(a6-a7);
-  a7=cos(a6);
-  a5=(a5-a7);
-  a7=casadi_sq(a5);
-  a7=(a0*a7);
-  a2=(a2+a7);
   if (res[0]!=0) res[0][0]=a2;
   a1=(a1+a1);
   a1=(a0*a1);
   a1=(-a1);
   if (res[1]!=0) res[1][0]=a1;
   a3=(a3+a3);
-  a3=(a0*a3);
-  a3=(-a3);
-  if (res[1]!=0) res[1][1]=a3;
-  a3=sin(a6);
-  a5=(a5+a5);
-  a5=(a0*a5);
-  a1=(a3*a5);
-  a1=(-a1);
-  if (res[1]!=0) res[1][2]=a1;
-  a4=(a4+a4);
-  a4=(a0*a4);
-  a4=(-a4);
-  if (res[1]!=0) res[1][3]=a4;
-  a4=200.;
-  if (res[2]!=0) res[2][0]=a4;
-  if (res[2]!=0) res[2][1]=a4;
-  a1=cos(a6);
-  a5=(a5*a1);
-  a6=sin(a6);
-  a6=(a6+a6);
-  a0=(a0*a6);
-  a3=(a3*a0);
-  a5=(a5+a3);
-  if (res[2]!=0) res[2][2]=a5;
-  if (res[2]!=0) res[2][3]=a4;
+  a0=(a0*a3);
+  a0=(-a0);
+  if (res[1]!=0) res[1][1]=a0;
+  a0=0.;
+  if (res[1]!=0) res[1][2]=a0;
+  if (res[1]!=0) res[1][3]=a0;
+  a0=200.;
+  if (res[2]!=0) res[2][0]=a0;
+  if (res[2]!=0) res[2][1]=a0;
   return 0;
 }
 

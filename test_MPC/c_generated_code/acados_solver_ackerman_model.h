@@ -40,7 +40,7 @@
 #define ACKERMAN_MODEL_NZ     0
 #define ACKERMAN_MODEL_NU     44
 #define ACKERMAN_MODEL_NP     80
-#define ACKERMAN_MODEL_NBX    1
+#define ACKERMAN_MODEL_NBX    0
 #define ACKERMAN_MODEL_NBX0   4
 #define ACKERMAN_MODEL_NBU    3
 #define ACKERMAN_MODEL_NSBX   0
@@ -64,7 +64,7 @@
 #define ACKERMAN_MODEL_NY     0
 #define ACKERMAN_MODEL_NYN    0
 #define ACKERMAN_MODEL_N      10
-#define ACKERMAN_MODEL_NH     13
+#define ACKERMAN_MODEL_NH     0
 #define ACKERMAN_MODEL_NHN    0
 #define ACKERMAN_MODEL_NH0    0
 #define ACKERMAN_MODEL_NPHI0  0
@@ -127,9 +127,6 @@ typedef struct ackerman_model_solver_capsule
 
 
     // constraints
-    external_function_external_param_casadi *nl_constr_h_fun_jac;
-    external_function_external_param_casadi *nl_constr_h_fun;
-    external_function_external_param_casadi *nl_constr_h_fun_jac_hess;
 
 
 

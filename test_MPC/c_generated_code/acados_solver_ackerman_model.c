@@ -39,7 +39,6 @@
 
 // example specific
 #include "ackerman_model_model/ackerman_model_model.h"
-#include "ackerman_model_constraints/ackerman_model_constraints.h"
 #include "ackerman_model_cost/ackerman_model_cost.h"
 
 
@@ -319,22 +318,6 @@ void ackerman_model_acados_create_setup_functions(ackerman_model_solver_capsule*
         capsule->__CAPSULE_FNC__.casadi_work = & __MODEL_BASE_FNC__ ## _work; \
         external_function_external_param_casadi_create(&capsule->__CAPSULE_FNC__ ); \
     } while(false)
-    // constraints.constr_type == "BGH" and dims.nh > 0
-    capsule->nl_constr_h_fun_jac = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*(N-1));
-    for (int i = 0; i < N-1; i++) {
-        MAP_CASADI_FNC(nl_constr_h_fun_jac[i], ackerman_model_constr_h_fun_jac_uxt_zt);
-    }
-    capsule->nl_constr_h_fun = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*(N-1));
-    for (int i = 0; i < N-1; i++) {
-        MAP_CASADI_FNC(nl_constr_h_fun[i], ackerman_model_constr_h_fun);
-    }
-    
-    capsule->nl_constr_h_fun_jac_hess = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*(N-1));
-    for (int i = 0; i < N-1; i++) {
-        MAP_CASADI_FNC(nl_constr_h_fun_jac_hess[i], ackerman_model_constr_h_fun_jac_uxt_zt_hess);
-    }
-    
-
     // external cost
     MAP_CASADI_FNC(ext_cost_0_fun, ackerman_model_cost_ext_cost_0_fun);
     MAP_CASADI_FNC(ext_cost_0_fun_jac, ackerman_model_cost_ext_cost_0_fun_jac);
@@ -443,7 +426,7 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
         ackerman_model_acados_update_time_steps(capsule, N, new_time_steps);
     }
     else
-    {double time_step = 1;
+    {double time_step = 0.5;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
@@ -554,63 +537,10 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
 
 
 
-    // x
-    int* idxbx = malloc(NBX * sizeof(int));
-    
-    idxbx[0] = 2;
-    double* lubx = calloc(2*NBX, sizeof(double));
-    double* lbx = lubx;
-    double* ubx = lubx + NBX;
-    
-    lbx[0] = -6.283185307179586;
-    ubx[0] = 6.283185307179586;
-
-    for (int i = 1; i < N; i++)
-    {
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "idxbx", idxbx);
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "lbx", lbx);
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "ubx", ubx);
-    }
-    free(idxbx);
-    free(lubx);
 
 
 
 
-    // set up nonlinear constraints for stage 1 to N-1
-    double* luh = calloc(2*NH, sizeof(double));
-    double* lh = luh;
-    double* uh = luh + NH;
-
-    
-
-    
-    uh[0] = 10000;
-    uh[1] = 10000;
-    uh[2] = 10000;
-    uh[3] = 10000;
-    uh[4] = 10000;
-    uh[5] = 10000;
-    uh[6] = 10000;
-    uh[7] = 10000;
-    uh[8] = 10;
-    uh[11] = 1;
-    uh[12] = 10;
-
-    for (int i = 1; i < N; i++)
-    {
-        ocp_nlp_constraints_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "nl_constr_h_fun_jac",
-                                      &capsule->nl_constr_h_fun_jac[i-1]);
-        ocp_nlp_constraints_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "nl_constr_h_fun",
-                                      &capsule->nl_constr_h_fun[i-1]);
-        
-        ocp_nlp_constraints_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i,
-                                      "nl_constr_h_fun_jac_hess", &capsule->nl_constr_h_fun_jac_hess[i-1]);
-        
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "lh", lh);
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "uh", uh);
-    }
-    free(luh);
 
 
 
@@ -752,6 +682,8 @@ int with_solution_sens_wrt_params = false;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_iter_max", &qp_solver_iter_max);
 
 
+    int qp_solver_warm_start = 1;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_warm_start", &qp_solver_warm_start);
 
     int print_level = 0;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "print_level", &print_level);
@@ -1039,15 +971,6 @@ int ackerman_model_acados_free(ackerman_model_solver_capsule* capsule)
     
 
     // constraints
-    for (int i = 0; i < N-1; i++)
-    {
-        external_function_external_param_casadi_free(&capsule->nl_constr_h_fun_jac[i]);
-        external_function_external_param_casadi_free(&capsule->nl_constr_h_fun[i]);
-        external_function_external_param_casadi_free(&capsule->nl_constr_h_fun_jac_hess[i]);
-    }
-    free(capsule->nl_constr_h_fun_jac);
-    free(capsule->nl_constr_h_fun);
-    free(capsule->nl_constr_h_fun_jac_hess);
 
     return 0;
 }

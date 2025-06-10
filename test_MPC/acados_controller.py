@@ -48,12 +48,9 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     #ipdb.set_trace()
     nx = model.x.rows()
     nu = model.u.rows()
-
     # set prediction horizon
     ocp.solver_options.N_horizon = N
     ocp.solver_options.tf = Tf
-
-    
 
     #cost matricesq
     Q_mat = 1*np.diag([10e1, 10e1, 100e1, 1e1 ])
@@ -73,8 +70,8 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     #cost matricesq
     # x, y, yaw, pitch, roll, vel
     Q_mat = unscale * ca.vertcat(10, 10,10,10)
-    R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
-    Q_emat =  unscale * ca.vertcat(100,100,100, 100) 
+    R_mat = unscale * ca.vertcat(1e-8, 1e-8, 1e-8)
+    Q_emat =  unscale * ca.vertcat(50,50,0,50) 
     control_rate_weight = ca.vertcat(100,100,100)
     state_rate_weight = ca.vertcat(0, 0, 10, 0)
     prev_in = ca.vertcat(0,0,0)
@@ -88,8 +85,8 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     input_error = cal_input_cost(u_aaray[0:3], ref_array[4:7], R_mat, prev_in, control_rate_weight) 
     
     ocp.cost.cost_type = 'EXTERNAL'
-    ocp.model.cost_expr_ext_cost = state_error + input_error 
-    ocp.model.cost_expr_ext_cost_0 = state_error  + input_error      
+    ocp.model.cost_expr_ext_cost = state_error  + input_error 
+    ocp.model.cost_expr_ext_cost_0 = state_error  + input_error    
 
     state_error = cal_state_cost(x_array, ref_array, Q_emat, prev_state, state_rate_weight)    
     ocp.cost.cost_type_e = 'EXTERNAL'
@@ -100,7 +97,7 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     no_u = 3
     lbu = np.zeros(no_u)
     lbu[0:3] = min_vel, min_str_angle_in, min_str_angle_out    
-    ubu = np.ones(no_u) * 1000
+    ubu = np.ones(no_u)
     ubu[0:3] = max_vel, max_str_angle_in, max_str_angle_out
     #ubu[-1] = 10
     indices = np.arange(no_u)  
@@ -112,32 +109,27 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     #initial state contraints
     ocp.constraints.x0 = np.array([0, 0, 0, 0] )
 
-    #lower and upper bound constraints on states - velocity and angular velocities
-    ocp.constraints.lbx = np.array([-2 * ca.pi])
-    ocp.constraints.ubx = np.array([2 * ca.pi])
-    ocp.constraints.idxbx = np.array([2] )
-
+        #lower and upper bound constraints on states - velocity and angular velocities
+        # ocp.constraints.lbx = np.array([-2 * ca.pi])
+        # ocp.constraints.ubx = np.array([2 * ca.pi])
+        # ocp.constraints.idxbx = np.array([2])
 
     W = 2.0
     loc_list = get_loc_list(model.x, L, W) 
     x = model.x   
-    u = model.u
+    u = model.u 
 
-    CBF_obj = CBF_constraints( Tf/N, L, W , d_safe, pl_margin, nx, nu)   
-    #CBF_obj.external_warm_start()
-    h_list, h_lb_list, h_ub_list = CBF_obj.get_cbf_constraints(model.x, model.u, model.p) 
+    #CBF_obj = CBF_constraints( Tf/N, L, W , d_safe, pl_margin, nx, nu)   
+    # #CBF_obj.external_warm_start()
+    # h_list, h_lb_list, h_ub_list = CBF_obj.get_cbf_constraints(model.x, model.u, model.p)   
+    # ocp.model.con_h_expr =h_list 
+    # ocp.dims.nh = len(h_lb_list)
+    # ocp.constraints.lh = h_lb_list          # lower bound
+    # ocp.constraints.uh = h_ub_list            # Upper bound 
+    # ocp.model.lh = h_lb_list         # lower bound
+    # ocp.model.uh = h_ub_list
 
-   
-    
-    ocp.model.con_h_expr =h_list
-    ocp.dims.nh = len(h_lb_list)
-    ocp.constraints.lh = h_lb_list          # lower bound
-    ocp.constraints.uh = h_ub_list            # Upper bound 
-    ocp.model.lh = h_lb_list         # lower bound
-    ocp.model.uh = h_ub_list
-
-    
-    # set QP solver and integration
+    #set QP solver and integration
     #ocp.constraints.constr_type = 'BGH'
     ocp.solver_options.tf = Tf
     #ocp.solver_options.qp_solver = 'FULL_CONDENSING_QPOASES'
@@ -146,13 +138,11 @@ def acados_controller(N, Tf, L, pl_margin, d_safe , KNN):
     ocp.solver_options.hessian_approx =    "EXACT"  #"GAUSS_NEWTON" 
     ocp.solver_options.integrator_type = "ERK"
     ocp.solver_options.sim_method_num_stages = 4    
-    #ocp.solver_options.qp_solver_warm_start = 1
-    ocp.solver_options.regularize_method     = 'CONVEXIFY' #'PROJECT' 
-    ocp.solver_options.levenberg_marquardt = 1e-6# Example value
-
+    ocp.solver_options.qp_solver_warm_start = 1
+    ocp.solver_options.regularize_method     =  'CONVEXIFY' #'PROJECT'
+    ocp.solver_options.levenberg_marquardt = 1e-6 # Example value 
 
     # create solver
-    acados_solver = AcadosOcpSolver(ocp, json_file="acados_ocp.json")
-    acados_integrator = AcadosSimSolver(ocp, json_file = "acados_ocp.json")
-
-    return model, acados_solver, acados_integrator
+    acados_solver = AcadosOcpSolver(ocp, json_file="acados_ocp.json", build=True)
+    acados_integrator = AcadosSimSolver(ocp, json_file = "acados_ocp.json", build=True) 
+    return model, acados_solver, acados_integrator 
