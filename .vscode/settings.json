@@ -1,0 +1,26 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_global_planner/lib/python3.10/site-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_data_saver/lib/python3.10/site-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_config/lib/python3.10/site-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_cmd_sender/lib/python3.10/site-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/carla_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages",
+        "/PythonAPI/carla/dist/carla-0.9.14-py3.10-linux-x86_64.egg",
+        "/home/swati/carla_sim10/Carla-0.10.0-Linux-Shipping/PythonAPI/carla"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_global_planner/lib/python3.10/site-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_data_saver/lib/python3.10/site-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_config/lib/python3.10/site-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/vd_cmd_sender/lib/python3.10/site-packages",
+        "/home/swati/Motion_Planning/MP_for_AV/install/carla_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages",
+        "/PythonAPI/carla/dist/carla-0.9.14-py3.10-linux-x86_64.egg",
+        "/home/swati/carla_sim10/Carla-0.10.0-Linux-Shipping/PythonAPI/carla"
+    ]
+}
