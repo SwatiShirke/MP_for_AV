@@ -5,10 +5,13 @@ This repo consist of code for real time motion planning for Autonomous Vehicle w
 source ./CarlaUnreal.sh --ROS2
 
 #go to the MP_for_AV dir, start carla client node with pygame, vehicle is spawned here
-cd carla_client 
+ 
+cd Motion_Planning/MP_for_AV/src/MP_for_AV/carla_client/
 python3 CBF_test.py
 
 #start the planer and control, rosbag nodes
+cd Motion_Planning/MP_for_AV/src
+source install/setup.bash
 ros2 launch vd_global_planner sim_launch.py
 
 #start planning by sending request with goal node
