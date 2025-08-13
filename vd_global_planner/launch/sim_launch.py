@@ -29,5 +29,15 @@ def generate_launch_description():
             name='data_saver_node',
             output='screen',
             parameters=[{'use_sim_time': True}]
+        ),
+
+        # Node 4: Start PID velocity control node
+        Node(
+            package='vd_pid_controller',
+            executable='pid_controller_node',
+            name='pid_controller_node',
+            output='screen',
+            parameters=[{'use_sim_time': True}]
         )
+
     ])

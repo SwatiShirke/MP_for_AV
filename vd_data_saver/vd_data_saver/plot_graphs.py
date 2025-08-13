@@ -128,8 +128,10 @@ def plot_vehicle_data(topic_data):
         plt.plot(odom_times, odom_long_vel, label='Longitudinal Velocity')
         plt.plot(traj_times, traj_ref_vel, label='Reference Velocity', linestyle='--')
         plt.legend()
+        
         plt.xlabel('Time (seconds)')
         plt.ylabel('Velocity')
+        plt.ylim(0, 45)
         plt.title('Longitudinal Velocity vs Reference Velocity')
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))

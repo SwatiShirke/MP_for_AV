@@ -42,8 +42,8 @@ class a_star:
     def get_neighbours(self, node):
         x_off, y_off = self.offset
         x, y = node
-        print(node)
-        print(x,y)
+        # print(node)
+        # print(x,y)
         rows, cols = self.grid_map.shape
         ## 8 neighbour grid
         n_nodes = [(x+1, y), (x-1, y), (x, y+1), (x, y-1), (x+1, y+1), (x+1, y-1), (x-1, y-1), (x-1, y+1)]
@@ -78,16 +78,16 @@ class a_star:
         #loop until goal found or queue empty
         while open_set:
             node,cost = open_set.popitem() 
-            print("popped node", node)           
+            #print("popped node", node)           
             closed_set.append(node)
             if node == goal:
                 print("path found!")
                 path = self.get_path(parents_dict, goal, start)
-                print(path)
+                #print(path)
                 return path
             else:              
                 neighbour_list = self.get_neighbours(node)    
-                print("n list", neighbour_list)
+                #print("n list", neighbour_list)
                 for n in neighbour_list:                
                     if n in closed_set:
                         continue  

@@ -61,7 +61,7 @@ static const casadi_int casadi_s3[5] = {1, 1, 0, 1, 0};
 /* ackerman_model_cost_ext_cost_e_fun:(i0[4],i1[],i2[],i3[7])->(o0) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
   casadi_real a0, a1, a2, a3, a4;
-  a0=1000.;
+  a0=500.;
   a1=arg[3]? arg[3][0] : 0;
   a2=arg[0]? arg[0][0] : 0;
   a1=(a1-a2);
@@ -72,13 +72,6 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   a2=(a2-a3);
   a2=casadi_sq(a2);
   a2=(a0*a2);
-  a1=(a1+a2);
-  a2=100.;
-  a3=arg[3]? arg[3][3] : 0;
-  a4=arg[0]? arg[0][3] : 0;
-  a3=(a3-a4);
-  a3=casadi_sq(a3);
-  a2=(a2*a3);
   a1=(a1+a2);
   a2=1.;
   a3=arg[3]? arg[3][2] : 0;

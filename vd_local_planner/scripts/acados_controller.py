@@ -4,18 +4,13 @@ import numpy as np
 import casadi as ca
 from scipy.spatial.transform import Rotation as R
 
-#from utils import ackerman_model
-#import yaml 
-# import ipdb
-# import sys
 
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
     vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
     yaw_cost =  ( 1 - np.cos(ref_vec[2] - state_vec[2]))**2  * weights[2]
-    cost = (pos_cost + vel_cost ) + yaw_cost
-    #state_change_cost = ca.fabs(prev_state[2] - state_vec[2]) < 0.035
-    #ipdb.set_trace()    
+    cost = pos_cost + yaw_cost
+       
     return cost 
 
 
@@ -95,12 +90,12 @@ def acados_controller(N, Tf, lf, lr):
     unscale = 1
     #cost matricesq
     # x, y, yaw, pitch, roll, vel
-    Q_mat = unscale * ca.vertcat(100, 100,   100, 100)
+    Q_mat = unscale * ca.vertcat(10, 10,   10, 10)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
-    Q_emat =  unscale * ca.vertcat(1000, 1000,  1000, 100) 
-    control_rate_weight = ca.vertcat(2000, 1000, 1000)
+    Q_emat =  unscale * ca.vertcat(500, 500,  500, 500) 
+    control_rate_weight = ca.vertcat(200, 200, 200)
     state_rate_weight = ca.vertcat(0, 0, 100, 0)
-    prev_in = ca.vertcat(0,0,0)
+    prev_in = ca.vertcat(0,0, 0)
     prev_state = ca.vertcat(0,0,0,0)
 
     x_array = model.x
@@ -139,9 +134,9 @@ def acados_controller(N, Tf, lf, lr):
     ocp.constraints.lbx = np.array([-2* np.pi ,vel_min])
     ocp.constraints.ubx = np.array([2 * np.pi, vel_max])
     ocp.constraints.idxbx = np.array([2,3] )
-    # ocp.constraints.lbu = np.array([dthrottle_min, ddelta_min])
-    # ocp.constraints.ubu = np.array([dthrottle_max, ddelta_max])
-
+    
+  
+    # ocp.model.uh = np.array([0.001, 0.001]) #np.array([yaw_rate, steer_rate,state_error])  
     # set inequlaity constraints
     # h_list = get_constraints(x_array, prev_state, yaw_rate, u_aaray, prev_in, steer_rate)
     # ocp.model.con_h_expr = h_list
@@ -180,4 +175,4 @@ if __name__ == "__main__":
     lf = 2.56/2
     lr = 2.56/2
     #L =  2.5654
-    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr ) 
+    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr )

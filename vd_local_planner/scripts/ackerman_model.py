@@ -32,7 +32,7 @@ def ackerman_model(lf, lr):
     delta = (steer_angle_in + steer_angle_out)/2
     u = vertcat(accel, steer_angle_in, steer_angle_out)
 
-    beta = arctan(lr / (lf + lr) * tan(delta))
+    beta = atan2(lr *  tan(delta), (lf + lr))
     
     #system dynamics/kinematics
     f_expl =vertcat(Vf * np.cos(theta + beta),
@@ -46,11 +46,11 @@ def ackerman_model(lf, lr):
     model.x = x
     model.xdot = x_dot
     model.u = u
-    model.x0 = np.array([0.0,0,0,0])
+    model.x0 = np.array([0.0,0,0,0]) 
     nx = model.x.rows()
     nu = model.u.rows()    
     reference_param = SX.sym('references', (nx + nu), 1) # instead of yaw angle, we are getting quaternions
-    model.p = reference_param
+    model.p = reference_param    
     model.name = model_name
 
     return model
