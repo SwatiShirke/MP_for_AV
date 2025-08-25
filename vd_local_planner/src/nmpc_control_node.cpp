@@ -41,9 +41,9 @@ namespace nmpc_control_nodelet
     pub_vd_cmd_ = this->create_publisher<vd_msgs::msg::VDControlCMD>("mpc_cmd", qos_profile_);
 
     //subscribers    
-    sub_traj_cmd_ = this->create_subscription<nav_msgs::msg::Path>(
+    sub_traj_cmd_ = this->create_subscription<vd_msgs::msg::VDtraj>(
       "/carla/ego_vehicle/waypoints", qos_profile_, std::bind(&NMPCControlNodelet::referenceCallback, this, std::placeholders::_1));
-    sub_odometry_ = this->create_subscription<nav_msgs::msg::Odometry>(
+    sub_odometry_ = this->create_subscription<vd_msgs::msg::VDpose>(
       "/carla/ego_vehicle/odometry", qos_profile_, std::bind(&NMPCControlNodelet::odomCallback, this, std::placeholders::_1));
     // sub_pid_cmd_ = this->create_subscription<vd_msgs::msg::VDControlCMD>(
     //   "pid_control_cmd", qos_profile_, std::bind(&NMPCControlNodelet::pidCallback, this, std::placeholders::_1));
@@ -74,8 +74,8 @@ namespace nmpc_control_nodelet
     void publishControl();
     void publishReference();
     void publishPrediction();
-    void referenceCallback(const nav_msgs::msg::Path::SharedPtr reference_msg);
-    void odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg);
+    void referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr reference_msg);
+    void odomCallback(const vd_msgs::msg::VDpose::SharedPtr odom_msg);
     //void pidCallback(const vd_msgs::msg::VDControlCMD::SharedPtr vd_msg);
 
     rclcpp::QoS create_custom_qos();
@@ -85,8 +85,8 @@ namespace nmpc_control_nodelet
     rclcpp::Publisher<vd_msgs::msg::VDControlCMD>::SharedPtr pub_vd_cmd_;
 
 
-    rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr sub_traj_cmd_;
-    rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odometry_;
+    rclcpp::Subscription<vd_msgs::msg::VDtraj>::SharedPtr sub_traj_cmd_;
+    rclcpp::Subscription<vd_msgs::msg::VDpose>::SharedPtr sub_odometry_;
     rclcpp::Subscription<vd_msgs::msg::VDControlCMD>::SharedPtr sub_pid_cmd_;
     
  };
@@ -114,62 +114,81 @@ rclcpp::QoS NMPCControlNodelet::create_custom_qos() {
             return qos_profile;
     }
 
-void NMPCControlNodelet::referenceCallback(const nav_msgs::msg::Path::SharedPtr reference_msg )
+
+void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr reference_msg )
 { 
-  nav_msgs::msg::Path::SharedPtr filt_reference_msg(reference_msg);
+  vd_msgs::msg::VDtraj::SharedPtr filt_reference_msg(reference_msg);
   
   //initialize ref state and input variables
   Eigen::Matrix<double,kStateSize, kSamples> reference_states;
   Eigen::Matrix<double, kInputSize, kSamples> reference_inputs;
+  Eigen::Matrix<double,kParamSize, kSamples> reference_params;
   reference_states = Eigen::Matrix<double,kStateSize, kSamples>::Zero();
   reference_inputs = Eigen::Matrix<double,kInputSize, kSamples>::Zero();
   
-  this->ref_vel = filt_reference_msg->poses[0].pose.orientation.w;
+  this->ref_vel = filt_reference_msg->poses[0].velocity;
+  auto iterator(filt_reference_msg->poses.begin());
+  
   if (filt_reference_msg->poses.size() > 1)
-  {
-    auto iterator(filt_reference_msg->poses.begin());
+  { 
+    
     for (int i=0; i < kSamples; i++)
     { 
-      //std::cout <<iterator->pose.position.x << " " << iterator->pose.position.y << std::endl;
+      std::cout <<iterator->x << " " << iterator->y << " " << iterator->psi << " " <<
+       iterator->velocity << iterator->distance <<std::endl;
        
-      reference_states.col(i) << iterator->pose.position.x,
-                                  iterator->pose.position.y, 
-                                  iterator->pose.orientation.x,
-                                  iterator->pose.orientation.w;
+      reference_states.col(i) << iterator->x,
+                                  iterator->y, 
+                                  iterator->psi,
+                                  iterator->velocity,
+                                  iterator->distance;
                                   
                                  
     
       reference_inputs.col(i) << 0, 0, 0;
+      reference_params.col(i) << iterator->total_distance;
       iterator++;
     }
   }
   else if(filt_reference_msg->poses.size() == 1)
   { 
+    std::cout << "Here ..";    
+    std::cout <<iterator->x << " " << iterator->y << " " << iterator->psi << " " <<
+       iterator->velocity << iterator->distance <<std::endl;
 
-    reference_states = (Eigen::Matrix<double, kStateSize, 1>() << filt_reference_msg->poses[0].pose.position.x,
-                                                                  filt_reference_msg->poses[0].pose.position.y,
-                                                                  filt_reference_msg->poses[0].pose.orientation.x,
-                                                                  filt_reference_msg->poses[0].pose.orientation.w).finished().replicate(1, kSamples);
+    this->ref_vel = filt_reference_msg->poses[0].velocity;
+    reference_states = (Eigen::Matrix<double, kStateSize, 1>() << filt_reference_msg->poses[0].x,
+                                                                  filt_reference_msg->poses[0].y,
+                                                                  filt_reference_msg->poses[0].psi,
+                                                                  filt_reference_msg->poses[0].velocity,
+                                                                  filt_reference_msg->poses[0].distance).finished().replicate(1, kSamples);
     
     
     reference_inputs = (Eigen::Matrix<double, kInputSize, 1>() << 0,0,0).finished().replicate(1, kSamples);
+    reference_params << (Eigen::Matrix<double, kParamSize,1>() <<  filt_reference_msg->poses[0].total_distance).finished().replicate(1, kSamples);
+
+
         
     }
   
   else 
-  {
+  { 
+    std::cout << "here in ref callback" << std::endl;
     Eigen::Matrix<double, kStateSize, 1> state = this->get_vd_current_state();
     for (int i=0; i < kSamples; i++)
     {       
-      reference_states.col(i) = state;
+      reference_states.col(i) << state(0), state(1), state(2), 0, 0;
       //std::cout << "x :" <<state(0) << "y :" << state(1) << "z :" << state(2)<< '\n'; 
       reference_inputs.col(i) << 0,0,0;
+      reference_params.col(i) << 0;
     }
+    std::cout << "here in ref callback pt 2" << std::endl;
   }
 
 
   controller_.setReferenceStates(reference_states);
   controller_.setReferenceInputs(reference_inputs);
+  controller_.setReferenceParams(reference_params);
 
   
   // run controller at reference frequency
@@ -182,16 +201,16 @@ void NMPCControlNodelet::referenceCallback(const nav_msgs::msg::Path::SharedPtr 
   publishPrediction();
 }
 
-void NMPCControlNodelet::odomCallback(const nav_msgs::msg::Odometry::SharedPtr odom_msg)
+void NMPCControlNodelet::odomCallback(const vd_msgs::msg::VDpose::SharedPtr odom_msg)
 {
   Eigen::Matrix<double, kStateSize, 1> state;
   //frame_id_ = odom_msg->header.frame_id;
-  state(0) = odom_msg->pose.pose.position.x;
-  state(1) = odom_msg->pose.pose.position.y;
-  state(2) = odom_msg->pose.pose.orientation.x;
-  state(3) = odom_msg->twist.twist.linear.x;
- 
-  
+  state(0) = odom_msg->x;
+  state(1) = odom_msg->y;
+  state(2) = odom_msg->psi;
+  state(3) = odom_msg->velocity;
+  state(4) = odom_msg->distance;
+  //std::cout << "state" <<  state << std::endl;    
   this->vd_current_state = state;
   controller_.setState(state);
 }

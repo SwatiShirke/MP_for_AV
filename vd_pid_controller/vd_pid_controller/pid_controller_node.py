@@ -41,7 +41,7 @@ class PIDPublisher(Node):
 
         #get pedal model
         path = "src/MP_for_AV/carla_client/pedal_map_data.xlsx"
-        print(path)
+        #print(path)
         self.pedal_map_fun = self.create_interpld_obj(path) 
         
 
@@ -50,8 +50,8 @@ class PIDPublisher(Node):
         # Prepare points array of shape (N,2): [velocity, acceleration]
         #self.points = np.vstack((df['velocity'].values, df['acceleration'].values)).T
         self.points = np.column_stack((df['velocity'].values, df['acceleration'].values))
-        print("self.points", self.points[0])
-        print("shape", self.points.shape)
+        # print("self.points", self.points[0])
+        # print("shape", self.points.shape)
         # Pedal values (N,)
         self.values = df['pedal'].values
     
@@ -75,15 +75,15 @@ class PIDPublisher(Node):
         self.ref_accel = msg.acceleration  
         self.steering_angle = msg.steering_angle
 
-        print(" ")
+        #print(" ")
         #print("self.ref_vel", self.ref_vel)
-        print("self.ref_accel", self.ref_accel)
+        #print("self.ref_accel", self.ref_accel)
         #print("self.steering_angle", self.steering_angle)
-        print("self.currentvel", self.current_vel)
+        #print("self.currentvel", self.current_vel)
         #apply feedforward here
         ff_cmd = self.interpolate_pedal(self.current_vel,self.ref_accel)
         
-        print("ff_cmd", ff_cmd[0])
+        #print("ff_cmd", ff_cmd[0])
 
         #apply pid here 
         error = self.ref_vel - self.current_vel
@@ -103,13 +103,13 @@ class PIDPublisher(Node):
                  
         self.accel_cmd = ff_cmd[0] + pid_fb_cmd
         self.accel_cmd = min(max(self.accel_cmd, -1.0), 1.0)
-        print("self.accel_cmd", self.accel_cmd)
+        #print("self.accel_cmd", self.accel_cmd)
 
         msg = CarlaEgoVehicleControl()
         current_time = self.sim_clock.now() 
         msg.header.stamp = current_time.to_msg()
 
-        print("self.accel_cmd",self.accel_cmd )
+        #print("self.accel_cmd",self.accel_cmd )
         if self.accel_cmd >= 0:
             msg.throttle = self.accel_cmd 
             msg.steer = self.steering_angle

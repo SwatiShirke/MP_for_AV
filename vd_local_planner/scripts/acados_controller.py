@@ -8,44 +8,15 @@ from scipy.spatial.transform import Rotation as R
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
     vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
-    yaw_cost =  ( 1 - np.cos(ref_vec[2] - state_vec[2]))**2  * weights[2]
-    cost = pos_cost + yaw_cost
-       
+    #yaw_cost =  ( 1 - np.cos(ca.fabs(ref_vec[2] - state_vec[2])))  * weights[2]
+    yaw_cost = (ref_vec[2] - state_vec[2])**2 * weights[2]
+    cost = pos_cost + yaw_cost + vel_cost       
     return cost 
-
-
 
 def cal_input_cost(input_vec, ref_vec, weights, prev_in, control_rate_weight):
     cost = ca.dot((ref_vec - input_vec)**2, weights)      
     rate_cost = ca.dot((prev_in - input_vec)**2, control_rate_weight)
     return cost + rate_cost
-
-# x, y, qw, qx,qy,qz, v, acc, del1, del2
-def calculate_quat_cost(current_yaw, ref_yaw, weight):
-    current_quat = ca.vertcat(ca.cos(current_yaw/2), 0, 0, ca.sin(current_yaw/2))
-    ref_quat = ca.vertcat(ca.cos(ref_yaw/2), 0, 0, ca.sin(ref_yaw/2))
-    
-    weights = ca.vertcat(weight, 0,0 )
-    qk = ref_quat
-    qd = current_quat 
-    q_aux = ca.vertcat(
-     qd[0] * qk[0] + qd[1] * qk[1] + qd[2] * qk[2] + qd[3] * qk[3],
-    -qd[1] * qk[0] + qd[0] * qk[1] + qd[3] * qk[2] - qd[2] * qk[3],
-    -qd[2] * qk[0] - qd[3] * qk[1] + qd[0] * qk[2] + qd[1] * qk[3],
-    -qd[3] * qk[0] + qd[2] * qk[1] - qd[1] * qk[2] + qd[0] * qk[3]
-    )
-
-    q_att_denom = ca.sqrt(q_aux[0] * q_aux[0] + q_aux[3] * q_aux[3] + 1e-3)
-    q_att = ca.vertcat(
-      q_aux[0] * q_aux[1] - q_aux[2] * q_aux[3],
-      q_aux[0] * q_aux[2] + q_aux[1] * q_aux[3],
-      q_aux[3]) / q_att_denom
-    
-   
-    cost = ca.transpose(q_att) @ ca.diag(weights) @ q_att
-    
-    return cost
-
 
 def get_constraints(x_array, prev_state, yaw_rate, u_aaray, prev_in, steer_rate):
     h_list = []    
@@ -89,23 +60,22 @@ def acados_controller(N, Tf, lf, lr):
     ocp.solver_options.tf = Tf
     unscale = 1
     #cost matricesq
-    # x, y, yaw, pitch, roll, vel
-    Q_mat = unscale * ca.vertcat(10, 10,   10, 10)
+    # x, y, yaw,  vel, s_len
+    Q_mat = unscale * ca.vertcat(10, 10, 10, 10, 0)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
-    Q_emat =  unscale * ca.vertcat(500, 500,  500, 500) 
-    control_rate_weight = ca.vertcat(200, 200, 200)
-    state_rate_weight = ca.vertcat(0, 0, 100, 0)
+    Q_emat =  unscale * ca.vertcat(500, 500,  1000, 500, 0) 
+    control_rate_weight = ca.vertcat(500, 500, 500)
+    state_rate_weight = ca.vertcat(0, 0, 0, 0, 0)
     prev_in = ca.vertcat(0,0, 0)
-    prev_state = ca.vertcat(0,0,0,0)
+    prev_state = ca.vertcat(0,0,0, 0, 0)
 
     x_array = model.x
     u_aaray = model.u 
     ref_array = model.p  # x, y, qw, qx,qy,qz, v, acc, del1, del2
 
 
-    state_error = cal_state_cost(x_array, ref_array, Q_mat, prev_state, state_rate_weight )
-    quat_error = calculate_quat_cost(x_array[2],ref_array[2], Q_mat[2] )
-    input_error = cal_input_cost(u_aaray, ref_array[4:7], R_mat, prev_in, control_rate_weight)  
+    state_error = cal_state_cost(x_array, ref_array, Q_mat, prev_state, state_rate_weight )    
+    input_error = cal_input_cost(u_aaray, ref_array[5:8], R_mat, prev_in, control_rate_weight)  
     
 
     ocp.cost.cost_type = 'EXTERNAL'
@@ -114,8 +84,7 @@ def acados_controller(N, Tf, lf, lr):
     
     
 
-    state_error = cal_state_cost(x_array, ref_array, Q_emat, prev_state, state_rate_weight)
-    quat_error = calculate_quat_cost(x_array[2],ref_array[2], Q_mat[2]  )
+    state_error = cal_state_cost(x_array, ref_array, Q_emat, prev_state, state_rate_weight)    
     ocp.cost.cost_type_e = 'EXTERNAL'
     ocp.model.cost_expr_ext_cost_e = state_error 
 
@@ -128,7 +97,7 @@ def acados_controller(N, Tf, lf, lr):
     ocp.constraints.idxbu = np.array([0, 1, 2])
 
     #initial state contraints
-    ocp.constraints.x0 = np.array([0, 0, 0, 0] )
+    ocp.constraints.x0 = np.array([0, 0, 0, 0, 0] )
 
     #lower and upper bound constraints on states - velocity and angular velocities
     ocp.constraints.lbx = np.array([-2* np.pi ,vel_min])
@@ -166,7 +135,6 @@ def acados_controller(N, Tf, lf, lr):
     acados_integrator = AcadosSimSolver(ocp, json_file = "acados_ocp.json")
 
     return model, acados_solver, acados_integrator
-
 
 
 if __name__ == "__main__":

@@ -1,8 +1,8 @@
 import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Odometry
-#from rotor_tm_msgs.msg import FMNCommand, TrajCommand, PositionCommand
-from vd_msgs.msg import VDPath
+from vd_msgs.msg import VDPath, VDpose, VDtraj
+
 from carla_msgs.msg import CarlaEgoVehicleControl
 from nav_msgs.msg import Odometry, Path
 from geometry_msgs.msg import PoseStamped, Quaternion
@@ -38,9 +38,9 @@ class BagWriterNode(Node):
 
         # Create topics for saving messages
         
-        self.create_bag_topic('/carla/ego_vehicle/odometry', 'nav_msgs/msg/Odometry')
+        self.create_bag_topic('/carla/ego_vehicle/odometry', 'vd_msgs/msg/VDpose')
         self.create_bag_topic('/carla/ego_vehicle/vehicle_control_cmd', 'carla_msgs/msg/CarlaEgoVehicleControl')
-        self.create_bag_topic('/carla/ego_vehicle/waypoints', 'nav_msgs/msg/Path')
+        self.create_bag_topic('/carla/ego_vehicle/waypoints', 'vd_msgs/msg/VDtraj')
         self.create_bag_topic( '/norm_error', 'std_msgs/msg/Float32')
         self.create_bag_topic('global_path', 'vd_msgs/msg/VDPath')
 
@@ -52,9 +52,9 @@ class BagWriterNode(Node):
             depth=1  # Equivalent to queue_size=1)
         )
         self.create_subscription(VDPath, "global_path", self.path_callback, 10)
-        self.create_subscription(Odometry, "/carla/ego_vehicle/odometry", self.odom_callback, qos_profile)
+        self.create_subscription(VDpose, "/carla/ego_vehicle/odometry", self.odom_callback, qos_profile)
         self.create_subscription(CarlaEgoVehicleControl, "/carla/ego_vehicle/vehicle_control_cmd", self.control_input_callback, qos_profile)
-        self.create_subscription(Path, "/carla/ego_vehicle/waypoints", self.desired_traj_callback, qos_profile)
+        self.create_subscription(VDtraj, "/carla/ego_vehicle/waypoints", self.desired_traj_callback, qos_profile)
         self.create_subscription(Float32, "/norm_error", self.err_callback,1)
 
     def create_bag_topic(self, topic_name, type_name):

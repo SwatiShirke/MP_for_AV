@@ -37,6 +37,7 @@ extern "C" {
 #define casadi_s4 CASADI_PREFIX(s4)
 #define casadi_s5 CASADI_PREFIX(s5)
 #define casadi_s6 CASADI_PREFIX(s6)
+#define casadi_s7 CASADI_PREFIX(s7)
 #define casadi_sq CASADI_PREFIX(sq)
 
 /* Symbol visibility in DLLs */
@@ -56,15 +57,16 @@ extern "C" {
 
 casadi_real casadi_sq(casadi_real x) { return x*x;}
 
-static const casadi_int casadi_s0[8] = {4, 1, 0, 4, 0, 1, 2, 3};
+static const casadi_int casadi_s0[9] = {5, 1, 0, 5, 0, 1, 2, 3, 4};
 static const casadi_int casadi_s1[7] = {3, 1, 0, 3, 0, 1, 2};
 static const casadi_int casadi_s2[3] = {0, 0, 0};
-static const casadi_int casadi_s3[11] = {7, 1, 0, 7, 0, 1, 2, 3, 4, 5, 6};
+static const casadi_int casadi_s3[13] = {9, 1, 0, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8};
 static const casadi_int casadi_s4[5] = {1, 1, 0, 1, 0};
-static const casadi_int casadi_s5[16] = {7, 7, 0, 1, 2, 3, 4, 5, 6, 6, 0, 1, 2, 3, 4, 5};
-static const casadi_int casadi_s6[10] = {0, 7, 0, 0, 0, 0, 0, 0, 0, 0};
+static const casadi_int casadi_s5[12] = {8, 1, 0, 8, 0, 1, 2, 3, 4, 5, 6, 7};
+static const casadi_int casadi_s6[18] = {8, 8, 0, 1, 2, 3, 4, 5, 6, 7, 7, 0, 1, 2, 3, 4, 5, 6};
+static const casadi_int casadi_s7[11] = {0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-/* ackerman_model_cost_ext_cost_0_fun_jac_hess:(i0[4],i1[3],i2[],i3[7])->(o0,o1[7],o2[7x7,6nz],o3[],o4[0x7]) */
+/* ackerman_model_cost_ext_cost_0_fun_jac_hess:(i0[5],i1[3],i2[],i3[9])->(o0,o1[8],o2[8x8,7nz],o3[],o4[0x8]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
   casadi_real a0, a1, a10, a11, a12, a13, a14, a15, a16, a2, a3, a4, a5, a6, a7, a8, a9;
   a0=10.;
@@ -79,28 +81,31 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   a4=casadi_sq(a3);
   a4=(a0*a4);
   a2=(a2+a4);
-  a4=1.;
-  a5=arg[3]? arg[3][2] : 0;
-  a6=arg[0]? arg[0][2] : 0;
+  a4=arg[3]? arg[3][2] : 0;
+  a5=arg[0]? arg[0][2] : 0;
+  a4=(a4-a5);
+  a5=casadi_sq(a4);
+  a5=(a0*a5);
+  a2=(a2+a5);
+  a5=arg[3]? arg[3][3] : 0;
+  a6=arg[0]? arg[0][3] : 0;
   a5=(a5-a6);
-  a6=cos(a5);
-  a4=(a4-a6);
-  a6=casadi_sq(a4);
+  a6=casadi_sq(a5);
   a6=(a0*a6);
   a2=(a2+a6);
   a6=1.0000000000000000e-08;
-  a7=arg[3]? arg[3][4] : 0;
+  a7=arg[3]? arg[3][5] : 0;
   a8=arg[1]? arg[1][0] : 0;
   a7=(a7-a8);
   a9=casadi_sq(a7);
   a9=(a6*a9);
-  a10=arg[3]? arg[3][5] : 0;
+  a10=arg[3]? arg[3][6] : 0;
   a11=arg[1]? arg[1][1] : 0;
   a10=(a10-a11);
   a12=casadi_sq(a10);
   a12=(a6*a12);
   a9=(a9+a12);
-  a12=arg[3]? arg[3][6] : 0;
+  a12=arg[3]? arg[3][7] : 0;
   a13=arg[1]? arg[1][2] : 0;
   a12=(a12-a13);
   a14=casadi_sq(a12);
@@ -144,29 +149,25 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   a3=(a0*a3);
   a3=(-a3);
   if (res[1]!=0) res[1][4]=a3;
-  a3=sin(a5);
   a4=(a4+a4);
   a4=(a0*a4);
-  a1=(a3*a4);
-  a1=(-a1);
-  if (res[1]!=0) res[1][5]=a1;
-  a1=0.;
-  if (res[1]!=0) res[1][6]=a1;
-  a1=4.0000000002000002e+02;
-  if (res[2]!=0) res[2][0]=a1;
-  if (res[2]!=0) res[2][1]=a1;
-  if (res[2]!=0) res[2][2]=a1;
-  a1=20.;
-  if (res[2]!=0) res[2][3]=a1;
-  if (res[2]!=0) res[2][4]=a1;
-  a1=cos(a5);
-  a4=(a4*a1);
-  a5=sin(a5);
+  a4=(-a4);
+  if (res[1]!=0) res[1][5]=a4;
   a5=(a5+a5);
   a0=(a0*a5);
-  a3=(a3*a0);
-  a4=(a4+a3);
-  if (res[2]!=0) res[2][5]=a4;
+  a0=(-a0);
+  if (res[1]!=0) res[1][6]=a0;
+  a0=0.;
+  if (res[1]!=0) res[1][7]=a0;
+  a0=4.0000000002000002e+02;
+  if (res[2]!=0) res[2][0]=a0;
+  if (res[2]!=0) res[2][1]=a0;
+  if (res[2]!=0) res[2][2]=a0;
+  a0=20.;
+  if (res[2]!=0) res[2][3]=a0;
+  if (res[2]!=0) res[2][4]=a0;
+  if (res[2]!=0) res[2][5]=a0;
+  if (res[2]!=0) res[2][6]=a0;
   return 0;
 }
 
@@ -242,10 +243,10 @@ CASADI_SYMBOL_EXPORT const casadi_int* ackerman_model_cost_ext_cost_0_fun_jac_he
 CASADI_SYMBOL_EXPORT const casadi_int* ackerman_model_cost_ext_cost_0_fun_jac_hess_sparsity_out(casadi_int i) {
   switch (i) {
     case 0: return casadi_s4;
-    case 1: return casadi_s3;
-    case 2: return casadi_s5;
+    case 1: return casadi_s5;
+    case 2: return casadi_s6;
     case 3: return casadi_s2;
-    case 4: return casadi_s6;
+    case 4: return casadi_s7;
     default: return 0;
   }
 }

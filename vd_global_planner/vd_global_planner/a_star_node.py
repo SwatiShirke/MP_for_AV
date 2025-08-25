@@ -3,7 +3,7 @@ from rclpy.node import Node
 from nav_msgs.msg import Path, Odometry
 from geometry_msgs.msg import PoseStamped
 from vd_msgs.srv import PlannerSrv
-from vd_msgs.msg import VDPath
+from vd_msgs.msg import VDPath, VDpose, VDtraj
 import carla
 from vd_global_planner.a_star import a_star
 import numpy as np
@@ -14,6 +14,7 @@ import math
 from std_msgs.msg import Float32
 import time 
 from rclpy.qos import QoSProfile, QoSHistoryPolicy, ReliabilityPolicy, DurabilityPolicy
+from vd_global_planner.traj_opt import Trajecotry
 
 class GlobalPlanner(Node):
     def __init__(self):
@@ -34,12 +35,9 @@ class GlobalPlanner(Node):
         self.get_vehicle()
         self.grid_map = None
         self.offset = (0,0)
-        self.get_grid_map()              
+        self.get_grid_map()       
+                
          
-
-        #for testing
-        self.start = (-26.00, 130.04)
-        self.goal =  (-70.49, 128.90) 
         self.path = []      # returned by a* from grid map
         self.trajectory = []        #(x,y,theta)
         self.planner = a_star(self.grid_map, self.grid_resolution, self.offset)        
@@ -48,15 +46,23 @@ class GlobalPlanner(Node):
         self.ref_vel = 5.00 #m/s
         self.path_kd_tree = None
         self.init_vel = 1.00 #m/s used for predicting future points
-        
+        self.goal_margin = 5.00 #m
         ##pub sub
         qos_profile = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=1, reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE)
         self.path_pub = self.create_publisher(VDPath, "global_path", 1)
         self.srv = self.create_service(PlannerSrv, "global_plan_srv", self.service_callback)
-        self.odom_pub = self.create_publisher(Odometry, '/carla/ego_vehicle/odometry', qos_profile)
-        self.waypoints_pub = self.create_publisher(Path, '/carla/ego_vehicle/waypoints', qos_profile)
+        self.odom_pub = self.create_publisher(VDpose, '/carla/ego_vehicle/odometry', qos_profile)
+        self.waypoints_pub = self.create_publisher(VDtraj, '/carla/ego_vehicle/waypoints', qos_profile)
         self.timer = self.create_timer(self.time_period, self.timer_callback)
 
+        ##traj object
+        self.v_min = 0
+        self.v_max = 30
+        self.a_min = -8.5
+        self.a_max = 2.5
+        self.lateral_accel = 0.1
+        self.traj_obj = Trajecotry(self.v_min,self.v_max, self.a_min, self.a_min , self.lateral_accel)
+        
 
     def get_vehicle(self):             
         self.role_name = "hero"               
@@ -75,7 +81,6 @@ class GlobalPlanner(Node):
         x_val = [wp.transform.location.x for wp in waypoints if wp.lane_type == carla.LaneType.Driving]
         y_val = [wp.transform.location.y for wp in waypoints if wp.lane_type == carla.LaneType.Driving] 
         free_points = np.column_stack([x_val,y_val])
-
         
         #grid creation
         x_min, x_max = int(min(x_val) - self.buffer), int(max(x_val) + self.buffer)
@@ -108,18 +113,17 @@ class GlobalPlanner(Node):
         if not self.path:
             response.message = "Global Path not found!"
             return response
-        self.trajectory = self.cal_trajectory()
-        self.interploate_path()
+        print("path", self.path)
         self.path_kd_tree = sp.KDTree(self.path)
         self.is_trajectory_generated = True
-        response.message = "Global Path generated!"
+        response.message = "Global Path generated!"        
+        self.traj_obj.create_path_funs(self.path)
 
-        # #publish to save into ros bag
-        # path_arr = np.array(self.path)
-        # vd_path_msg = VDPath()
-        # vd_path_msg.x_val = np.array(path_arr[:, 0]).astype(float).tolist()
-        # vd_path_msg.y_val = np.array(path_arr[:, 1]).astype(float).tolist()
-        # self.path_pub.publish(vd_path_msg)
+        path_arr = np.array(self.path)
+        vd_path_msg = VDPath()
+        vd_path_msg.x_val = np.array(path_arr[:, 0]).astype(float).tolist()
+        vd_path_msg.y_val = np.array(path_arr[:, 1]).astype(float).tolist()
+        self.path_pub.publish(vd_path_msg)
         return response
 
     def cal_trajectory(self):
@@ -162,7 +166,7 @@ class GlobalPlanner(Node):
         vd_path_msg.y_val = np.array(y_val  ).astype(float).tolist()
         self.path_pub.publish(vd_path_msg)
 
-    def get_current_state(self):               
+    def get_current_state(self, s_curr_flag = False):               
         self.vehicle_transform = self.vehicle.get_transform()    
         
         # Velocity in longitudinal and lateral directions
@@ -174,35 +178,147 @@ class GlobalPlanner(Node):
         
         x = self.vehicle_transform.location.x
         y = self.vehicle_transform.location.y        
-        yaw = self.vehicle_transform.rotation.yaw 
-        return (x, y, yaw, longitudinal_velocity)
+        yaw = np.deg2rad(self.vehicle_transform.rotation.yaw)
+
+        if s_curr_flag == True:
+            _, index = self.path_kd_tree.query([x,y], 1)
+            s_current = self.traj_obj.waypoints[index][4] 
+            return (x, y, yaw, longitudinal_velocity, s_current)
+        else:
+            return (x, y, yaw, longitudinal_velocity)
+        
 
     def publish_odometry(self): 
-        x,y, yaw, vel = self.get_current_state()
-
-        odom_msg = Odometry()
-        current_time = self.sim_clock.now()
-        #print(current_time) 
-        odom_msg.header.stamp = current_time.to_msg()
-        #odom_msg.header.stamp = self.get_clock().now().to_msg()
-        odom_msg.header.frame_id = 'map'
+        x,y, yaw, vel, s_current = self.get_current_state(s_curr_flag = True)
+        odom_msg = VDpose()
+        # current_time = self.sim_clock.now()
+        # #print(current_time) 
+        # odom_msg.header.stamp = current_time.to_msg()
+        # #odom_msg.header.stamp = self.get_clock().now().to_msg()
+        # odom_msg.header.frame_id = 'map'
 
         # Position
-        odom_msg.pose.pose.position.x = x
-        odom_msg.pose.pose.position.y = y
-        yaw = (math.radians(yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi  # MPC range of Yaw - -2*pi to +2 *pi
-        odom_msg.pose.pose.orientation.x = yaw
-
-        # Assigning longitudinal and lateral velocities to odometry message (optional fields)
-        odom_msg.twist.twist.linear.x = vel
+        odom_msg.x = x
+        odom_msg.y = y        
+        odom_msg.psi = yaw
+        odom_msg.velocity = vel
+        odom_msg.distance = s_current
+        # Assigning longitudinal and lateral velocities to odometry message (optional fields)        
         self.odom_pub.publish(odom_msg)  
 
-    # def publish_waypoints(self, N=10):       
-    #     #Retrieve waypoints        
-    #     waypoints = self.get_n_waypoints()
+    def publish_waypoints(self, N=10):       
+        #Retrieve waypoints        
+        waypoints, s_total = self.get_n_waypoints()
+        
+        # print("*******************printing waypoints***************************")
+        # print(waypoints)
+        #Create PoseArray for waypoints
+        path_msg = VDtraj()
+        # current_time = self.sim_clock.now()        
+        # path_msg.header.stamp = current_time.to_msg()
+        # path_msg.header.frame_id = 'map'
 
-    #     # print("*******************printing waypoints***************************")
-    #     # print(waypoints)
+        way_point_list = []        
+        for i, wp in enumerate(waypoints):
+            if i ==0:
+                self.ref_waypoint = wp
+
+            pose_stamped = VDpose()
+            # pose_stamped.header = path_msg.header
+            # current_time = self.sim_clock.now()        
+            # pose_stamped.header.stamp = current_time.to_msg()
+            pose_stamped.x = float(wp[0])  #x pose
+            pose_stamped.y = float(wp[1])  #y pose
+            pose_stamped.psi = float(wp[2])  # s_total 
+            #yaw =  #(math.radians(float(wp[2])) + 2*np.pi) % (4*np.pi) - 2*np.pi              
+            pose_stamped.velocity = float(wp[3])
+            pose_stamped.total_distance = s_total  ##total track length     
+            path_msg.poses.append(pose_stamped) 
+
+        self.waypoints_pub.publish(path_msg)
+
+    def is_goal_reached(self, point):
+        dist = np.sqrt((self.goal[0] - point[0])**2 + (self.goal[1] - point[1])**2)
+        #print("dist", dist)
+        if dist <= self.goal_margin:
+            return True
+        else:
+            return False
+
+    def get_n_waypoints(self):
+        x,y, yaw, vel, s_current = self.get_current_state(s_curr_flag = True)
+        print("current state yaw", yaw)        
+        goal_flag = self.is_goal_reached((x,y))              
+        vel = self.ref_vel
+        waypoints = []
+        
+        s_total = self.traj_obj.track_length
+        s_init = s_current
+        
+        if goal_flag:
+            point = self.traj_obj.traj_interpld(s_init)
+            yaw = point[2]
+            waypoints = [(self.goal[0], self.goal[1], yaw, 0)]
+            
+        else:                        
+                     
+            for i in range(1, self.N+1):  
+                dist = max(i * vel * (self.Tf /self.N), 1)         
+                s_new = s_init + dist
+                point = self.traj_obj.traj_interpld(s_new)
+                x = point[0]#self.x_interpld(s_new)
+                y = point[1]#self.y_interpld(s_new)
+                yaw = point[2]#self.yaw_interpld(s_new)
+                #location = carla.Location(x=float(x), y=float(y), z=0.0)
+                # waypoint = self.map.get_waypoint(location)
+                # x = waypoint.transform.location.x
+                # y = waypoint.transform.location.y
+                # yaw = waypoint.transform.rotation.yaw
+                waypoints.append((x,y,yaw, self.ref_vel))            
+            
+        return waypoints, s_total   
+
+
+    # def get_time_spanned_waypoints(self):
+    #     """
+    #     Generate waypoints spaced at consistent time intervals.
+    
+    #     Args:
+    #         vehicle: CARLA vehicle object
+    #         map: CARLA map object
+    #         total_time: Total time horizon (seconds)
+    #         delta_t: Time interval between waypoints (seconds)
+    
+    #     Returns:
+    #         List of time-spanned waypoints
+    #     """
+    #     map = self.vehicle.get_world().get_map()
+    #     current_waypoint = map.get_waypoint(self.vehicle.get_transform().location)
+    #     waypoints = []
+    #     #print("starting here")
+    #     for _ in range(int(self.N)):
+    #         velocity = self.vehicle.get_velocity()
+    #         forward_vector = self.vehicle.get_transform().get_forward_vector()
+    #         longitudinal_speed = (velocity.x * forward_vector.x +
+    #                               velocity.y * forward_vector.y +
+    #                               velocity.z * forward_vector.z)
+    #         # Calculate the distance to the next waypoint
+    #         distance = max(longitudinal_speed * self.Tf / self.N, 1 ) # Ensure non-zero distance
+    #         #print("dist ", distance)
+    #         next_waypoints = current_waypoint.next(distance)
+    #         #print("next wp :",next_waypoints[0].transform.location.x, next_waypoints[0].transform.location.y  )
+        
+    #         if next_waypoints:
+    #             current_waypoint = next_waypoints[0]  # Use the first waypoint in the list
+    #             waypoints.append(current_waypoint)
+    #         else:
+    #             break  # No more waypoints available (end of the road)
+            
+    #     return waypoints
+
+    # def publish_waypoints(self, N=10):               
+    #     # Retrieve waypoints
+    #     waypoints = self.get_time_spanned_waypoints()
     #     #Create PoseArray for waypoints
     #     path_msg = Path()
     #     current_time = self.sim_clock.now()        
@@ -210,122 +326,33 @@ class GlobalPlanner(Node):
     #     path_msg.header.frame_id = 'map'
 
     #     way_point_list = []
-        
     #     for i, wp in enumerate(waypoints):
     #         if i ==0:
-    #             self.ref_waypoint = wp
+    #             self.ref_waypoint = wp.transform
 
     #         pose_stamped = PoseStamped()
     #         pose_stamped.header = path_msg.header
     #         current_time = self.sim_clock.now()        
     #         pose_stamped.header.stamp = current_time.to_msg()
-    #         pose_stamped.pose.position.x = float(wp[0])
-    #         pose_stamped.pose.position.y = float(wp[1])
-    #         pose_stamped.pose.position.z = 0.0
+    #         pose_stamped.pose.position.x = wp.transform.location.x
+    #         pose_stamped.pose.position.y = wp.transform.location.y
+    #         pose_stamped.pose.position.z = wp.transform.location.z
 
-    #         yaw = (math.radians(float(wp[2])) + 2*np.pi) % (4*np.pi) - 2*np.pi             
+    #         yaw = (math.radians(wp.transform.rotation.yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi
+    #         # pitch = math.radians(wp.transform.rotation.pitch)
+    #         # roll = math.radians(wp.transform.rotation.roll)
+    #         #x, y,z, w = self.euler_to_quaternion(roll, pitch, yaw)
+
+            
     #         pose_stamped.pose.orientation.x = yaw#% 2 *math.pi
     #         pose_stamped.pose.orientation.y = 0.0
     #         pose_stamped.pose.orientation.z = 0.0
     #         pose_stamped.pose.orientation.w = self.ref_vel  # self.vehicle.get_speed_limit()
+
     #         pose_stamped.pose
+    #         #print("wavepoint :", wp.transform.location.x, " " ,wp.transform.location.y," ", wp.transform.rotation.yaw)         
     #         path_msg.poses.append(pose_stamped)  
     #     self.waypoints_pub.publish(path_msg)
-
-    # def get_n_waypoints(self):
-    #     x,y, yaw, vel = self.get_current_state()
-        
-    #     vel = self.ref_vel
-    #     #print("current loc of vehicle", x,y )
-    #     _, index = self.path_kd_tree.query([x,y], 1)
-    #     s_init = self.s_len[index]
-        
-    #     waypoints = []             
-    #     for i in range(1, self.N+1):  
-    #         dist = max(i * vel * (self.Tf /self.N), 1)         
-    #         s_new = s_init + dist
-    #         x = self.x_interpld(s_new)
-    #         y = self.y_interpld(s_new)
-    #         yaw = self.yaw_interpld(s_new)
-    #         waypoints.append((x,y,yaw))
-            
-            
-    #     return waypoints    
-
-    def get_time_spanned_waypoints(self):
-        """
-        Generate waypoints spaced at consistent time intervals.
-    
-        Args:
-            vehicle: CARLA vehicle object
-            map: CARLA map object
-            total_time: Total time horizon (seconds)
-            delta_t: Time interval between waypoints (seconds)
-    
-        Returns:
-            List of time-spanned waypoints
-        """
-        map = self.vehicle.get_world().get_map()
-        current_waypoint = map.get_waypoint(self.vehicle.get_transform().location)
-        waypoints = []
-        #print("starting here")
-        for _ in range(int(self.N)):
-            velocity = self.vehicle.get_velocity()
-            forward_vector = self.vehicle.get_transform().get_forward_vector()
-            longitudinal_speed = (velocity.x * forward_vector.x +
-                                  velocity.y * forward_vector.y +
-                                  velocity.z * forward_vector.z)
-            # Calculate the distance to the next waypoint
-            distance = max(longitudinal_speed * self.Tf / self.N, 1 ) # Ensure non-zero distance
-            #print("dist ", distance)
-            next_waypoints = current_waypoint.next(distance)
-            #print("next wp :",next_waypoints[0].transform.location.x, next_waypoints[0].transform.location.y  )
-        
-            if next_waypoints:
-                current_waypoint = next_waypoints[0]  # Use the first waypoint in the list
-                waypoints.append(current_waypoint)
-            else:
-                break  # No more waypoints available (end of the road)
-            
-        return waypoints
-
-    def publish_waypoints(self, N=10):               
-        # Retrieve waypoints
-        waypoints = self.get_time_spanned_waypoints()
-        #Create PoseArray for waypoints
-        path_msg = Path()
-        current_time = self.sim_clock.now()        
-        path_msg.header.stamp = current_time.to_msg()
-        path_msg.header.frame_id = 'map'
-
-        way_point_list = []
-        for i, wp in enumerate(waypoints):
-            if i ==0:
-                self.ref_waypoint = wp.transform
-
-            pose_stamped = PoseStamped()
-            pose_stamped.header = path_msg.header
-            current_time = self.sim_clock.now()        
-            pose_stamped.header.stamp = current_time.to_msg()
-            pose_stamped.pose.position.x = wp.transform.location.x
-            pose_stamped.pose.position.y = wp.transform.location.y
-            pose_stamped.pose.position.z = wp.transform.location.z
-
-            yaw = (math.radians(wp.transform.rotation.yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi
-            # pitch = math.radians(wp.transform.rotation.pitch)
-            # roll = math.radians(wp.transform.rotation.roll)
-            #x, y,z, w = self.euler_to_quaternion(roll, pitch, yaw)
-
-            
-            pose_stamped.pose.orientation.x = yaw#% 2 *math.pi
-            pose_stamped.pose.orientation.y = 0.0
-            pose_stamped.pose.orientation.z = 0.0
-            pose_stamped.pose.orientation.w = self.ref_vel  # self.vehicle.get_speed_limit()
-
-            pose_stamped.pose
-            #print("wavepoint :", wp.transform.location.x, " " ,wp.transform.location.y," ", wp.transform.rotation.yaw)         
-            path_msg.poses.append(pose_stamped)  
-        self.waypoints_pub.publish(path_msg)
 
 
     def cal_error(self):
@@ -337,7 +364,7 @@ class GlobalPlanner(Node):
             self.err_pub.publish(float_msg)
 
     def timer_callback(self):
-                      
+        #print("inside timer")              
         if self.is_trajectory_generated:
             """Publish odometry and trajectory data."""
             # =======================

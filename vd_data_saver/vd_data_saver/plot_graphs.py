@@ -7,7 +7,7 @@ from nav_msgs.msg import Odometry, Path
 from carla_msgs.msg import CarlaEgoVehicleControl
 from std_msgs.msg import Float32  # Import Float32 for norm_error topic
 import numpy as np
-from vd_msgs.msg import VDPath
+from vd_msgs.msg import VDPath, VDpose, VDtraj
 
 def read_vehicle_bag_data(bag_path):
     reader = rosbag2_py.SequentialReader()
@@ -37,20 +37,20 @@ def read_vehicle_bag_data(bag_path):
                 topic_data[topic_name].append((time_sec, msg.x_val, msg.y_val))
 
             if topic_name == '/carla/ego_vehicle/odometry':
-                msg = deserialize_message(serialized_msg, Odometry)
-                topic_data[topic_name].append((time_sec, msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z,
-                                               msg.pose.pose.orientation.x,  # Yaw angle
-                                               msg.twist.twist.linear.x))  # Longitudinal velocity
+                msg = deserialize_message(serialized_msg, VDpose)
+                topic_data[topic_name].append((time_sec, msg.x, msg.y, msg.psi,
+                                               msg.velocity,  # Yaw angle
+                                               msg.distance))  # Longitudinal velocity
             elif topic_name == '/carla/ego_vehicle/vehicle_control_cmd':
                 msg = deserialize_message(serialized_msg, CarlaEgoVehicleControl)
                 topic_data[topic_name].append((time_sec, msg.throttle, msg.brake, msg.steer))
             elif topic_name == '/carla/ego_vehicle/waypoints':
-                msg = deserialize_message(serialized_msg, Path)
+                msg = deserialize_message(serialized_msg, VDtraj)
                 if len(msg.poses) > 0:
-                    first_pose = msg.poses[0].pose
-                    topic_data[topic_name].append((time_sec, first_pose.position.x, first_pose.position.y, first_pose.position.z,
-                                                   first_pose.orientation.x,  # Yaw
-                                                   first_pose.orientation.w))  # Reference velocity
+                    first_pose = msg.poses[0]
+                    topic_data[topic_name].append((time_sec, first_pose.x, first_pose.y, first_pose.psi,
+                                                   first_pose.velocity,  # Yaw
+                                                   first_pose.distance))  # Reference velocity
             elif topic_name == '/norm_error':  # Read norm error values
                 msg = deserialize_message(serialized_msg, Float32)
                 topic_data[topic_name].append((time_sec, msg.data))  # Store norm_error values
@@ -87,10 +87,20 @@ def compute_norm_error_rmse(topic_data):
 
 def plot_vehicle_data(topic_data):
     if '/carla/ego_vehicle/odometry' in topic_data and '/carla/ego_vehicle/waypoints' in topic_data:
-        odom_times, odom_x, odom_y, odom_z, odom_yaw, odom_long_vel = zip(*topic_data['/carla/ego_vehicle/odometry'])
-        traj_times, traj_x, traj_y, traj_z, traj_yaw, traj_ref_vel = zip(*topic_data['/carla/ego_vehicle/waypoints'])
+        odom_times, odom_x, odom_y, odom_yaw, odom_long_vel, odom_distance = zip(*topic_data['/carla/ego_vehicle/odometry'])
+        traj_times, traj_x, traj_y, traj_yaw, traj_ref_vel, ref_distance = zip(*topic_data['/carla/ego_vehicle/waypoints'])
 
         # Plot X Position
+        plt.figure()
+        plt.plot(odom_x, odom_y, label='Vehicle pose', linestyle='-')
+        plt.plot(traj_x, traj_y, label='Waypoints', linestyle='--')
+        plt.legend()
+        plt.xlabel('X Position')
+        plt.ylabel('Y Position')
+        plt.title('Vehicle Position vs Waypoints')
+        plt.grid(True)
+        #plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))  # Fix time axis
+
         plt.figure()
         plt.plot(odom_times, odom_x, label='Vehicle X')
         plt.plot(traj_times, traj_x, label='Waypoints X', linestyle='--')

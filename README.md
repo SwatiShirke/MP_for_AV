@@ -4,7 +4,7 @@ This repo consist of code for real time motion planning for Autonomous Vehicle w
 
 ##start carla
 cd carla_sim10/Carla-0.10.0-Linux-Shipping/
-source CarlaUnreal.sh -- ROS2
+source CarlaUnreal.sh --ROS2
 
 ## start
 cd Motion_Planning/MP_for_AV/src/MP_for_AV/carla_client/
