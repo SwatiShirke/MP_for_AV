@@ -237,6 +237,7 @@ class GlobalPlanner(Node):
 
         self.waypoints_pub.publish(path_msg)
 
+
     def is_goal_reached(self, point):
         dist = np.sqrt((self.goal[0] - point[0])**2 + (self.goal[1] - point[1])**2)
         #print("dist", dist)
@@ -244,6 +245,7 @@ class GlobalPlanner(Node):
             return True
         else:
             return False
+
 
     def get_n_waypoints(self):
         x,y, yaw, vel, s_current = self.get_current_state(s_curr_flag = True)
@@ -320,37 +322,25 @@ class GlobalPlanner(Node):
     #     # Retrieve waypoints
     #     waypoints = self.get_time_spanned_waypoints()
     #     #Create PoseArray for waypoints
-    #     path_msg = Path()
+    #     path_msg = VDtraj()
     #     current_time = self.sim_clock.now()        
-    #     path_msg.header.stamp = current_time.to_msg()
-    #     path_msg.header.frame_id = 'map'
+    #     # path_msg.header.stamp = current_time.to_msg()
+    #     # path_msg.header.frame_id = 'map'
 
     #     way_point_list = []
     #     for i, wp in enumerate(waypoints):
     #         if i ==0:
     #             self.ref_waypoint = wp.transform
 
-    #         pose_stamped = PoseStamped()
-    #         pose_stamped.header = path_msg.header
+    #         pose_stamped = VDpose()
+    #         # pose_stamped.header = path_msg.header
     #         current_time = self.sim_clock.now()        
-    #         pose_stamped.header.stamp = current_time.to_msg()
-    #         pose_stamped.pose.position.x = wp.transform.location.x
-    #         pose_stamped.pose.position.y = wp.transform.location.y
-    #         pose_stamped.pose.position.z = wp.transform.location.z
-
-    #         yaw = (math.radians(wp.transform.rotation.yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi
-    #         # pitch = math.radians(wp.transform.rotation.pitch)
-    #         # roll = math.radians(wp.transform.rotation.roll)
-    #         #x, y,z, w = self.euler_to_quaternion(roll, pitch, yaw)
-
-            
-    #         pose_stamped.pose.orientation.x = yaw#% 2 *math.pi
-    #         pose_stamped.pose.orientation.y = 0.0
-    #         pose_stamped.pose.orientation.z = 0.0
-    #         pose_stamped.pose.orientation.w = self.ref_vel  # self.vehicle.get_speed_limit()
-
-    #         pose_stamped.pose
-    #         #print("wavepoint :", wp.transform.location.x, " " ,wp.transform.location.y," ", wp.transform.rotation.yaw)         
+    #         # pose_stamped.header.stamp = current_time.to_msg()
+    #         pose_stamped.x = wp.transform.location.x
+    #         pose_stamped.y = wp.transform.location.y
+    #         pose_stamped.psi = (math.radians(wp.transform.rotation.yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi
+    #         pose_stamped.velocity = self.ref_vel   
+    #         pose_stamped.total_distance = 0.0        
     #         path_msg.poses.append(pose_stamped)  
     #     self.waypoints_pub.publish(path_msg)
 
