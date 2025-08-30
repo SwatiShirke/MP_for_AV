@@ -60,8 +60,8 @@ static const casadi_int casadi_s3[5] = {1, 1, 0, 1, 0};
 
 /* ackerman_model_cost_ext_cost_e_fun_jac:(i0[4],i1[],i2[],i3[7])->(o0,o1[4]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
-  casadi_real a0, a1, a2, a3, a4, a5, a6;
-  a0=500.;
+  casadi_real a0, a1, a2, a3, a4, a5;
+  a0=1000.;
   a1=arg[3]? arg[3][0] : 0;
   a2=arg[0]? arg[0][0] : 0;
   a1=(a1-a2);
@@ -73,32 +73,23 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   a4=casadi_sq(a3);
   a4=(a0*a4);
   a2=(a2+a4);
-  a4=1.;
-  a5=arg[3]? arg[3][2] : 0;
-  a6=arg[0]? arg[0][2] : 0;
-  a5=(a5-a6);
-  a6=cos(a5);
-  a4=(a4-a6);
-  a6=casadi_sq(a4);
-  a6=(a0*a6);
-  a2=(a2+a6);
+  a4=arg[3]? arg[3][2] : 0;
+  a5=arg[0]? arg[0][2] : 0;
+  a4=(a4-a5);
+  a2=(a2+a4);
   if (res[0]!=0) res[0][0]=a2;
   a1=(a1+a1);
   a1=(a0*a1);
   a1=(-a1);
   if (res[1]!=0) res[1][0]=a1;
   a3=(a3+a3);
-  a3=(a0*a3);
-  a3=(-a3);
-  if (res[1]!=0) res[1][1]=a3;
-  a5=sin(a5);
-  a4=(a4+a4);
-  a0=(a0*a4);
-  a5=(a5*a0);
-  a5=(-a5);
-  if (res[1]!=0) res[1][2]=a5;
-  a5=0.;
-  if (res[1]!=0) res[1][3]=a5;
+  a0=(a0*a3);
+  a0=(-a0);
+  if (res[1]!=0) res[1][1]=a0;
+  a0=-1.;
+  if (res[1]!=0) res[1][2]=a0;
+  a0=0.;
+  if (res[1]!=0) res[1][3]=a0;
   return 0;
 }
 

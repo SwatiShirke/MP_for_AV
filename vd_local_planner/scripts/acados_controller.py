@@ -8,9 +8,8 @@ from scipy.spatial.transform import Rotation as R
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
     vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
-    yaw_cost =  ( 1 - np.cos(ref_vec[2] - state_vec[2]))**2  * weights[2]
-    cost = pos_cost + yaw_cost
-       
+    yaw_cost = ref_vec[2] - state_vec[2] #( 1 - np.cos(ref_vec[2] - state_vec[2]))**2  * weights[2]  #ref_vec[2] - state_vec[2] 
+    cost = pos_cost + yaw_cost       
     return cost 
 
 
@@ -18,7 +17,7 @@ def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
 def cal_input_cost(input_vec, ref_vec, weights, prev_in, control_rate_weight):
     cost = ca.dot((ref_vec - input_vec)**2, weights)      
     rate_cost = ca.dot((prev_in - input_vec)**2, control_rate_weight)
-    return cost + rate_cost
+    return cost  + rate_cost
 
 # x, y, qw, qx,qy,qz, v, acc, del1, del2
 def calculate_quat_cost(current_yaw, ref_yaw, weight):
@@ -90,10 +89,10 @@ def acados_controller(N, Tf, lf, lr):
     unscale = 1
     #cost matricesq
     # x, y, yaw, pitch, roll, vel
-    Q_mat = unscale * ca.vertcat(10, 10,   10, 10)
+    Q_mat = unscale * ca.vertcat(100, 100,   100, 100)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
-    Q_emat =  unscale * ca.vertcat(500, 500,  500, 500) 
-    control_rate_weight = ca.vertcat(200, 200, 200)
+    Q_emat =  unscale * ca.vertcat(1000, 1000, 2000, 1000) 
+    control_rate_weight = ca.vertcat(1000, 1000, 1000)
     state_rate_weight = ca.vertcat(0, 0, 100, 0)
     prev_in = ca.vertcat(0,0, 0)
     prev_state = ca.vertcat(0,0,0,0)

@@ -91,13 +91,25 @@ def plot_vehicle_data(topic_data):
         traj_times, traj_x, traj_y, traj_z, traj_yaw, traj_ref_vel = zip(*topic_data['/carla/ego_vehicle/waypoints'])
 
         # Plot X Position
+
+        plt.figure()
+        plt.plot(odom_x, odom_y, label='Vehicle position')
+        plt.plot(traj_x, traj_y, label='Reference Waypoints', linestyle='--')
+        plt.legend()
+        plt.xlabel('X Position in m')
+        plt.ylabel('Y Position in m')
+        plt.title('Vehicle Position vs Reference Waypoints')
+        plt.grid(True)
+        plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))  # Fix time axis
+        
+
         plt.figure()
         plt.plot(odom_times, odom_x, label='Vehicle X')
         plt.plot(traj_times, traj_x, label='Waypoints X', linestyle='--')
         plt.legend()
-        plt.xlabel('Time (seconds)')
-        plt.ylabel('X Position')
-        plt.title('Vehicle X Position vs Waypoints')
+        plt.xlabel('Time in seconds')
+        plt.ylabel('X Position in m')
+        plt.title('Vehicle Position X vs Waypoints')
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))  # Fix time axis
         
@@ -106,20 +118,27 @@ def plot_vehicle_data(topic_data):
         plt.plot(odom_times, odom_y, label='Vehicle Y')
         plt.plot(traj_times, traj_y, label='Waypoints Y', linestyle='--')
         plt.legend()
-        plt.xlabel('Time (seconds)')
-        plt.ylabel('Y Position')
-        plt.title('Vehicle Y Position vs Waypoints')
+        plt.xlabel('Time in seconds')
+        plt.ylabel('Y Position in m')
+        plt.title('Vehicle Position Y vs Waypoints')
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
         # Plot Yaw Angle
         plt.figure()
-        plt.plot(odom_times, odom_yaw, label='Yaw Angle')
-        plt.plot(traj_times, traj_yaw, label='Reference Yaw', linestyle='--')
+        plt.plot(odom_times, np.rad2deg(odom_yaw), label='Vehicle Yaw Angle')
+        plt.plot(traj_times, np.rad2deg(traj_yaw), label='Reference Yaw', linestyle='--')
+
+        #print(traj_yaw)
+        len_min = min(len(traj_yaw), len(odom_yaw))
+        diff = np.rad2deg(np.arccos(np.cos(np.array(traj_yaw[0:len_min]) - np.array(odom_yaw[0:len_min]))) ) 
+        
+        plt.plot(odom_times[0:len_min], diff, label='Difference in Angles', color='r')
+        
         plt.legend()
-        plt.xlabel('Time (seconds)')
-        plt.ylabel('Yaw Angle')
-        plt.title('Yaw Angle vs Reference Yaw')
+        plt.xlabel('Time in seconds')
+        plt.ylabel('Yaw Angle in degree')
+        plt.title('Vehicle Heading Angle vs Reference Yaw')
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
@@ -129,37 +148,37 @@ def plot_vehicle_data(topic_data):
         plt.plot(traj_times, traj_ref_vel, label='Reference Velocity', linestyle='--')
         plt.legend()
         
-        plt.xlabel('Time (seconds)')
-        plt.ylabel('Velocity')
-        plt.ylim(0, 45)
+        plt.xlabel('Time in seconds')
+        plt.ylabel('Velocity in m/s')
+        plt.ylim(-5,20 )
         plt.title('Longitudinal Velocity vs Reference Velocity')
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
     if '/carla/ego_vehicle/vehicle_control_cmd' in topic_data:
         times, throttle, brake, steer = zip(*topic_data['/carla/ego_vehicle/vehicle_control_cmd'])
-        
+        steer_in_deg = np.rad2deg(steer)
         plt.figure()
         plt.plot(times, throttle, label='Throttle')
-        plt.xlabel('Time (seconds)')
-        plt.ylabel('Throttle')
-        plt.title('Throttle Command Over Time')
+        plt.xlabel('Time in seconds')
+        plt.ylabel('Throttle (0 to 1)')
+        plt.title('Throttle Command')
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
         plt.figure()
         plt.plot(times, brake, label='Brake')
-        plt.xlabel('Time (seconds)')
-        plt.ylabel('Brake')
-        plt.title('Brake Command Over Time')
+        plt.xlabel('Time in seconds')
+        plt.ylabel('Brake (0 to 1)')
+        plt.title('Brake Command')
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
         plt.figure()
-        plt.plot(times, steer, label='Steer')
-        plt.xlabel('Time (seconds)')
-        plt.ylabel('Steering Angle')
-        plt.title('Steering Command Over Time')
+        plt.plot(times, steer_in_deg, label='Steer')
+        plt.xlabel('Time in seconds')
+        plt.ylabel('Steering Angle in degree')
+        plt.title('Steering Command')
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
@@ -168,10 +187,10 @@ def plot_vehicle_data(topic_data):
         #print(x[0], y[0])
         plt.figure()
         plt.plot(x[0],y[0])
-        plt.xlabel("x")
-        plt.ylabel("y")
+        plt.xlabel("X in m")
+        plt.ylabel("Y in m")
         plt.grid(True)
-        plt.title("path")
+        plt.title("Path Generated by Planner")
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
     plt.legend()

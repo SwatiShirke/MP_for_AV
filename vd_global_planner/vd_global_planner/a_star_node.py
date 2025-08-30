@@ -56,6 +56,9 @@ class GlobalPlanner(Node):
         self.odom_pub = self.create_publisher(Odometry, '/carla/ego_vehicle/odometry', qos_profile)
         self.waypoints_pub = self.create_publisher(Path, '/carla/ego_vehicle/waypoints', qos_profile)
         self.timer = self.create_timer(self.time_period, self.timer_callback)
+        self.err_pub = self.create_publisher(Float32, '/norm_error', 1) 
+        self.ref_waypoint = None 
+        self.current_loc = None
 
 
     def get_vehicle(self):             
@@ -71,11 +74,12 @@ class GlobalPlanner(Node):
            
 
     def get_grid_map(self):
-        waypoints = self.map.generate_waypoints(distance = self.grid_resolution)        
+        waypoints = self.map.generate_waypoints(distance = self.grid_resolution)  
+              
         x_val = [wp.transform.location.x for wp in waypoints if wp.lane_type == carla.LaneType.Driving]
         y_val = [wp.transform.location.y for wp in waypoints if wp.lane_type == carla.LaneType.Driving] 
         free_points = np.column_stack([x_val,y_val])
-
+        print("freep points", free_points)
         
         #grid creation
         x_min, x_max = int(min(x_val) - self.buffer), int(max(x_val) + self.buffer)
@@ -113,7 +117,7 @@ class GlobalPlanner(Node):
         self.path_kd_tree = sp.KDTree(self.path)
         self.is_trajectory_generated = True
         response.message = "Global Path generated!"
-
+        
         # #publish to save into ros bag
         # path_arr = np.array(self.path)
         # vd_path_msg = VDPath()
@@ -180,6 +184,8 @@ class GlobalPlanner(Node):
     def publish_odometry(self): 
         x,y, yaw, vel = self.get_current_state()
 
+        self.current_loc = self.vehicle.get_transform()
+
         odom_msg = Odometry()
         current_time = self.sim_clock.now()
         #print(current_time) 
@@ -190,7 +196,7 @@ class GlobalPlanner(Node):
         # Position
         odom_msg.pose.pose.position.x = x
         odom_msg.pose.pose.position.y = y
-        yaw = (math.radians(yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi  # MPC range of Yaw - -2*pi to +2 *pi
+        yaw = math.radians(yaw)  #+ np.pi) % (2*np.pi) - (np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
         odom_msg.pose.pose.orientation.x = yaw
 
         # Assigning longitudinal and lateral velocities to odometry message (optional fields)
@@ -301,7 +307,7 @@ class GlobalPlanner(Node):
         way_point_list = []
         for i, wp in enumerate(waypoints):
             if i ==0:
-                self.ref_waypoint = wp.transform
+                self.ref_waypoint = [wp.transform.location.x, wp.transform.location.y]
 
             pose_stamped = PoseStamped()
             pose_stamped.header = path_msg.header
@@ -311,7 +317,7 @@ class GlobalPlanner(Node):
             pose_stamped.pose.position.y = wp.transform.location.y
             pose_stamped.pose.position.z = wp.transform.location.z
 
-            yaw = (math.radians(wp.transform.rotation.yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi
+            yaw = math.radians(wp.transform.rotation.yaw) #+ np.pi) % (2*np.pi) - np.pi
             # pitch = math.radians(wp.transform.rotation.pitch)
             # roll = math.radians(wp.transform.rotation.roll)
             #x, y,z, w = self.euler_to_quaternion(roll, pitch, yaw)
@@ -333,7 +339,7 @@ class GlobalPlanner(Node):
             norm_error =  np.sqrt((self.ref_waypoint[0] - self.current_loc.location.x)**2 + (self.ref_waypoint[1] - self.current_loc.location.y)**2)
             float_msg = Float32()
             float_msg.data = norm_error
-            #print("norm_error",norm_error)
+            print("norm_error",norm_error)
             self.err_pub.publish(float_msg)
 
     def timer_callback(self):
@@ -347,12 +353,14 @@ class GlobalPlanner(Node):
             
             
             self.publish_odometry()
+            self.cal_error()
             #cal nd publish norm error 
-            #self.cal_error()
+            
             # =======================
             # Publish Trajectory
             # =======================
             self.publish_waypoints()
+            
 
 
 
