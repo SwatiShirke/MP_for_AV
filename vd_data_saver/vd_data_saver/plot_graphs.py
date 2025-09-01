@@ -132,6 +132,7 @@ def plot_vehicle_data(topic_data):
         #print(traj_yaw)
         len_min = min(len(traj_yaw), len(odom_yaw))
         diff = np.rad2deg(np.arccos(np.cos(np.array(traj_yaw[0:len_min]) - np.array(odom_yaw[0:len_min]))) ) 
+        #diff = np.rad2deg(np.array(traj_yaw[0:len_min] - np.array(odom_yaw[0:len_min])) )
         
         plt.plot(odom_times[0:len_min], diff, label='Difference in Angles', color='r')
         

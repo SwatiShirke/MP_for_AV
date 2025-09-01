@@ -318,8 +318,8 @@ class World(object):
         ego_bp = self.world.get_blueprint_library().find('vehicle.mini.cooper')
         ego_bp.set_attribute('role_name', 'hero')
         ego_bp.set_attribute("ros_name", 'ego_vehicle')
-        transform = carla.Transform(carla.Location(x=98, y=85), carla.Rotation(yaw=90))
-        self.player = self.world.spawn_actor(ego_bp, transform)
+        #transform = carla.Transform(carla.Location(x=98, y=85), carla.Rotation(yaw=90))
+        self.player = self.world.spawn_actor(ego_bp, spawn_points[0])
 
 
         ##spawn neighbours

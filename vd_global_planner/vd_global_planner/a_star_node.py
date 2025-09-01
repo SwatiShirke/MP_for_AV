@@ -196,7 +196,7 @@ class GlobalPlanner(Node):
         # Position
         odom_msg.pose.pose.position.x = x
         odom_msg.pose.pose.position.y = y
-        yaw = math.radians(yaw)  #+ np.pi) % (2*np.pi) - (np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
+        yaw = (math.radians(yaw)  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
         odom_msg.pose.pose.orientation.x = yaw
 
         # Assigning longitudinal and lateral velocities to odometry message (optional fields)
@@ -282,7 +282,7 @@ class GlobalPlanner(Node):
                                   velocity.y * forward_vector.y +
                                   velocity.z * forward_vector.z)
             # Calculate the distance to the next waypoint
-            distance = max(longitudinal_speed * self.Tf / self.N, 1 ) # Ensure non-zero distance
+            distance =     self.ref_vel *  self.Tf / self.N #max(longitudinal_speed * self.Tf / self.N, 1 ) # Ensure non-zero distance
             #print("dist ", distance)
             next_waypoints = current_waypoint.next(distance)
             #print("next wp :",next_waypoints[0].transform.location.x, next_waypoints[0].transform.location.y  )
@@ -317,7 +317,7 @@ class GlobalPlanner(Node):
             pose_stamped.pose.position.y = wp.transform.location.y
             pose_stamped.pose.position.z = wp.transform.location.z
 
-            yaw = math.radians(wp.transform.rotation.yaw) #+ np.pi) % (2*np.pi) - np.pi
+            yaw = (math.radians(wp.transform.rotation.yaw) + 2* np.pi) % (4*np.pi) - 2* np.pi
             # pitch = math.radians(wp.transform.rotation.pitch)
             # roll = math.radians(wp.transform.rotation.roll)
             #x, y,z, w = self.euler_to_quaternion(roll, pitch, yaw)
