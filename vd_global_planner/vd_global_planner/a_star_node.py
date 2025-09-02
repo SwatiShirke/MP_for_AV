@@ -29,7 +29,7 @@ class GlobalPlanner(Node):
         self.client.set_timeout(10.0)
         self.world = self.client.get_world()
         self.map = self.world.get_map()
-        self.grid_resolution = 1        
+        self.grid_resolution = 1.0       
         self.buffer = 10
         self.vehicle = None
         self.get_vehicle()
@@ -54,6 +54,7 @@ class GlobalPlanner(Node):
         self.odom_pub = self.create_publisher(VDpose, '/carla/ego_vehicle/odometry', qos_profile)
         self.waypoints_pub = self.create_publisher(VDtraj, '/carla/ego_vehicle/waypoints', qos_profile)
         self.timer = self.create_timer(self.time_period, self.timer_callback)
+        self.err_pub = self.create_publisher(Float32, '/norm_error', 1)
 
         ##traj object
         self.v_min = 0
@@ -62,6 +63,8 @@ class GlobalPlanner(Node):
         self.a_max = 2.5
         self.lateral_accel = 0.1
         self.traj_obj = Trajecotry(self.v_min,self.v_max, self.a_min, self.a_min , self.lateral_accel)
+        self.ref_waypoint = None 
+        self.current_loc = None
         
 
     def get_vehicle(self):             
@@ -113,16 +116,17 @@ class GlobalPlanner(Node):
         if not self.path:
             response.message = "Global Path not found!"
             return response
-        print("path", self.path)
+        #print("path", self.path)
         self.path_kd_tree = sp.KDTree(self.path)
         self.is_trajectory_generated = True
         response.message = "Global Path generated!"        
         self.traj_obj.create_path_funs(self.path)
+        smooth_path = self.traj_obj.get_interpld_path()
 
-        path_arr = np.array(self.path)
+        path_arr = smooth_path 
         vd_path_msg = VDPath()
-        vd_path_msg.x_val = np.array(path_arr[:, 0]).astype(float).tolist()
-        vd_path_msg.y_val = np.array(path_arr[:, 1]).astype(float).tolist()
+        vd_path_msg.x_val = np.array(path_arr[:,0]).astype(float).tolist()
+        vd_path_msg.y_val = np.array(path_arr[:,1]).astype(float).tolist()
         self.path_pub.publish(vd_path_msg)
         return response
 
@@ -190,6 +194,7 @@ class GlobalPlanner(Node):
 
     def publish_odometry(self): 
         x,y, yaw, vel, s_current = self.get_current_state(s_curr_flag = True)
+        self.current_loc = self.vehicle.get_transform()
         odom_msg = VDpose()
         # current_time = self.sim_clock.now()
         # #print(current_time) 
@@ -249,7 +254,7 @@ class GlobalPlanner(Node):
 
     def get_n_waypoints(self):
         x,y, yaw, vel, s_current = self.get_current_state(s_curr_flag = True)
-        print("current state yaw", yaw)        
+        #print("current state yaw", yaw)        
         goal_flag = self.is_goal_reached((x,y))              
         vel = self.ref_vel
         waypoints = []
@@ -318,6 +323,7 @@ class GlobalPlanner(Node):
             
     #     return waypoints
 
+
     # def publish_waypoints(self, N=10):               
     #     # Retrieve waypoints
     #     waypoints = self.get_time_spanned_waypoints()
@@ -350,7 +356,7 @@ class GlobalPlanner(Node):
             norm_error =  np.sqrt((self.ref_waypoint[0] - self.current_loc.location.x)**2 + (self.ref_waypoint[1] - self.current_loc.location.y)**2)
             float_msg = Float32()
             float_msg.data = norm_error
-            #print("norm_error",norm_error)
+            print("norm_error",norm_error)
             self.err_pub.publish(float_msg)
 
     def timer_callback(self):
@@ -365,7 +371,7 @@ class GlobalPlanner(Node):
             
             self.publish_odometry()
             #cal nd publish norm error 
-            #self.cal_error()
+            self.cal_error()
             # =======================
             # Publish Trajectory
             # =======================

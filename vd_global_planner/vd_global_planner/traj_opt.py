@@ -4,6 +4,7 @@ from scipy import sparse
 
 from matplotlib import pyplot as plt
 import osqp
+from scipy.interpolate import make_interp_spline
 
 class Trajecotry():
     def __init__(self, v_min, v_max, a_min, a_max, lat_acc_a_max):       
@@ -50,8 +51,17 @@ class Trajecotry():
         print("before interpolation")
         self.interploate()
 
+    def get_interpld_path(self):
+        s_min, s_max = 0, self.track_length
+        s_points = np.linspace(0,self.track_length, 1000 )
+        points = self.traj_interpld(s_points)
+        print("points", points[:, 0:2]) 
+        return points
+        
+
     def interploate(self):              
-        self.traj_interpld = CubicSpline(self.waypoints[:, -2], self.waypoints[:, 0:4])        
+        #self.traj_interpld = CubicSpline(self.waypoints[:, -2], self.waypoints[:, 0:4])    
+        self.traj_interpld = make_interp_spline(self.waypoints[:, -2], self.waypoints[:, 0:4], k=5)    
         #testing
         
     def compute_speed_profile(self):
