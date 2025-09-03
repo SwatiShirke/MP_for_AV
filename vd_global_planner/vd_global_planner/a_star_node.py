@@ -29,7 +29,7 @@ class GlobalPlanner(Node):
         self.client.set_timeout(10.0)
         self.world = self.client.get_world()
         self.map = self.world.get_map()
-        self.grid_resolution = 1.0       
+        self.grid_resolution = 1.0
         self.buffer = 10
         self.vehicle = None
         self.get_vehicle()
