@@ -12,21 +12,30 @@ from scipy import spatial as sp
 import carla
 import networkx as nx
 from scipy.integrate import solve_ivp
+from vd_global_planner import carla_utils 
+
 
 class Node:
         
-    def __init__(self, grid_index, cost,  parent_index):        
+        
+    def __init__(self, grid_index,theta, velocity, steering_angle, cost,  parent_index, traj):        
         self.grid_index = grid_index
-        self.cost = cost         
-        self.parent_index = parent_index
-
+        self.theta = theta 
+        self.velocity = velocity
+        self.steering_angle = steering_angle 
+        self.cost = cost
+        self.parent_index = parent_index      
+        self.traj = traj 
+        
+        
+        
     def get_index(self):
         return self.grid_index
 
 
 class a_star:
     
-    def __init__(self, grid_map, grid_resolution, offset):
+    def __init__(self, grid_map, grid_resolution, offset, lr, lf, w, vel_min, vel_max, min_steer, max_steer, vel_steps, angle_steps, sim_time, eval_time):
         #grid_map = 2d np array
         #map = is carla map used during collision checking 
         #lf, lr: front and rear axel distance from CG
@@ -36,55 +45,200 @@ class a_star:
         self.grid_resolution = grid_resolution      
         self.threshold = 1
         self.offset = offset 
-        # self.lr = lr
-        # self.lf = lf
-        # self.w = w
-        # self.simulation_time = 0.1 # same as controller frequency
-        # self.eval_time = 0.01
-        # self.angle_steps = 10    # no of loops in 1 simulation steps
-        # self.accel_steps = 20
-        # self.accel_min = accel_min
-        # self.accel_max = acccel_max
-        # self.steer_min = np.rad2deg(min_steer)
-        # self.steer_max = np.rad2deg(max_steer)
+        self.lr = lr
+        self.lf = lf
+        self.width = w
+        self.simulation_time = sim_time # same as controller frequency
+        self.eval_time = eval_time
+        self.angle_steps = angle_steps  # no of loops in 1 simulation steps
+        self.vel_steps = vel_steps
+        self.vel_min = vel_min
+        self.vel_max = vel_max
+        self.steer_min = np.rad2deg(min_steer)
+        self.steer_max = np.rad2deg(max_steer)
+        self.open_dict = {}
 
 
-    def get_path(self, open_dict,  goal_node, start_node ):
-        #print("goal_node", goal_node)
+    def get_path(self, goal_node, start_node ):
+        
         node = goal_node
         path_list = []
         while node!= start_node:
             #ispdb.set_trace()
-            path_list.append(node)
-            node = open_dict[node].parent_index
+            path_list.extend(node)
+            node = self.open_dict[node].parent_index
         path_list.append(start_node)
         path_list.reverse()
-        return path_list   
+
+        traj = []
+        for node in path_list:
+            traj.extend(self.open_dict[node].traj)
+
+        return traj   
     
     def cal_heuristic_cost(self, current_node, goal_node):
           
         dist = np.linalg.norm(np.array(current_node) - np.array(goal_node))           
         return dist    
 
-    def get_neighbours(self, node):
+    def get_neighbours(self, node, is_hyrbid=False):
         x_off, y_off = self.offset
-        x, y = node
-        # print(node)
-        # print(x,y)
-        rows, cols = self.grid_map.shape
-        ## 8 neighbour grid
-
-       
-        n_nodes = [(x+ self.grid_resolution, y), (x-self.grid_resolution, y), (x, y+self.grid_resolution), (x, y-self.grid_resolution), 
-                   (x+self.grid_resolution, y+self.grid_resolution), (x+self.grid_resolution, y-self.grid_resolution), (x-self.grid_resolution, y-self.grid_resolution), (x-self.grid_resolution, y+self.grid_resolution)]
+        x, y = node        
+        rows, cols = self.grid_map.shape        
         n_list = []
-        for x_val, y_val in n_nodes:
-            if ( x_val >= x_off and x_val < cols-x_off and y_val >= y_off and y_val < rows - y_off ):
-                n_list.append((x_val,y_val))
-      
+
+        if not is_hyrbid:
+            ## 8 neighbour grid
+            n_nodes = [(x+ self.grid_resolution, y), (x-self.grid_resolution, y), (x, y+self.grid_resolution), (x, y-self.grid_resolution), 
+                       (x+self.grid_resolution, y+self.grid_resolution), (x+self.grid_resolution, y-self.grid_resolution), (x-self.grid_resolution, y-self.grid_resolution), (x-self.grid_resolution, y+self.grid_resolution)]
+            
+            for x_val, y_val in n_nodes:
+                if ( x_val >= x_off and x_val < cols-x_off and y_val >= y_off and y_val < rows - y_off ):
+                    n_list.append((x_val,y_val))
+        else:
+            n_list = self.get_hybrid_a_star_neighbours(node)
+
         return n_list       
 
+    def snap_to_resolution(self, node):
+        x, y = node
+        return (np.round(x / self.grid_resolution) * self.grid_resolution, np.round(y / self.grid_resolution) * self.grid_resolution)
 
+
+    def get_hybrid_a_star_neighbours(self, parent_node):
+        """The logic for Hybrid A* simulation is built here.
+        The model has 3 inputs = [accel, steer_l, steer_r]"""
+        velocity_steps = np.linspace(self.vel_min, self.vel_max, self.vel_steps)
+        steer_steps = np.linspace(self.steer_min, self.steer_max, self.angle_steps)
+        
+        x_off, y_off = self.offset
+        rows, cols = self.grid_map.shape 
+        
+        #print("steer steps ", steer_steps)
+        parent_obj = self.open_dict[parent_node]
+        x_current, y_current = parent_node
+
+        theta_current, vel_current, parent_cost = parent_obj.theta, parent_obj.velocity, parent_obj.cost
+        #print("parent_node", parent_node)
+        n_obj_list = []
+        n_index_list = []
+        trajectory_dict = {}
+        for vel in velocity_steps:
+            for steer in steer_steps:                   
+                    
+                    U = [vel, steer]
+                    X = [x_current, y_current, theta_current,0 ]                   
+                    t_val = np.arange(0, self.simulation_time, self.eval_time)
+                    sol = solve_ivp(self.ackerman_steering,(0,self.simulation_time) , X, t_eval=t_val, 
+                                args=(U,), method="RK45")
+                    
+                    n, _ = sol.y.shape                    
+                    traj = np.transpose(sol.y)       
+                    x, y, theta, distance = traj[-1]     # extarct the position of the node, where the simulation reached 
+                    node_index = self.snap_to_resolution((x,y))
+
+                    if node_index == parent_node or node_index in n_index_list:
+                        continue
+                    
+                    if ( x >= x_off and x < cols-x_off and y >= y_off and y < rows - y_off ):                        
+                        cost = abs(distance) +  parent_cost                        
+                        n_node = Node( node_index, theta, vel, steer ,cost ,parent_node, traj)
+                        n_obj_list.append(n_node)
+                        trajectory_dict[node_index] = traj 
+                        n_index_list.append(node_index) 
+             
+        
+        if parent_node[1] >= 119: 
+            print("parent node", parent_node, "cost", cost)                           
+            print("n_index_list", n_index_list)         
+        #rint("trajectory_dict", trajectory_dict)
+        # print("parent node", parent_node, "cost", cost)
+        # print("n_index_list", n_index_list)
+
+        return n_obj_list
+    
+    def test_state_lattice_planner(self, parent_node):
+        velocity_steps = np.linspace(self.vel_min, self.vel_max, self.vel_steps)
+        steer_steps = np.linspace(self.steer_min, self.steer_max, self.angle_steps)
+        
+        x_off, y_off = self.offset
+        rows, cols = self.grid_map.shape 
+        
+        #print("steer steps ", steer_steps)
+        parent_obj = self.open_dict[parent_node]
+        x_current, y_current = parent_node
+
+        theta_current, vel_current, cost = parent_obj.theta, parent_obj.velocity, parent_obj.cost
+        #print("parent_node", parent_node)
+        n_obj_list = []
+        n_index_list = []
+        trajectory_dict = {}
+        for vel in velocity_steps:
+            for steer in steer_steps:                   
+                    #print("vel, steer", vel, steer)
+                    U = [vel, steer]
+                    X = [x_current, y_current, theta_current,0 ]                   
+                    t_val = np.arange(0, self.simulation_time, self.eval_time)
+                    sol = solve_ivp(self.ackerman_steering,(0,self.simulation_time) , X, t_eval=t_val, 
+                                args=(U,), method="RK45")
+                    
+                    n, _ = sol.y.shape                    
+                    traj = np.transpose(sol.y)       
+                    x, y, theta, distance = traj[-1]     # extarct the position of the node, where the simulation reached 
+                    node_index = (x,y)
+                    if node_index == parent_node or node_index in n_index_list:
+                        continue
+                    
+                    if ( x >= x_off and x < cols-x_off and y >= y_off and y < rows - y_off ):                                                      
+                        
+                        trajectory_dict[node_index] = traj
+                        n_index_list.append(node_index) 
+
+        return  n_index_list   
+        
+
+    def get_node_to_index(self,node):
+        ##from real no (x,y) of node convert into index of an 2d array map        
+        x, y = node
+        x_idx = (x - self.offset[0]) /self.grid_resolution
+        y_idx = (y - self.offset[1])/self.grid_resolution
+        return (int(x_idx), int(y_idx)) 
+
+    def get_index_to_node(self, index):
+        x,y = index        
+        node  = ((x + self.offset[0] ) * self.grid_resolution , (y + self.offset[1])* self.grid_resolution)
+        return node
+    
+
+    def ackerman_steering(self, t, X, U):
+        "Ackerman steering model is implemented herem it is a kinematic model"
+        """
+        vel: forward velocity in vehicle frame
+        theta: Heading angle of vehicle in reference frame
+        accel: acceleration/decceleration signal 
+        steer_l, steer_r: steering angle of left and right front wheel
+
+        """    
+        x_pos, y_pos, theta, distance = X
+        vel, delta= U
+        
+
+        # Rl =  self.lf / np.tan(steer_l)  + (self.width /2)      # left inner 
+        # Rr =  self.lr / np.tan(steer_r)  - (self.width /2)
+        # R = (Rl + Rr)/2
+
+        #beta = np.arctan2(self.lr *  np.tan(delta), (self.lf + self.lr))
+
+        # print("R", R)
+        #print("beta", beta)
+        dt = [vel * np.cos(theta ),
+              vel * np.sin(theta),
+              vel / (self.lr + self.lr) * np.tan(delta),
+              vel
+        ]
+        
+        return dt
+    
 
     def a_star(self, start, goal): 
 
@@ -92,65 +246,153 @@ class a_star:
         open_set = {node_index : object}
         p_queue = {node_index : total_cost}
         closed_set = [node_index]
-        """        
-        goal = (int(goal[0]), int(goal[1]))
-        start = (int(start[0]), int(start[1]) )
-
-        
+        """  
+        x,y, yaw = start
+        start = self.snap_to_resolution( (x,y))    
+        goal = self.snap_to_resolution( goal)
+        print("start", start)
+        print("goal", goal)
 
         p_queue = heapdict()   
-        open_dict = {}
+        self.open_dict = {}
         closed_set = [] 
         rows, cols = self.grid_map.shape
         path = []
 
         #start node 
-        start_node = Node(start, 0, None )
-        open_dict[start_node.get_index()] = start_node         
+        start_node = Node(start, yaw, 0,0,0, None, [] )
+        self.open_dict[start_node.get_index()] = start_node         
         p_queue[start] = 0 + self.cal_heuristic_cost(start, goal)
         
         
-
+        explored_nodes = []
+       
         #loop until goal found or queue empty
         while p_queue:
+            #print("queue ", list(p_queue.items()))
             node,cost = p_queue.popitem() 
-            node_obj = open_dict[node]
-            #print("popped node", node)           
+            
+            if node[1] > 119:
+                print("popped node", node) 
+            explored_nodes.append(node)         
             closed_set.append(node)
+            
+            
             if node == goal:
                 print("path found!")
-                path = self.get_path(open_dict, goal, start)
-                #print(path)
+                path = self.get_path(self.open_dict, goal, start, [])                
                 return path
-            else:              
-                neighbour_list = self.get_neighbours(node)    
-                #print("n list", neighbour_list)
-                for n in neighbour_list:                
-                    if n in closed_set:
+            else:    
+                         
+                neighbour_list = self.get_neighbours(node, is_hyrbid=True)    
+                
+                for n_obj in neighbour_list:
+                    
+                    n_index =  n_obj.grid_index 
+                    n_cost  =  n_obj.cost 
+
+                    if n_index[1] > 119:
+                        print("n_index", n_index)
+
+                    if n_index in closed_set:
                         continue  
                     
-                    x,y = n
-
-                    if n in open_dict:
-                        n_node_cost = open_dict[n].cost
+                    x,y = n_index
+                    if n_index in self.open_dict:
+                        n_old_cost = self.open_dict[n_index].cost
                     else:
-                        n_node_cost = float('inf')
+                        self.open_dict[n_index] = n_obj
+                        n_old_cost = float('inf')                                           
 
-                    new_cost = node_obj.cost + self.grid_resolution   
-                    print(int((y - self.offset[1])/self.grid_resolution))
-                    print(int((x - self.offset[0])/self.grid_resolution))                 
-                    if self.grid_map[ int((y - self.offset[1])/self.grid_resolution),int((x - self.offset[0])/self.grid_resolution)] == 0 and  new_cost < n_node_cost:
-                        
-                        if n  not in open_dict:
-                            n_obj = Node(n, new_cost, node )
-                            open_dict[n] = n_obj
-
-                        open_dict[n].cost = new_cost 
-                        open_dict[n].parent_index = node
-                        total_cost = new_cost + self.cal_heuristic_cost(n, goal)
-                        p_queue[n] = total_cost
+                    if (n_index[1] > 118):
+                        print("map value ",  int((y - self.offset[1])/self.grid_resolution), int((x - self.offset[0])/self.grid_resolution) )           
+                    if self.grid_map[ int((y - self.offset[1])/self.grid_resolution),int((x - self.offset[0])/self.grid_resolution)] == 0 and  n_cost < n_old_cost:
+                        #print("here inside now node is", n_index, "cost ", n_cost)
+                    
+                        self.open_dict[n_index].cost = n_cost 
+                        self.open_dict[n_index].parent_index = node
+                        total_cost = n_cost + self.cal_heuristic_cost(n_index, goal)
+                        p_queue[n_index] = total_cost
         
         print("path not found!")             
-        return path
+        return path, explored_nodes
+ 
+def plot_grid(node, neighbour_nodes):
+    # unpack points
+    x_node, y_node = zip(*node)
+    x_n_node, y_n_node = zip(*neighbour_nodes)
+
+    # scatter plots
+    plt.scatter(x_node, y_node, c='red', marker='o', label='Node')
+    plt.scatter(x_n_node, y_n_node, c='blue', marker='x', label='Neighbour Nodes')
+
+    # optional connecting lines
+    plt.plot(x_node, y_node, 'r--', alpha=0.5)
+    plt.plot(x_n_node, y_n_node, 'b--', alpha=0.5)
+
+    plt.legend()
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.title("Node vs Neighbour Nodes")
+    plt.grid(True)
+    plt.show()
+
+
+if __name__ == "__main__":
+    #Connect to CARLA         
+   
+    client = carla.Client('localhost', 2000)
+    client.set_timeout(10.0)
+    world = client.get_world()
+          
+    #map settings
+    grid_resolution = 0.25    
+    buffer = 10
+    grid_map, offset = carla_utils.get_grid_map(world, grid_resolution, buffer)
+    
+
+    ##planner settings     
+    lr = 1.28    # l = 3.86 m, w = 1.73 m 
+    lf = 1.28
+    width = 1.5
+    vel_min = - 10
+    vel_max = 10
+    min_steer = np.deg2rad(-40)
+    max_steer = np.deg2rad(+40) 
+    vel_steps = 2
+    
+    angle_steps = 3
+    sim_time = 0.1
+    eval_time = 0.01
+    L = 1  #no of nodes on horizontal for which plotting state lattice planner ()
+    W = 1  #no of nodes on vertical lines for which plotting ..
+    planner = a_star(grid_map, grid_resolution, offset, lr, lr, width, 
+                              vel_min, vel_max, min_steer, max_steer, vel_steps, angle_steps, sim_time, eval_time)
+    start = (-64, 24)
+    
+
+
+    start_rounded = planner.snap_to_resolution(start)
+    start_index = planner.get_node_to_index(start_rounded)
+
+    centers = []
+    neighbour_nodes = []
+    print(start_index)
+    for x_idx in range(start_index[0], start_index[0]+L, 1):
+        for y_idx in range(start_index[1], start_index[1]+ W , 1 ):           
+            
+            node = planner.get_index_to_node((x_idx, y_idx))            
+            planner.open_dict[node] = Node(node, 0,0, 0,0, 0,  None, [])
+            n_list = planner.test_state_lattice_planner(node)
+            neighbour_nodes.extend(n_list)
+            centers.append(node)
+    
+    plot_grid(centers, neighbour_nodes)
+
+
 
     
+    
+
+
+

@@ -8,6 +8,11 @@ from carla_msgs.msg import CarlaEgoVehicleControl
 from std_msgs.msg import Float32  # Import Float32 for norm_error topic
 import numpy as np
 from vd_msgs.msg import VDPath, VDpose, VDtraj
+import matplotlib.animation as animation
+import matplotlib.ticker as ticker
+import io
+from PIL import Image
+
 
 def read_vehicle_bag_data(bag_path):
     reader = rosbag2_py.SequentialReader()
@@ -20,11 +25,13 @@ def read_vehicle_bag_data(bag_path):
         '/carla/ego_vehicle/odometry',
         '/carla/ego_vehicle/vehicle_control_cmd',
         '/carla/ego_vehicle/waypoints',
-        '/norm_error'  # Include norm_error topic
+        '/norm_error',  # Include norm_error topic
+        'explored_nodes'
     ]
     topic_data = {topic: [] for topic in topics}
 
     while reader.has_next():
+        
         topic_name, serialized_msg, t = reader.read_next()
         #print(topic_name, " ", t)
         
@@ -37,23 +44,28 @@ def read_vehicle_bag_data(bag_path):
                 topic_data[topic_name].append((time_sec, msg.x_val, msg.y_val))
 
             if topic_name == '/carla/ego_vehicle/odometry':
+                print("got odom data")
                 msg = deserialize_message(serialized_msg, VDpose)
                 topic_data[topic_name].append((time_sec, msg.x, msg.y, msg.psi,
                                                msg.velocity,  # Yaw angle
                                                msg.distance))  # Longitudinal velocity
-            elif topic_name == '/carla/ego_vehicle/vehicle_control_cmd':
+            if topic_name == '/carla/ego_vehicle/vehicle_control_cmd':
                 msg = deserialize_message(serialized_msg, CarlaEgoVehicleControl)
                 topic_data[topic_name].append((time_sec, msg.throttle, msg.brake, msg.steer))
-            elif topic_name == '/carla/ego_vehicle/waypoints':
+            if topic_name == '/carla/ego_vehicle/waypoints':
                 msg = deserialize_message(serialized_msg, VDtraj)
                 if len(msg.poses) > 0:
                     first_pose = msg.poses[0]
                     topic_data[topic_name].append((time_sec, first_pose.x, first_pose.y, first_pose.psi,
                                                    first_pose.velocity,  # Yaw
                                                    first_pose.distance))  # Reference velocity
-            elif topic_name == '/norm_error':  # Read norm error values
+            if topic_name == '/norm_error':  # Read norm error values
                 msg = deserialize_message(serialized_msg, Float32)
                 topic_data[topic_name].append((time_sec, msg.data))  # Store norm_error values
+            
+            if topic_name == 'explored_nodes':                
+                msg = deserialize_message(serialized_msg, VDPath)                
+                topic_data[topic_name].append((time_sec, msg.x_val, msg.y_val))
 
     return topic_data
 
@@ -86,7 +98,7 @@ def compute_norm_error_rmse(topic_data):
         return None
 
 def plot_vehicle_data(topic_data):
-    if '/carla/ego_vehicle/odometry' in topic_data and '/carla/ego_vehicle/waypoints' in topic_data:
+    if  topic_data['/carla/ego_vehicle/odometry'] != [] and topic_data['/carla/ego_vehicle/waypoints'] != []:
         odom_times, odom_x, odom_y, odom_yaw, odom_long_vel, odom_distance = zip(*topic_data['/carla/ego_vehicle/odometry'])
         traj_times, traj_x, traj_y, traj_yaw, traj_ref_vel, ref_distance = zip(*topic_data['/carla/ego_vehicle/waypoints'])
 
@@ -146,7 +158,7 @@ def plot_vehicle_data(topic_data):
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
-    if '/carla/ego_vehicle/vehicle_control_cmd' in topic_data:
+    if topic_data['/carla/ego_vehicle/vehicle_control_cmd'] != []:
         times, throttle, brake, steer = zip(*topic_data['/carla/ego_vehicle/vehicle_control_cmd'])
         
         plt.figure()
@@ -173,7 +185,7 @@ def plot_vehicle_data(topic_data):
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
-    if 'global_path' in topic_data:
+    if topic_data['global_path'] != []:
         time, x, y = zip(*topic_data['global_path'])
         #print(x[0], y[0])
         plt.figure()
@@ -183,6 +195,48 @@ def plot_vehicle_data(topic_data):
         plt.grid(True)
         plt.title("path")
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
+
+    if topic_data['explored_nodes'] != []: 
+        grid_resolution = 0.25      
+        time, x, y = zip(*topic_data['explored_nodes'])         
+        x,y = np.array(x[0]), np.array(y[0]) 
+        print(len(x), len(y))    
+        path = np.hstack((x.reshape(-1,1),y.reshape(-1, 1)))
+        frames = [] 
+
+        # Create frames
+        for i in range(5000, len(x)):
+            fig, ax = plt.subplots(figsize=(5, 5))
+    
+            # Set axis limits based on the min/max of x and y
+            # ax.set_xlim(np.min(x), np.max(x))
+            # ax.set_ylim(np.min(y), np.max(y))
+
+            ax.set_xlim(np.min(x)-grid_resolution, np.max(x)+grid_resolution)
+            ax.set_ylim(np.min(y)-grid_resolution, np.max(y)+grid_resolution)
+            
+            # Plot the explored nodes up to the current frame (green dots)
+            ax.plot(x[:i+1], y[:i+1], 'go', markersize=6)  
+    
+            # Remove axis labels and ticks for a cleaner plot
+            ax.set_xticks(np.linspace(np.min(x), np.max(x), 10))
+            ax.set_yticks(np.linspace(np.min(y), np.max(y), 10))
+            
+            
+            # Save the frame to memory
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            frames.append(Image.open(buf))
+            plt.close()
+    
+        # Save the frames as a GIF
+        frames[0].save('explored_nodes_points.gif', save_all=True, append_images=frames[1:], duration=300, loop=0, format='GIF')
+
+        print("GIF saved successfully!")
+
+        
+
 
     plt.legend()
     plt.show()

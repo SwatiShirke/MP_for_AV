@@ -19,35 +19,56 @@ from vd_global_planner.traj_opt import Trajecotry
 class GlobalPlanner(Node):
     def __init__(self):
         super().__init__('global_planner')
-        #Connect to CARLA
-        self.time_period = 0.01 # timer period f = 100Hz
-        self.N = 10         #horizon 
-        self.Tf = 2        # horizon time
+
+        #Connect to CARLA               
         self.clock = Clock() #wall clock
         self.sim_clock = self.get_clock() #sim clock
         self.client = carla.Client('localhost', 2000)
         self.client.set_timeout(10.0)
         self.world = self.client.get_world()
-        self.map = self.world.get_map()
-        self.grid_resolution = 1.0
+        
         self.buffer = 10
         self.vehicle = None
-        self.get_vehicle()
-        self.grid_map = None
-        self.offset = (0,0)
-        self.get_grid_map()       
-                
-         
-        self.path = []      # returned by a* from grid map
+        self.get_vehicle()           
+        self.ref_vel = 10.00 #m/s  this will be removed from here, when trajectory optimization will be implemented
+
+
+        #map settings
+        self.map = self.world.get_map()
+        self.grid_resolution = 0.25              
+        self.grid_map, self.offset = self.get_grid_map()
+
+
+        ##planner settings        
+        self.path = []      
         self.trajectory = []        #(x,y,theta)
-        self.planner = a_star(self.grid_map, self.grid_resolution, self.offset)        
+        self.lr = 1.28    # l = 3.86 m, w = 1.73 m 
+        self.lf = 1.28
+        self.width = 1.5
+        self.vel_min = - self.ref_vel
+        self.vel_max = self.ref_vel
+        self.min_steer = np.deg2rad(-90)
+        self.max_steer = np.deg2rad(+90) 
+        self.vel_steps = 2
+        self.angle_steps = 21
+        self.sim_time = 0.1
+        self.eval_time = 0.01
+        self.planner = a_star(self.grid_map, self.grid_resolution, self.offset, self.lr, self.lr, self.width, 
+                              self.vel_min, self.vel_max, self.min_steer, self.max_steer, self.vel_steps, self.angle_steps, self.sim_time, self.eval_time)
+            
         self.is_trajectory_generated = False
         self.current_s_len = 0
-        self.ref_vel = 5.00 #m/s
+        
         self.path_kd_tree = None
         self.init_vel = 1.00 #m/s used for predicting future points
         self.goal_margin = 5.00 #m
-        ##pub sub
+
+        ## MPC settings
+        self.N = 10         #horizon  steps
+        self.Tf = 2        # horizon time
+        self.time_period = 0.01 # timer period f = 100Hz 
+
+        ##ROS pub sub
         qos_profile = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=1, reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE)
         self.path_pub = self.create_publisher(VDPath, "global_path", 1)
         self.srv = self.create_service(PlannerSrv, "global_plan_srv", self.service_callback)
@@ -55,6 +76,7 @@ class GlobalPlanner(Node):
         self.waypoints_pub = self.create_publisher(VDtraj, '/carla/ego_vehicle/waypoints', qos_profile)
         self.timer = self.create_timer(self.time_period, self.timer_callback)
         self.err_pub = self.create_publisher(Float32, '/norm_error', 1)
+        self.explored_nodes_pub = self.create_publisher(VDPath, "explored_nodes", 1)
 
         ##traj object
         self.v_min = 0
@@ -78,6 +100,9 @@ class GlobalPlanner(Node):
         if self.vehicle == None:
             raise RuntimeError(f"Vehicle with ID {self.role_name} not found!")
            
+    def snap_to_resolution(self, node):
+        x, y = node
+        return (np.round(x / self.grid_resolution) * self.grid_resolution, np.round(y / self.grid_resolution) * self.grid_resolution)
 
     def get_grid_map(self):
         waypoints = self.map.generate_waypoints(distance = self.grid_resolution)        
@@ -85,20 +110,35 @@ class GlobalPlanner(Node):
         y_val = [wp.transform.location.y for wp in waypoints if wp.lane_type == carla.LaneType.Driving] 
         free_points = np.column_stack([x_val,y_val])
         
+
         #grid creation
         x_min, x_max = int(min(x_val) - self.buffer), int(max(x_val) + self.buffer)
         y_min, y_max = int(min(y_val) - self.buffer), int(max(y_val) + self.buffer)
         
-        self.offset = (x_min, y_min)
+        offset = (x_min, y_min)
         x_lin = np.linspace(x_min, x_max, int((x_max - x_min)/self.grid_resolution)+1)
         y_lin = np.linspace(y_min, y_max, int((y_max - y_min)/self.grid_resolution)+1)
-
+      
+        
         X, Y = np.meshgrid(x_lin, y_lin)
         
         grid_map = np.ones(X.shape) 
-        for (x_pos,y_pos) in free_points:
+        for node in free_points:           
+            x_pos, y_pos   =  self.snap_to_resolution(node)  
             grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]  = 0
-        self.grid_map = grid_map  
+            
+            # if (x_pos > -61.50 and x_pos <= -61.25  and y_pos > 24.25 and y_pos <=24.50 ):
+            #     print("indexes ", int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution))
+        
+        # temp_node = (-61.25, 24.50)
+        # x_pos, y_pos = temp_node
+        # map_value = grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]
+        # print("indexes", int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution))
+        # #map_value = grid_map[409, 250]
+        # print("map_value ", map_value)
+
+        self.grid_map = grid_map 
+        return grid_map, offset 
         
     def check_if_reached(self, node1, node2):
         if np.linalg.norm(np.array(node1)-np.array(node2) ) <= self.resolution:
@@ -109,13 +149,21 @@ class GlobalPlanner(Node):
     def service_callback(self, request, response):
         self.get_logger().info('started generating global path')
         x,y, yaw, vel = self.get_current_state()
-        self.start = (x,y)
+        self.start = (x,y, yaw)
         self.goal = (request.x,request.y)
-        self.path = self.planner.a_star(self.start, self.goal)
+        self.path, self.explored_nodes = self.planner.a_star(self.start, self.goal)
         
         if not self.path:
             response.message = "Global Path not found!"
+
+            #send explored nodes
+            path_arr = np.array(self.explored_nodes) 
+            vd_path_msg = VDPath()
+            vd_path_msg.x_val = np.array(path_arr[:,0]).astype(float).tolist()
+            vd_path_msg.y_val = np.array(path_arr[:,1]).astype(float).tolist()
+            self.explored_nodes_pub.publish(vd_path_msg)
             return response
+        
         #print("path", self.path)
         self.path_kd_tree = sp.KDTree(self.path)
         self.is_trajectory_generated = True
@@ -128,6 +176,13 @@ class GlobalPlanner(Node):
         vd_path_msg.x_val = np.array(path_arr[:,0]).astype(float).tolist()
         vd_path_msg.y_val = np.array(path_arr[:,1]).astype(float).tolist()
         self.path_pub.publish(vd_path_msg)
+
+        path_arr = self.explored_nodes 
+        vd_path_msg = VDPath()
+        vd_path_msg.x_val = np.array(path_arr[:,0]).astype(float).tolist()
+        vd_path_msg.y_val = np.array(path_arr[:,1]).astype(float).tolist()
+        self.explored_nodes_pub.publish(vd_path_msg)
+
         return response
 
     def cal_trajectory(self):
