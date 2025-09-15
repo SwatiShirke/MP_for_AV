@@ -61,7 +61,7 @@ class PIDPublisher(Node):
 
         pedals_interp = griddata(self.points, self.values, query_points, method='cubic')
         if np.isnan(pedals_interp):
-            accel_interp = griddata(self.points, self.values, query_points, method='nearest')
+            pedals_interp = griddata(self.points, self.values, query_points, method='nearest')
 
         return pedals_interp
 
@@ -76,14 +76,14 @@ class PIDPublisher(Node):
         self.steering_angle = msg.steering_angle
 
         #print(" ")
-        #print("self.ref_vel", self.ref_vel)
-        #print("self.ref_accel", self.ref_accel)
+        print("self.ref_vel", self.ref_vel)
+        print("self.ref_accel", self.ref_accel)
         #print("self.steering_angle", self.steering_angle)
         #print("self.currentvel", self.current_vel)
         #apply feedforward here
         ff_cmd = self.interpolate_pedal(self.current_vel,self.ref_accel)
         
-        #print("ff_cmd", ff_cmd[0])
+        print("ff_cmd", ff_cmd[0])
 
         #apply pid here 
         error = self.ref_vel - self.current_vel
@@ -100,10 +100,11 @@ class PIDPublisher(Node):
             pid_fb_cmd = self.Kp * error + self.Ki * self.cumm_error + self.Kd * (error - self.last_error)
             self.cumm_error += error
             self.last_error = error  
-                 
+
+        print("pid_fb_cmd", pid_fb_cmd)         
         self.accel_cmd = ff_cmd[0] + pid_fb_cmd
         self.accel_cmd = min(max(self.accel_cmd, -1.0), 1.0)
-        #print("self.accel_cmd", self.accel_cmd)
+        print("self.accel_cmd", self.accel_cmd)
 
         msg = CarlaEgoVehicleControl()
         current_time = self.sim_clock.now() 

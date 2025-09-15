@@ -27,31 +27,32 @@ class GlobalPlanner(Node):
         self.client.set_timeout(10.0)
         self.world = self.client.get_world()
         
-        self.buffer = 10
+       
         self.vehicle = None
         self.get_vehicle()           
-        self.ref_vel = 10.00 #m/s  this will be removed from here, when trajectory optimization will be implemented
+        self.ref_vel = 5.00 #m/s  this will be removed from here, when trajectory optimization will be implemented
 
 
         #map settings
         self.map = self.world.get_map()
-        self.grid_resolution = 0.25              
+        self.grid_resolution = 3.00    
+        self.buffer = self.grid_resolution *20       
         self.grid_map, self.offset = self.get_grid_map()
 
 
         ##planner settings        
         self.path = []      
         self.trajectory = []        #(x,y,theta)
-        self.lr = 1.28    # l = 3.86 m, w = 1.73 m 
-        self.lf = 1.28
+        self.lr = 2.56/2     # l = 3.86 m, w = 1.73 m 
+        self.lf = 2.56/2
         self.width = 1.5
         self.vel_min = - self.ref_vel
         self.vel_max = self.ref_vel
-        self.min_steer = np.deg2rad(-90)
-        self.max_steer = np.deg2rad(+90) 
-        self.vel_steps = 2
-        self.angle_steps = 21
-        self.sim_time = 0.1
+        self.min_steer = np.deg2rad(-60)
+        self.max_steer = np.deg2rad(+60) 
+        self.vel_steps = 1
+        self.angle_steps = 11
+        self.sim_time = 1.00
         self.eval_time = 0.01
         self.planner = a_star(self.grid_map, self.grid_resolution, self.offset, self.lr, self.lr, self.width, 
                               self.vel_min, self.vel_max, self.min_steer, self.max_steer, self.vel_steps, self.angle_steps, self.sim_time, self.eval_time)
@@ -102,18 +103,51 @@ class GlobalPlanner(Node):
            
     def snap_to_resolution(self, node):
         x, y = node
-        return (np.round(x / self.grid_resolution) * self.grid_resolution, np.round(y / self.grid_resolution) * self.grid_resolution)
+        return [np.round(x / self.grid_resolution) * self.grid_resolution, np.round(y / self.grid_resolution) * self.grid_resolution]
+
+
+    def expand_waypoint_to_lane_points(self, wp, lateral_res=0.5):
+        """
+        Expand a CARLA waypoint into a set of points across full lane width.
+        """
+        loc = wp.transform.location
+        yaw = math.radians(wp.transform.rotation.yaw)
+        half_width = wp.lane_width * 0.5
+
+        # Perpendicular unit vector to lane heading
+        nx = math.cos(yaw + math.pi / 2.0)
+        ny = math.sin(yaw + math.pi / 2.0)
+
+        num_samples = int((2 * half_width) / lateral_res) + 1
+        lane_points = []
+        for i in range(num_samples):
+            offset = -half_width + i * lateral_res
+            px = loc.x + nx * offset
+            py = loc.y + ny * offset
+            lane_points.append((px, py))
+        return lane_points
 
     def get_grid_map(self):
-        waypoints = self.map.generate_waypoints(distance = self.grid_resolution)        
-        x_val = [wp.transform.location.x for wp in waypoints if wp.lane_type == carla.LaneType.Driving]
-        y_val = [wp.transform.location.y for wp in waypoints if wp.lane_type == carla.LaneType.Driving] 
-        free_points = np.column_stack([x_val,y_val])
-        
+        waypoints = self.map.generate_waypoints(distance = self.grid_resolution) 
 
+        free_points = []
+        for wp in waypoints:
+            if wp.lane_type == carla.LaneType.Driving:
+                lane_pts = self.expand_waypoint_to_lane_points(wp, self.grid_resolution)
+                free_points.extend(lane_pts)
+
+        free_points = np.array(free_points)
+
+        #free_points = np.array([self.snap_to_resolution((wp.transform.location.x, wp.transform.location.y)) for wp in waypoints if wp.lane_type == carla.LaneType.Driving])
+
+
+        x_val = free_points[:,0]
+        y_val = free_points[:,1]
+        
+        
         #grid creation
-        x_min, x_max = int(min(x_val) - self.buffer), int(max(x_val) + self.buffer)
-        y_min, y_max = int(min(y_val) - self.buffer), int(max(y_val) + self.buffer)
+        x_min, x_max = min(x_val) - self.buffer, max(x_val) + self.buffer
+        y_min, y_max = min(y_val) - self.buffer, max(y_val) + self.buffer
         
         offset = (x_min, y_min)
         x_lin = np.linspace(x_min, x_max, int((x_max - x_min)/self.grid_resolution)+1)
@@ -123,19 +157,25 @@ class GlobalPlanner(Node):
         X, Y = np.meshgrid(x_lin, y_lin)
         
         grid_map = np.ones(X.shape) 
-        for node in free_points:           
-            x_pos, y_pos   =  self.snap_to_resolution(node)  
+        for x_pos, y_pos in free_points:         
+               
             grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]  = 0
             
             # if (x_pos > -61.50 and x_pos <= -61.25  and y_pos > 24.25 and y_pos <=24.50 ):
             #     print("indexes ", int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution))
         
-        # temp_node = (-61.25, 24.50)
-        # x_pos, y_pos = temp_node
-        # map_value = grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]
-        # print("indexes", int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution))
-        # #map_value = grid_map[409, 250]
-        # print("map_value ", map_value)
+        # temp_node = (-43.5, 130.0)
+
+        # test_nodes = [(-43.25, 130.75), (-43.5, 131.0), (-43.75, 131.0), (-43.75, 130.75), (-44.25, 130.0), 
+        #               (-44.0, 130.75), (-43.0, 130.25), (-43.0, 129.25), (-43.25, 129.25), (-43.25, 129.0), (-43.5, 129.0), (-44.0, 129.75), (-43.75, 129.25), (-42.75, 130.0)]
+        # for node in test_nodes:
+        #     x_pos, y_pos = node
+        #     map_value = grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]
+        #     print("node", node, "map_value ", map_value)
+        # # print("indexes", int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution))
+        # map_value = grid_map[390, 231]
+        
+        print("map size ",grid_map.shape )
 
         self.grid_map = grid_map 
         return grid_map, offset 
@@ -151,36 +191,40 @@ class GlobalPlanner(Node):
         x,y, yaw, vel = self.get_current_state()
         self.start = (x,y, yaw)
         self.goal = (request.x,request.y)
-        self.path, self.explored_nodes = self.planner.a_star(self.start, self.goal)
+        path, explored_nodes = self.planner.a_star(self.start, self.goal)
         
-        if not self.path:
+
+        self.path = np.array(path)
+        self.explored_nodes = np.array(explored_nodes)
+
+        if self.path == []:
             response.message = "Global Path not found!"
 
             #send explored nodes
-            path_arr = np.array(self.explored_nodes) 
+            path_arr = self.explored_nodes
             vd_path_msg = VDPath()
-            vd_path_msg.x_val = np.array(path_arr[:,0]).astype(float).tolist()
-            vd_path_msg.y_val = np.array(path_arr[:,1]).astype(float).tolist()
+            vd_path_msg.x_val = path_arr[:,0].astype(float).tolist()
+            vd_path_msg.y_val = path_arr[:,1].astype(float).tolist()
             self.explored_nodes_pub.publish(vd_path_msg)
             return response
         
         #print("path", self.path)
-        self.path_kd_tree = sp.KDTree(self.path)
+        self.path_kd_tree = sp.KDTree(self.path[:, 0:2])
         self.is_trajectory_generated = True
         response.message = "Global Path generated!"        
         self.traj_obj.create_path_funs(self.path)
         smooth_path = self.traj_obj.get_interpld_path()
 
-        path_arr = smooth_path 
+        path_arr =  np.array(smooth_path)
         vd_path_msg = VDPath()
-        vd_path_msg.x_val = np.array(path_arr[:,0]).astype(float).tolist()
-        vd_path_msg.y_val = np.array(path_arr[:,1]).astype(float).tolist()
+        vd_path_msg.x_val = path_arr[:,0].astype(float).tolist()
+        vd_path_msg.y_val = path_arr[:,1].astype(float).tolist()
         self.path_pub.publish(vd_path_msg)
 
-        path_arr = self.explored_nodes 
+        path_arr = np.array(self.explored_nodes) 
         vd_path_msg = VDPath()
-        vd_path_msg.x_val = np.array(path_arr[:,0]).astype(float).tolist()
-        vd_path_msg.y_val = np.array(path_arr[:,1]).astype(float).tolist()
+        vd_path_msg.x_val = path_arr[:,0].astype(float).tolist()
+        vd_path_msg.y_val = path_arr[:,1].astype(float).tolist()
         self.explored_nodes_pub.publish(vd_path_msg)
 
         return response
@@ -336,6 +380,7 @@ class GlobalPlanner(Node):
                 # x = waypoint.transform.location.x
                 # y = waypoint.transform.location.y
                 # yaw = waypoint.transform.rotation.yaw
+                #print("waypoints ", (x,y,yaw, self.ref_vel))
                 waypoints.append((x,y,yaw, self.ref_vel))            
             
         return waypoints, s_total   

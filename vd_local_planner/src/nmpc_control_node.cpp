@@ -134,8 +134,7 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     
     for (int i=0; i < kSamples; i++)
     { 
-      std::cout <<iterator->x << " " << iterator->y << " " << iterator->psi << " " <<
-       iterator->velocity << iterator->distance <<std::endl;
+      //std::cout <<iterator->x << " " << iterator->y << " " << iterator->psi << " " << iterator->velocity << iterator->distance <<std::endl;
        
       reference_states.col(i) << iterator->x,
                                   iterator->y, 
@@ -152,9 +151,8 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
   }
   else if(filt_reference_msg->poses.size() == 1)
   { 
-    std::cout << "Here ..";    
-    std::cout <<iterator->x << " " << iterator->y << " " << iterator->psi << " " <<
-       iterator->velocity << iterator->distance <<std::endl;
+    //std::cout << "Here ..";    
+    //std::cout <<iterator->x << " " << iterator->y << " " << iterator->psi << " " <<iterator->velocity << iterator->distance <<std::endl;
 
     this->ref_vel = filt_reference_msg->poses[0].velocity;
     reference_states = (Eigen::Matrix<double, kStateSize, 1>() << filt_reference_msg->poses[0].x,
@@ -289,7 +287,7 @@ void NMPCControlNodelet::publishPrediction()
   path_msg.header.stamp = clock_.now();
   path_msg.header.frame_id = frame_id_;
   geometry_msgs::msg::PoseStamped pose;
-  //std::cout << "starting here" << std::endl;
+  //std::cout << "Predicted values here" << std::endl;
   for (int i=0; i < kSamples; i++)
   { 
     //std::cout << " pred x " << reference_states(0,i) << " pred_y " << reference_states(1,i) << " pred_yaw " << reference_states(2,i) << " pred_vel " << reference_states(3,i) << '\n';
@@ -302,8 +300,11 @@ void NMPCControlNodelet::publishPrediction()
     pose.pose.orientation.x = 0;
     pose.pose.orientation.y = 0;
     pose.pose.orientation.z = 0;
+      
     path_msg.poses.push_back(pose);    
   }
+
+  
 
   pub_pred_traj_->publish(path_msg);
 }

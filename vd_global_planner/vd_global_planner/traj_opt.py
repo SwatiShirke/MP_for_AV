@@ -4,7 +4,7 @@ from scipy import sparse
 
 from matplotlib import pyplot as plt
 import osqp
-from scipy.interpolate import make_interp_spline
+from scipy.interpolate import make_interp_spline, interp2d
 
 class Trajecotry():
     def __init__(self, v_min, v_max, a_min, a_max, lat_acc_a_max):       
@@ -17,37 +17,37 @@ class Trajecotry():
         self.lat_acc_a_max = lat_acc_a_max 
 
 
-    def create_path_funs(self, path):
+    def create_path_funs(self, path_array):
         ##waypoints = [x, y, theta, kappa, s_length, speed]
-        path_array = np.array([[tuple1[0], tuple1[1]] for tuple1 in path])
+        """
+        path : 2d array with n * 2 dimension
+        """   
         print("creating path fun")
-        waypoints = []
-        last_del_y = 0
-        s_len_curr = 0
-        for i in range(len(path_array) -1):           
-            curr_pt = path_array[i]
-            next_pt = path_array[i+1]
-            diff_pt = next_pt -curr_pt            
-            yaw = np.arctan2(diff_pt[1], diff_pt[0]) #+ 2*np.pi) % (4*np.pi )  - 2*np.pi            
-            dist = np.linalg.norm(diff_pt,2)
+        waypoints = []       
+# 
 
-            s_len_next = dist + s_len_curr
-            if i== 0:
-                kappa = 0
-            else:                        
-                kappa = (yaw - last_yaw) / np.linalg.norm(last_diff,2)
+        # for i in range(len(path_array)):           
+        #     x = path_array[i,0]  
+        #     y = path_array[i,1]  
+        #     yaw =  path_array[i,2]           
+        #     dist = path_array[i,3]
+        #     vel = path_array[i,4 ]
+        #     steer = path_array[i, 5]
+        #     s_len_curr = dist + s_len_curr
+        #     if i== 0:
+        #         kappa = 0
+        #     else:                        
+        #         kappa = (yaw - last_yaw) / dist
 
-            last_yaw = yaw
-            last_diff = diff_pt            
-            x, y = path_array[i,0], path_array[i,1]            
-            waypoints.append([x,y,yaw, kappa,s_len_curr, 0])
-            s_len_curr = s_len_next
-        
-        self.track_length = s_len_curr
-        
-        ##add last point
-        waypoints.append([path_array[-1][0], path_array[-1][1], yaw, kappa, s_len_curr, 0])        
-        self.waypoints =  np.array( waypoints)   
+        #     last_yaw = yaw
+                       
+        #     x, y = path_array[i,0:2]           
+        #     waypoints.append([x,y,yaw, kappa, s_len_curr, vel, steer])
+               
+        self.track_length = path_array[-1, 3]
+
+            
+        self.waypoints = path_array #np.array( waypoints)   
         print("before interpolation")
         self.interploate()
 
@@ -60,8 +60,21 @@ class Trajecotry():
         
 
     def interploate(self):              
-        #self.traj_interpld = CubicSpline(self.waypoints[:, -2], self.waypoints[:, 0:4])    
-        self.traj_interpld = make_interp_spline(self.waypoints[:, -2], self.waypoints[:, 0:4], k=5)    
+            
+        #print("s_len",self.waypoints[0:50, 3])
+        #s_len = self.waypoints[:, 3]
+        
+        # vals, first_idx, counts = np.unique(s_len, return_index=True, return_counts=True)
+        # dup_vals = vals[counts > 1]        
+        # dup_indices = [np.where(s_len == v)[0] for v in dup_vals]
+
+        # print("dup_indices ", dup_indices)
+
+        #self.traj_interpld = make_interp_spline(self.waypoints[:, 3], self.waypoints[:, 0:3], k=5)  
+        
+         
+        self.traj_interpld = CubicSpline(self.waypoints[:, 3], self.waypoints[:, 0:3])
+        
         #testing
         
     def compute_speed_profile(self):

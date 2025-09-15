@@ -15,8 +15,7 @@ from scipy.integrate import solve_ivp
 from vd_global_planner import carla_utils 
 
 
-class Node:
-        
+class Node:       
         
     def __init__(self, grid_index,theta, velocity, steering_angle, cost,  parent_index, traj):        
         self.grid_index = grid_index
@@ -54,24 +53,24 @@ class a_star:
         self.vel_steps = vel_steps
         self.vel_min = vel_min
         self.vel_max = vel_max
-        self.steer_min = np.rad2deg(min_steer)
-        self.steer_max = np.rad2deg(max_steer)
+        self.steer_min = min_steer
+        self.steer_max = max_steer
         self.open_dict = {}
 
 
-    def get_path(self, goal_node, start_node ):
-        
+    def get_path(self, goal_node, start_node ):        
         node = goal_node
         path_list = []
         while node!= start_node:
             #ispdb.set_trace()
-            path_list.extend(node)
+            path_list.append(node)
             node = self.open_dict[node].parent_index
         path_list.append(start_node)
         path_list.reverse()
 
         traj = []
-        for node in path_list:
+        
+        for node in path_list:            
             traj.extend(self.open_dict[node].traj)
 
         return traj   
@@ -102,15 +101,19 @@ class a_star:
 
     def snap_to_resolution(self, node):
         x, y = node
-        return (np.round(x / self.grid_resolution) * self.grid_resolution, np.round(y / self.grid_resolution) * self.grid_resolution)
+        return (round(x) , round(y))
 
 
     def get_hybrid_a_star_neighbours(self, parent_node):
         """The logic for Hybrid A* simulation is built here.
         The model has 3 inputs = [accel, steer_l, steer_r]"""
-        velocity_steps = np.linspace(self.vel_min, self.vel_max, self.vel_steps)
+
+
+        velocity_steps = [self.vel_max] if self.vel_steps == 1 else np.linspace(self.vel_min, self.vel_max, self.vel_steps)
         steer_steps = np.linspace(self.steer_min, self.steer_max, self.angle_steps)
-        
+
+        # print("steer_steps", steer_steps)
+        # print("velocity_steps", velocity_steps)
         x_off, y_off = self.offset
         rows, cols = self.grid_map.shape 
         
@@ -119,7 +122,8 @@ class a_star:
         x_current, y_current = parent_node
 
         theta_current, vel_current, parent_cost = parent_obj.theta, parent_obj.velocity, parent_obj.cost
-        #print("parent_node", parent_node)
+        
+
         n_obj_list = []
         n_index_list = []
         trajectory_dict = {}
@@ -127,34 +131,32 @@ class a_star:
             for steer in steer_steps:                   
                     
                     U = [vel, steer]
-                    X = [x_current, y_current, theta_current,0 ]                   
+                    X0 = [x_current, y_current, theta_current,parent_cost ]                   
                     t_val = np.arange(0, self.simulation_time, self.eval_time)
-                    sol = solve_ivp(self.ackerman_steering,(0,self.simulation_time) , X, t_eval=t_val, 
+                    sol = solve_ivp(self.ackerman_steering,(0,self.simulation_time) , X0, t_eval=t_val, 
                                 args=(U,), method="RK45")
                     
-                    n, _ = sol.y.shape                    
-                    traj = np.transpose(sol.y)       
-                    x, y, theta, distance = traj[-1]     # extarct the position of the node, where the simulation reached 
+                    m, n = sol.y.shape                    
+                    traj = np.transpose(sol.y)                   
+                    traj = np.hstack((traj, np.ones((n,1)) * vel , np.ones((n,1)) *steer))    
+                    traj = traj[1:, :]              #removed to handle remove duplicate problem
+
+                    x, y, yaw, distance, vel, steer= traj[-1, :]     # extarct the position of the node, where the simulation reached 
                     node_index = self.snap_to_resolution((x,y))
 
                     if node_index == parent_node or node_index in n_index_list:
                         continue
                     
                     if ( x >= x_off and x < cols-x_off and y >= y_off and y < rows - y_off ):                        
-                        cost = abs(distance) +  parent_cost                        
-                        n_node = Node( node_index, theta, vel, steer ,cost ,parent_node, traj)
+                        cost = abs(distance)                        
+                        n_node = Node( node_index, yaw, vel, steer ,cost ,parent_node, traj)
                         n_obj_list.append(n_node)
                         trajectory_dict[node_index] = traj 
                         n_index_list.append(node_index) 
-             
-        
-        if parent_node[1] >= 119: 
-            print("parent node", parent_node, "cost", cost)                           
-            print("n_index_list", n_index_list)         
-        #rint("trajectory_dict", trajectory_dict)
-        # print("parent node", parent_node, "cost", cost)
-        # print("n_index_list", n_index_list)
 
+        print("parent node ", parent_node )
+        print("n_index_list ", n_index_list)
+     
         return n_obj_list
     
     def test_state_lattice_planner(self, parent_node):
@@ -219,8 +221,8 @@ class a_star:
         steer_l, steer_r: steering angle of left and right front wheel
 
         """    
-        x_pos, y_pos, theta, distance = X
-        vel, delta= U
+        x_pos, y_pos, yaw, distance = X
+        vel, steer= U
         
 
         # Rl =  self.lf / np.tan(steer_l)  + (self.width /2)      # left inner 
@@ -231,11 +233,10 @@ class a_star:
 
         # print("R", R)
         #print("beta", beta)
-        dt = [vel * np.cos(theta ),
-              vel * np.sin(theta),
-              vel / (self.lr + self.lr) * np.tan(delta),
-              vel
-        ]
+        dt = [vel * np.cos(yaw),
+              vel * np.sin(yaw),
+              vel / (self.lr + self.lr) * np.tan(steer),
+              vel]
         
         return dt
     
@@ -248,7 +249,7 @@ class a_star:
         closed_set = [node_index]
         """  
         x,y, yaw = start
-        start = self.snap_to_resolution( (x,y))    
+        start = self.snap_to_resolution((x,y)) 
         goal = self.snap_to_resolution( goal)
         print("start", start)
         print("goal", goal)
@@ -269,19 +270,17 @@ class a_star:
        
         #loop until goal found or queue empty
         while p_queue:
-            #print("queue ", list(p_queue.items()))
-            node,cost = p_queue.popitem() 
             
-            if node[1] > 119:
-                print("popped node", node) 
+            node,cost = p_queue.popitem() 
             explored_nodes.append(node)         
             closed_set.append(node)
             
             
+            
             if node == goal:
                 print("path found!")
-                path = self.get_path(self.open_dict, goal, start, [])                
-                return path
+                path = self.get_path(goal, start)                
+                return path, explored_nodes
             else:    
                          
                 neighbour_list = self.get_neighbours(node, is_hyrbid=True)    
@@ -290,9 +289,8 @@ class a_star:
                     
                     n_index =  n_obj.grid_index 
                     n_cost  =  n_obj.cost 
+                    traj = n_obj.traj 
 
-                    if n_index[1] > 119:
-                        print("n_index", n_index)
 
                     if n_index in closed_set:
                         continue  
@@ -303,14 +301,12 @@ class a_star:
                     else:
                         self.open_dict[n_index] = n_obj
                         n_old_cost = float('inf')                                           
+          
+                    if self.grid_map[ int((y - self.offset[1])/self.grid_resolution),int((x - self.offset[0])/self.grid_resolution)] == 0 and  n_cost < n_old_cost:                     
 
-                    if (n_index[1] > 118):
-                        print("map value ",  int((y - self.offset[1])/self.grid_resolution), int((x - self.offset[0])/self.grid_resolution) )           
-                    if self.grid_map[ int((y - self.offset[1])/self.grid_resolution),int((x - self.offset[0])/self.grid_resolution)] == 0 and  n_cost < n_old_cost:
-                        #print("here inside now node is", n_index, "cost ", n_cost)
-                    
                         self.open_dict[n_index].cost = n_cost 
                         self.open_dict[n_index].parent_index = node
+                        self.open_dict[n_index].traj = traj
                         total_cost = n_cost + self.cal_heuristic_cost(n_index, goal)
                         p_queue[n_index] = total_cost
         

@@ -196,44 +196,44 @@ def plot_vehicle_data(topic_data):
         plt.title("path")
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))
 
-    if topic_data['explored_nodes'] != []: 
-        grid_resolution = 0.25      
-        time, x, y = zip(*topic_data['explored_nodes'])         
-        x,y = np.array(x[0]), np.array(y[0]) 
-        print(len(x), len(y))    
-        path = np.hstack((x.reshape(-1,1),y.reshape(-1, 1)))
-        frames = [] 
+    # if topic_data['explored_nodes'] != []: 
+    #     grid_resolution = 0.25      
+    #     time, x, y = zip(*topic_data['explored_nodes'])         
+    #     x,y = np.array(x[0]), np.array(y[0]) 
+    #     print(len(x), len(y))    
+    #     path = np.hstack((x.reshape(-1,1),y.reshape(-1, 1)))
+    #     frames = [] 
 
-        # Create frames
-        for i in range(5000, len(x)):
-            fig, ax = plt.subplots(figsize=(5, 5))
+    #     # Create frames
+    #     for i in range(len(x)):
+    #         fig, ax = plt.subplots(figsize=(5, 5))
     
-            # Set axis limits based on the min/max of x and y
-            # ax.set_xlim(np.min(x), np.max(x))
-            # ax.set_ylim(np.min(y), np.max(y))
+    #         # Set axis limits based on the min/max of x and y
+    #         # ax.set_xlim(np.min(x), np.max(x))
+    #         # ax.set_ylim(np.min(y), np.max(y))
 
-            ax.set_xlim(np.min(x)-grid_resolution, np.max(x)+grid_resolution)
-            ax.set_ylim(np.min(y)-grid_resolution, np.max(y)+grid_resolution)
+    #         ax.set_xlim(np.min(x)-grid_resolution, np.max(x)+grid_resolution)
+    #         ax.set_ylim(np.min(y)-grid_resolution, np.max(y)+grid_resolution)
             
-            # Plot the explored nodes up to the current frame (green dots)
-            ax.plot(x[:i+1], y[:i+1], 'go', markersize=6)  
+    #         # Plot the explored nodes up to the current frame (green dots)
+    #         ax.plot(x[:i+1], y[:i+1], 'go', markersize=6)  
     
-            # Remove axis labels and ticks for a cleaner plot
-            ax.set_xticks(np.linspace(np.min(x), np.max(x), 10))
-            ax.set_yticks(np.linspace(np.min(y), np.max(y), 10))
+    #         # Remove axis labels and ticks for a cleaner plot
+    #         ax.set_xticks(np.linspace(np.min(x), np.max(x), 10))
+    #         ax.set_yticks(np.linspace(np.min(y), np.max(y), 10))
             
             
-            # Save the frame to memory
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png')
-            buf.seek(0)
-            frames.append(Image.open(buf))
-            plt.close()
+    #         # Save the frame to memory
+    #         buf = io.BytesIO()
+    #         plt.savefig(buf, format='png')
+    #         buf.seek(0)
+    #         frames.append(Image.open(buf))
+    #         plt.close()
     
-        # Save the frames as a GIF
-        frames[0].save('explored_nodes_points.gif', save_all=True, append_images=frames[1:], duration=300, loop=0, format='GIF')
+    #     # Save the frames as a GIF
+    #     frames[0].save('explored_nodes_points.gif', save_all=True, append_images=frames[1:], duration=300, loop=0, format='GIF')
 
-        print("GIF saved successfully!")
+    #     print("GIF saved successfully!")
 
         
 
