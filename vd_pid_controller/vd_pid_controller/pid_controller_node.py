@@ -61,7 +61,7 @@ class PIDPublisher(Node):
 
         pedals_interp = griddata(self.points, self.values, query_points, method='cubic')
         if np.isnan(pedals_interp):
-            accel_interp = griddata(self.points, self.values, query_points, method='nearest')
+            pedals_interp = griddata(self.points, self.values, query_points, method='nearest')
 
         return pedals_interp
 

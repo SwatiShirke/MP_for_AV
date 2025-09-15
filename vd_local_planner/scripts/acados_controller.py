@@ -8,8 +8,8 @@ from scipy.spatial.transform import Rotation as R
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
     vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
-    yaw_cost = ref_vec[2] - state_vec[2] #( 1 - np.cos(ref_vec[2] - state_vec[2]))**2  * weights[2]  #ref_vec[2] - state_vec[2] 
-    cost = pos_cost + yaw_cost       
+    yaw_cost =  ref_vec[2] - state_vec[2] #( 1 - np.cos(ref_vec[2] - state_vec[2]))**2  * weights[2]  #ref_vec[2] - state_vec[2] #
+    cost = pos_cost + yaw_cost   + vel_cost    
     return cost 
 
 
