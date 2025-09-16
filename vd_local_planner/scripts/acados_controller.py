@@ -8,8 +8,8 @@ from scipy.spatial.transform import Rotation as R
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
     vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
-    #yaw_cost =  ( 1 - np.cos(ca.fabs(ref_vec[2] - state_vec[2])))  * weights[2]
-    yaw_cost = (ref_vec[2] - state_vec[2])**2 * weights[2]
+    yaw_cost =  ( 1 - np.cos(ca.fabs(ref_vec[2] - state_vec[2])))  * weights[2]
+    #yaw_cost = (ref_vec[2] - state_vec[2])**2 * weights[2]
     cost = pos_cost + yaw_cost + vel_cost       
     return cost 
 
@@ -41,9 +41,9 @@ def acados_controller(N, Tf, lf, lr):
     min_str_angle_out = -0.7
     max_str_angle_out = 0.7
     vel_min = 0
-    vel_max = 30
+    vel_max = 5
     steer_rate = 0.01   #2.866242038 deg /sec
-    yaw_rate = 0.1cout
+    yaw_rate = 0.1
 
     model = ackerman_model(lf, lr)
     ocp.model = model
@@ -61,7 +61,7 @@ def acados_controller(N, Tf, lf, lr):
     unscale = 1
     #cost matricesq
     # x, y, yaw,  vel, s_len
-    Q_mat = unscale * ca.vertcat(100, 100, 100, 10, 0)
+    Q_mat = unscale * ca.vertcat(10, 10, 10, 10, 0)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
     Q_emat =  unscale * ca.vertcat(500, 500,  500, 500, 0) 
     control_rate_weight = ca.vertcat(100, 100, 100)

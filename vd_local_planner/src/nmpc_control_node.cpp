@@ -287,10 +287,10 @@ void NMPCControlNodelet::publishPrediction()
   path_msg.header.stamp = clock_.now();
   path_msg.header.frame_id = frame_id_;
   geometry_msgs::msg::PoseStamped pose;
-  //std::cout << "Predicted values here" << std::endl;
+  std::cout << "Predicted values here" << std::endl;
   for (int i=0; i < kSamples; i++)
   { 
-    //std::cout << " pred x " << reference_states(0,i) << " pred_y " << reference_states(1,i) << " pred_yaw " << reference_states(2,i) << " pred_vel " << reference_states(3,i) << '\n';
+    std::cout << " pred x " << reference_states(0,i) << " pred_y " << reference_states(1,i) << " pred_yaw " << reference_states(2,i) << " pred_vel " << reference_states(3,i) << '\n';
     pose.header.stamp = clock_.now();
     pose.header.frame_id = frame_id_;
     pose.pose.position.x = reference_states(0,i);

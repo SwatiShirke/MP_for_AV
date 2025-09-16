@@ -197,7 +197,7 @@ class GlobalPlanner(Node):
         self.path = np.array(path)
         self.explored_nodes = np.array(explored_nodes)
 
-        if self.path == []:
+        if self.path.size == []:
             response.message = "Global Path not found!"
 
             #send explored nodes
@@ -303,152 +303,148 @@ class GlobalPlanner(Node):
 
         # Position
         odom_msg.x = x
-        odom_msg.y = y        
+        odom_msg.y = y   
+        yaw = (math.radians(yaw)  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi   
         odom_msg.psi = yaw
         odom_msg.velocity = vel
         odom_msg.distance = s_current
         # Assigning longitudinal and lateral velocities to odometry message (optional fields)        
         self.odom_pub.publish(odom_msg)  
 
-    def publish_waypoints(self, N=10):       
-        #Retrieve waypoints        
-        waypoints, s_total = self.get_n_waypoints()
+    # def publish_waypoints(self, N=10):       
+    #     #Retrieve waypoints        
+    #     waypoints, s_total = self.get_n_waypoints()
         
-        # print("*******************printing waypoints***************************")
-        # print(waypoints)
-        #Create PoseArray for waypoints
-        path_msg = VDtraj()
-        # current_time = self.sim_clock.now()        
-        # path_msg.header.stamp = current_time.to_msg()
-        # path_msg.header.frame_id = 'map'
-
-        way_point_list = []        
-        for i, wp in enumerate(waypoints):
-            if i ==0:
-                self.ref_waypoint = wp
-
-            pose_stamped = VDpose()
-            # pose_stamped.header = path_msg.header
-            # current_time = self.sim_clock.now()        
-            # pose_stamped.header.stamp = current_time.to_msg()
-            pose_stamped.x = float(wp[0])  #x pose
-            pose_stamped.y = float(wp[1])  #y pose
-            pose_stamped.psi = float(wp[2])  # s_total 
-            #yaw =  #(math.radians(float(wp[2])) + 2*np.pi) % (4*np.pi) - 2*np.pi              
-            pose_stamped.velocity = float(wp[3])
-            pose_stamped.total_distance = s_total  ##total track length     
-            path_msg.poses.append(pose_stamped) 
-
-        self.waypoints_pub.publish(path_msg)
-
-
-    def is_goal_reached(self, point):
-        dist = np.sqrt((self.goal[0] - point[0])**2 + (self.goal[1] - point[1])**2)
-        #print("dist", dist)
-        if dist <= self.goal_margin:
-            return True
-        else:
-            return False
-
-
-    def get_n_waypoints(self):
-        x,y, yaw, vel, s_current = self.get_current_state(s_curr_flag = True)
-        #print("current state yaw", yaw)        
-        goal_flag = self.is_goal_reached((x,y))              
-        vel = self.ref_vel
-        waypoints = []
-        
-        s_total = self.traj_obj.track_length
-        s_init = s_current
-        
-        if goal_flag:
-            point = self.traj_obj.traj_interpld(s_init)
-            yaw = point[2]
-            waypoints = [(self.goal[0], self.goal[1], yaw, 0)]
-            
-        else:                        
-                     
-            for i in range(1, self.N+1):  
-                dist = max(i * vel * (self.Tf /self.N), 1)         
-                s_new = s_init + dist
-                point = self.traj_obj.traj_interpld(s_new)
-                x = point[0]#self.x_interpld(s_new)
-                y = point[1]#self.y_interpld(s_new)
-                yaw = point[2]#self.yaw_interpld(s_new)
-                #location = carla.Location(x=float(x), y=float(y), z=0.0)
-                # waypoint = self.map.get_waypoint(location)
-                # x = waypoint.transform.location.x
-                # y = waypoint.transform.location.y
-                # yaw = waypoint.transform.rotation.yaw
-                #print("waypoints ", (x,y,yaw, self.ref_vel))
-                waypoints.append((x,y,yaw, self.ref_vel))            
-            
-        return waypoints, s_total   
-
-
-    # def get_time_spanned_waypoints(self):
-    #     """
-    #     Generate waypoints spaced at consistent time intervals.
-    
-    #     Args:
-    #         vehicle: CARLA vehicle object
-    #         map: CARLA map object
-    #         total_time: Total time horizon (seconds)
-    #         delta_t: Time interval between waypoints (seconds)
-    
-    #     Returns:
-    #         List of time-spanned waypoints
-    #     """
-    #     map = self.vehicle.get_world().get_map()
-    #     current_waypoint = map.get_waypoint(self.vehicle.get_transform().location)
-    #     waypoints = []
-    #     #print("starting here")
-    #     for _ in range(int(self.N)):
-    #         velocity = self.vehicle.get_velocity()
-    #         forward_vector = self.vehicle.get_transform().get_forward_vector()
-    #         longitudinal_speed = (velocity.x * forward_vector.x +
-    #                               velocity.y * forward_vector.y +
-    #                               velocity.z * forward_vector.z)
-    #         # Calculate the distance to the next waypoint
-    #         distance = max(longitudinal_speed * self.Tf / self.N, 1 ) # Ensure non-zero distance
-    #         #print("dist ", distance)
-    #         next_waypoints = current_waypoint.next(distance)
-    #         #print("next wp :",next_waypoints[0].transform.location.x, next_waypoints[0].transform.location.y  )
-        
-    #         if next_waypoints:
-    #             current_waypoint = next_waypoints[0]  # Use the first waypoint in the list
-    #             waypoints.append(current_waypoint)
-    #         else:
-    #             break  # No more waypoints available (end of the road)
-            
-    #     return waypoints
-
-
-    # def publish_waypoints(self, N=10):               
-    #     # Retrieve waypoints
-    #     waypoints = self.get_time_spanned_waypoints()
+    #     # print("*******************printing waypoints***************************")
+    #     # print(waypoints)
     #     #Create PoseArray for waypoints
     #     path_msg = VDtraj()
-    #     current_time = self.sim_clock.now()        
+    #     # current_time = self.sim_clock.now()        
     #     # path_msg.header.stamp = current_time.to_msg()
     #     # path_msg.header.frame_id = 'map'
 
-    #     way_point_list = []
+    #     way_point_list = []        
     #     for i, wp in enumerate(waypoints):
     #         if i ==0:
-    #             self.ref_waypoint = wp.transform
+    #             self.ref_waypoint = wp
 
     #         pose_stamped = VDpose()
     #         # pose_stamped.header = path_msg.header
-    #         current_time = self.sim_clock.now()        
+    #         # current_time = self.sim_clock.now()        
     #         # pose_stamped.header.stamp = current_time.to_msg()
-    #         pose_stamped.x = wp.transform.location.x
-    #         pose_stamped.y = wp.transform.location.y
-    #         pose_stamped.psi = (math.radians(wp.transform.rotation.yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi
-    #         pose_stamped.velocity = self.ref_vel   
-    #         pose_stamped.total_distance = 0.0        
-    #         path_msg.poses.append(pose_stamped)  
+    #         pose_stamped.x = float(wp[0])  #x pose
+    #         pose_stamped.y = float(wp[1])  #y pose
+    #         pose_stamped.psi = float(wp[2])  # s_total 
+    #         #yaw =  #(math.radians(float(wp[2])) + 2*np.pi) % (4*np.pi) - 2*np.pi              
+    #         pose_stamped.velocity = float(wp[3])
+    #         pose_stamped.total_distance = s_total  ##total track length     
+    #         path_msg.poses.append(pose_stamped) 
+
     #     self.waypoints_pub.publish(path_msg)
+
+
+    # def is_goal_reached(self, point):
+    #     dist = np.sqrt((self.goal[0] - point[0])**2 + (self.goal[1] - point[1])**2)
+    #     #print("dist", dist)
+    #     if dist <= self.goal_margin:
+    #         return True
+    #     else:
+    #         return False
+
+
+    # def get_n_waypoints(self):
+    #     x,y, yaw, vel, s_current = self.get_current_state(s_curr_flag = True)
+    #     #print("current state yaw", yaw)        
+    #     goal_flag = self.is_goal_reached((x,y))              
+    #     vel = self.ref_vel
+    #     waypoints = []
+        
+    #     s_total = self.traj_obj.track_length
+    #     s_init = s_current
+        
+    #     if goal_flag:
+    #         point = self.traj_obj.traj_interpld(s_init)
+    #         yaw = point[2]
+    #         waypoints = [(self.goal[0], self.goal[1], yaw, 0)]
+            
+    #     else:                        
+                     
+    #         for i in range(1, self.N+1):  
+    #             dist = max(i * vel * (self.Tf /self.N), 1)         
+    #             s_new = s_init + dist
+    #             point = self.traj_obj.traj_interpld(s_new)
+    #             x = point[0]#self.x_interpld(s_new)
+    #             y = point[1]#self.y_interpld(s_new)                
+    #             yaw = (math.radians(point[2])  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
+    #             print("waypoints ", (x,y,yaw, self.ref_vel))
+    #             waypoints.append((x,y,yaw, self.ref_vel))            
+            
+    #     return waypoints, s_total   
+
+
+    def get_time_spanned_waypoints(self):
+        """
+        Generate waypoints spaced at consistent time intervals.
+    
+        Args:
+            vehicle: CARLA vehicle object
+            map: CARLA map object
+            total_time: Total time horizon (seconds)
+            delta_t: Time interval between waypoints (seconds)
+    
+        Returns:
+            List of time-spanned waypoints
+        """
+        map = self.vehicle.get_world().get_map()
+        current_waypoint = map.get_waypoint(self.vehicle.get_transform().location)
+        waypoints = []
+        #print("starting here")
+        for _ in range(int(self.N)):
+            velocity = self.vehicle.get_velocity()
+            forward_vector = self.vehicle.get_transform().get_forward_vector()
+            longitudinal_speed = (velocity.x * forward_vector.x +
+                                  velocity.y * forward_vector.y +
+                                  velocity.z * forward_vector.z)
+            # Calculate the distance to the next waypoint
+            distance = max(longitudinal_speed * self.Tf / self.N, 1 ) # Ensure non-zero distance
+            #print("dist ", distance)
+            next_waypoints = current_waypoint.next(distance)
+            #print("next wp :",next_waypoints[0].transform.location.x, next_waypoints[0].transform.location.y  )
+        
+            if next_waypoints:
+                current_waypoint = next_waypoints[0]  # Use the first waypoint in the list
+                waypoints.append(current_waypoint)
+            else:
+                break  # No more waypoints available (end of the road)
+            
+        return waypoints
+
+
+    def publish_waypoints(self, N=10):               
+        # Retrieve waypoints
+        waypoints = self.get_time_spanned_waypoints()
+        #Create PoseArray for waypoints
+        path_msg = VDtraj()
+        current_time = self.sim_clock.now()        
+        # path_msg.header.stamp = current_time.to_msg()
+        # path_msg.header.frame_id = 'map'
+
+        way_point_list = []
+        for i, wp in enumerate(waypoints):
+            if i ==0:
+                self.ref_waypoint = [wp.transform.location.x, wp.transform.location.y, wp.transform.rotation.yaw, 0]
+
+            pose_stamped = VDpose()
+            # pose_stamped.header = path_msg.header
+            current_time = self.sim_clock.now()        
+            # pose_stamped.header.stamp = current_time.to_msg()
+            pose_stamped.x = wp.transform.location.x
+            pose_stamped.y = wp.transform.location.y
+            pose_stamped.psi = (math.radians(wp.transform.rotation.yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi
+            pose_stamped.velocity = self.ref_vel   
+            pose_stamped.total_distance = 0.0        
+            path_msg.poses.append(pose_stamped)  
+        self.waypoints_pub.publish(path_msg)
 
 
     def cal_error(self):

@@ -546,7 +546,7 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
     
     lbx[0] = -6.283185307179586;
     ubx[0] = 6.283185307179586;
-    ubx[1] = 30;
+    ubx[1] = 5;
 
     for (int i = 1; i < N; i++)
     {

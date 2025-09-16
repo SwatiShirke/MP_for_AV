@@ -32,7 +32,7 @@ def ackerman_model(lf, lr):
     delta = (steer_angle_in + steer_angle_out)/2
     u = vertcat(accel, steer_angle_in, steer_angle_out)
 
-    beta = atan2(lr *  tan(delta), (lf + lr))
+    beta = arctan(lr *  tan(delta)/(lf + lr))
     
     #system dynamics/kinematics
     f_expl =vertcat(Vf * np.cos(theta + beta),
