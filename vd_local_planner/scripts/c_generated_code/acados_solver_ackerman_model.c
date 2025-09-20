@@ -234,7 +234,7 @@ static ocp_nlp_dims* ackerman_model_acados_create_setup_dimensions(ackerman_mode
     nbx[0] = NBX0;
     nsbx[0] = 0;
     ns[0] = NS0;
-    nbxe[0] = 5;
+    nbxe[0] = 4;
     ny[0] = NY0;
     nh[0] = NH0;
     nsh[0] = NSH0;
@@ -422,7 +422,7 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
         ackerman_model_acados_update_time_steps(capsule, N, new_time_steps);
     }
     else
-    {double time_step = 0.2;
+    {double time_step = 0.1;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
@@ -471,7 +471,6 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
     idxbx0[1] = 1;
     idxbx0[2] = 2;
     idxbx0[3] = 3;
-    idxbx0[4] = 4;
 
     double* lubx0 = calloc(2*NBX0, sizeof(double));
     double* lbx0 = lubx0;
@@ -484,13 +483,12 @@ void ackerman_model_acados_setup_nlp_in(ackerman_model_solver_capsule* capsule, 
     free(idxbx0);
     free(lubx0);
     // idxbxe_0
-    int* idxbxe_0 = malloc(5 * sizeof(int));
+    int* idxbxe_0 = malloc(4 * sizeof(int));
     
     idxbxe_0[0] = 0;
     idxbxe_0[1] = 1;
     idxbxe_0[2] = 2;
     idxbxe_0[3] = 3;
-    idxbxe_0[4] = 4;
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "idxbxe", idxbxe_0);
     free(idxbxe_0);
 
@@ -855,7 +853,7 @@ int ackerman_model_acados_update_params(ackerman_model_solver_capsule* capsule, 
 {
     int solver_status = 0;
 
-    int casadi_np = 9;
+    int casadi_np = 7;
     if (casadi_np != np) {
         printf("acados_update_params: trying to set %i parameters for external functions."
             " External function has %i parameters. Exiting.\n", np, casadi_np);

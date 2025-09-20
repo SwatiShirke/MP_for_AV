@@ -68,6 +68,8 @@ class a_star:
         path_list.append(start_node)
         path_list.reverse()
 
+        
+
         traj = []
         
         for node in path_list:            
@@ -154,8 +156,8 @@ class a_star:
                         trajectory_dict[node_index] = traj 
                         n_index_list.append(node_index) 
 
-        print("parent node ", parent_node )
-        print("n_index_list ", n_index_list)
+        # print("parent node ", parent_node )
+        # print("n_index_list ", n_index_list)
      
         return n_obj_list
     
@@ -229,13 +231,13 @@ class a_star:
         # Rr =  self.lr / np.tan(steer_r)  - (self.width /2)
         # R = (Rl + Rr)/2
 
-        #beta = np.arctan2(self.lr *  np.tan(delta), (self.lf + self.lr))
+        beta = np.arctan2(self.lr *  np.tan(steer), (self.lf + self.lr))
 
         # print("R", R)
         #print("beta", beta)
-        dt = [vel * np.cos(yaw),
-              vel * np.sin(yaw),
-              vel / (self.lr + self.lr) * np.tan(steer),
+        dt = [vel * np.cos(yaw + beta),
+              vel * np.sin(yaw + beta),
+              vel / (self.lr) * np.sin(beta),
               vel]
         
         return dt
@@ -251,7 +253,7 @@ class a_star:
         x,y, yaw = start
         start = self.snap_to_resolution((x,y)) 
         goal = self.snap_to_resolution( goal)
-        print("start", start)
+        print("start", x," ", y," ",  yaw )
         print("goal", goal)
 
         p_queue = heapdict()   

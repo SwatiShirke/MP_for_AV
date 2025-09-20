@@ -1,7 +1,7 @@
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
-from vd_msgs.msg import VDControlCMD, VDstate, VDtraj
+from vd_msgs.msg import VDControlCMD, VDstate, VDtraj, VDpose
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy
 from nav_msgs.msg import Path, Odometry
 from rclpy.qos import QoSProfile, QoSHistoryPolicy, ReliabilityPolicy, DurabilityPolicy
@@ -16,12 +16,9 @@ class PIDPublisher(Node):
 
     def __init__(self):
         super().__init__('pid_publisher')
-        self.qos_profile = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=1, reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE)
-        self.cmd_publisher = self.create_publisher(VDControlCMD, 'pid_control_cmd', self.qos_profile)
-        self.state_sub = self.create_subscription(Odometry, '/carla/ego_vehicle/odometry',self.state_cb, self.qos_profile)
-        self.state_sub  # prevent unused variable warning
-        # self.traj_sub = self.create_subscription(Path, '/carla/ego_vehicle/waypoints', self.traj_cb, self.qos_profile)
-        # self.traj_sub  # prevent unused variable warning
+        self.qos_profile = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=1, reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE)        
+        self.state_sub = self.create_subscription(VDpose, '/carla/ego_vehicle/odometry',self.state_cb, self.qos_profile)
+        self.state_sub  # prevent unused variable warning        
         self.mpc_sub = self.create_subscription(VDControlCMD, 'mpc_cmd', self.mpc_cmd_cb, self.qos_profile)
         self.mpc_sub  # prevent unused variable warning
         self.pub_control_cmd = self.create_publisher(CarlaEgoVehicleControl,'/carla/ego_vehicle/vehicle_control_cmd',self.qos_profile)
@@ -29,7 +26,7 @@ class PIDPublisher(Node):
 
         self.ref_vel = 0
         self.current_vel = 0
-        self.Kp = 1.0
+        self.Kp = 0.5
         self.Ki = 0.01
         self.Kd = 0.2
         self.cumm_error = 0
@@ -46,9 +43,8 @@ class PIDPublisher(Node):
         
 
     def create_interpld_obj(self, path):
-        df = pd.read_csv(path)    
-        # Prepare points array of shape (N,2): [velocity, acceleration]
-        #self.points = np.vstack((df['velocity'].values, df['acceleration'].values)).T
+        df = pd.read_csv(path)   
+       
         self.points = np.column_stack((df['velocity'].values, df['acceleration'].values))
         # print("self.points", self.points[0])
         # print("shape", self.points.shape)
@@ -65,9 +61,9 @@ class PIDPublisher(Node):
 
         return pedals_interp
 
-    def state_cb(self, msg):
-        self.current_vel = msg.twist.twist.linear.x
-        
+    def state_cb(self, msg):               
+        self.current_vel = msg.velocity
+         
         
 
     def mpc_cmd_cb(self, msg):
@@ -75,11 +71,11 @@ class PIDPublisher(Node):
         self.ref_accel = msg.acceleration  
         self.steering_angle = msg.steering_angle
 
-        #print(" ")
+        # print(" ")
         # print("self.ref_vel", self.ref_vel)
         # print("self.ref_accel", self.ref_accel)
-        #print("self.steering_angle", self.steering_angle)
-        #print("self.currentvel", self.current_vel)
+        # print("self.steering_angle", self.steering_angle)
+        # print("self.currentvel", self.current_vel)
         #apply feedforward here
         ff_cmd = self.interpolate_pedal(self.current_vel,self.ref_accel)
         
@@ -122,32 +118,6 @@ class PIDPublisher(Node):
 
         self.pub_control_cmd.publish(msg)
         
-
-        #publish data to carla 
-
-    # def traj_cb(self, msg):        
-    #     self.ref_vel = msg.poses[0].pose.orientation.w
-    #     error = self.ref_vel - self.current_vel
-    #     # print("curr_vel",self.current_vel )
-    #     # print("self.ref_vel",self.ref_vel)
-    #     # print("error", error)
-    #     self.ref_max = self.ref_vel + self.vel_delta
-    #     self.ref_min = self.ref_vel - self.vel_delta
-    #     if (self.current_vel >= self.ref_min and self.current_vel <= self.ref_max):
-    #         accel_in = self.last_accel
-    #     else:
-    #         accel_in = self.Kp * error + self.Ki * self.cumm_error + self.Kd * (error - self.last_error)
-    #         self.cumm_error += error
-    #         self.last_error = error
-    #         accel_cmd = self.last_accel + accel_in #max(self.MAX_DECEL, min(accel_in, self.MAX_ACCEL))
-
-    #     cmd_msg = VDControlCMD()
-    #     cmd_msg.acceleration = accel_cmd
-    #     cmd_msg.steering_angle = 0.0        
-    #     self.cmd_publisher.publish(cmd_msg)
-    #     self.last_accel = accel_in
-        
-
 
 
 def main(args=None):

@@ -53,7 +53,7 @@ class Trajecotry():
 
     def get_interpld_path(self):
         s_min, s_max = 0, self.track_length
-        s_points = np.linspace(0,self.track_length, 1000 )
+        s_points = np.linspace(0,self.track_length, 20000 )
         points = self.traj_interpld(s_points)
         print("points", points[:, 0:2]) 
         return points

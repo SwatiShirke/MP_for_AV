@@ -34,6 +34,9 @@ class GlobalPlanner(Node):
 
 
         #map settings
+        self.lr = 2.56/2     # l = 3.86 m, w = 1.73 m 
+        self.lf = 2.56/2
+        self.vehicle_width = 1.744
         self.map = self.world.get_map()
         self.grid_resolution = 3.00    
         self.buffer = self.grid_resolution *20       
@@ -43,9 +46,7 @@ class GlobalPlanner(Node):
         ##planner settings        
         self.path = []      
         self.trajectory = []        #(x,y,theta)
-        self.lr = 2.56/2     # l = 3.86 m, w = 1.73 m 
-        self.lf = 2.56/2
-        self.width = 1.5
+        
         self.vel_min = - self.ref_vel
         self.vel_max = self.ref_vel
         self.min_steer = np.deg2rad(-60)
@@ -54,7 +55,7 @@ class GlobalPlanner(Node):
         self.angle_steps = 11
         self.sim_time = 1.00
         self.eval_time = 0.01
-        self.planner = a_star(self.grid_map, self.grid_resolution, self.offset, self.lr, self.lr, self.width, 
+        self.planner = a_star(self.grid_map, self.grid_resolution, self.offset, self.lr, self.lr, self.vehicle_width, 
                               self.vel_min, self.vel_max, self.min_steer, self.max_steer, self.vel_steps, self.angle_steps, self.sim_time, self.eval_time)
             
         self.is_trajectory_generated = False
@@ -66,7 +67,7 @@ class GlobalPlanner(Node):
 
         ## MPC settings
         self.N = 10         #horizon  steps
-        self.Tf = 2        # horizon time
+        self.Tf = 1        # horizon time
         self.time_period = 0.01 # timer period f = 100Hz 
 
         ##ROS pub sub
@@ -88,6 +89,8 @@ class GlobalPlanner(Node):
         self.traj_obj = Trajecotry(self.v_min,self.v_max, self.a_min, self.a_min , self.lateral_accel)
         self.ref_waypoint = None 
         self.current_loc = None
+        self.s_current = 0
+        self.last_velocity = 0 
         
 
     def get_vehicle(self):             
@@ -110,9 +113,11 @@ class GlobalPlanner(Node):
         """
         Expand a CARLA waypoint into a set of points across full lane width.
         """
+        lateral_res = self.grid_resolution
+
         loc = wp.transform.location
         yaw = math.radians(wp.transform.rotation.yaw)
-        half_width = wp.lane_width * 0.5
+        half_width = wp.lane_width * 0.5  #- self.vehicle_width/2
 
         # Perpendicular unit vector to lane heading
         nx = math.cos(yaw + math.pi / 2.0)
@@ -122,18 +127,21 @@ class GlobalPlanner(Node):
         lane_points = []
         for i in range(num_samples):
             offset = -half_width + i * lateral_res
-            px = loc.x + nx * offset
+            px = loc.x + nx * offset 
             py = loc.y + ny * offset
             lane_points.append((px, py))
         return lane_points
 
     def get_grid_map(self):
+
+        ##get all free points at the center of all lanes
         waypoints = self.map.generate_waypoints(distance = self.grid_resolution) 
 
+        ##from lane width find out all free points on the lanes/roads
         free_points = []
         for wp in waypoints:
             if wp.lane_type == carla.LaneType.Driving:
-                lane_pts = self.expand_waypoint_to_lane_points(wp, self.grid_resolution)
+                lane_pts = self.expand_waypoint_to_lane_points(wp)
                 free_points.extend(lane_pts)
 
         free_points = np.array(free_points)
@@ -161,21 +169,59 @@ class GlobalPlanner(Node):
                
             grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]  = 0
             
-            # if (x_pos > -61.50 and x_pos <= -61.25  and y_pos > 24.25 and y_pos <=24.50 ):
-            #     print("indexes ", int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution))
-        
-        # temp_node = (-43.5, 130.0)
+ 
 
-        # test_nodes = [(-43.25, 130.75), (-43.5, 131.0), (-43.75, 131.0), (-43.75, 130.75), (-44.25, 130.0), 
-        #               (-44.0, 130.75), (-43.0, 130.25), (-43.0, 129.25), (-43.25, 129.25), (-43.25, 129.0), (-43.5, 129.0), (-44.0, 129.75), (-43.75, 129.25), (-42.75, 130.0)]
-        # for node in test_nodes:
-        #     x_pos, y_pos = node
-        #     map_value = grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]
-        #     print("node", node, "map_value ", map_value)
-        # # print("indexes", int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution))
-        # map_value = grid_map[390, 231]
         
-        print("map size ",grid_map.shape )
+
+
+        #logic for vehicle collision avoidance to be shifted to MPC
+        # actors = self.world.get_actors()
+        # vehicles = actors.filter("vehicle.*")
+        #walkers  = actors.filter("walker.pedestrian.*")
+        # dyn_actors = list(vehicles) + list(walkers)
+        
+        # for actor in dyn_actors:
+        #     # if actor.attributes.get('role_name') == "obstacle":
+        #     #     print("obstacle found!")
+            
+        #     bb = actor.bounding_box
+        #     tf = actor.get_transform()
+        #     location = tf.location 
+            
+
+        #     print("location  ", tf)
+        #     # Corners of bounding box in local coords
+        #     extent = bb.extent
+        #     corners = [
+        #         carla.Location(x= location.x + extent.x, y= location.y + extent.y),
+        #         carla.Location(x= location.x + extent.x, y= location.y - extent.y),
+        #         carla.Location(x= location.x -extent.x, y= location.y + extent.y),
+        #         carla.Location(x= location.x -extent.x, y= location.y - extent.y)
+        #     ]
+        #     for i, c in enumerate(corners):
+        #         print(f"Corner {i}: x={c.x:.2f}, y={c.y:.2f}, z={c.z:.2f}")
+
+
+        #     ## calculate indices  
+        #     ## (center_value +- bounding box(lenght/ width) +- vehicle_width   ) / resolution 
+        #     ## added margin around vehicle with self.vehicle_width/2
+        #     x_idx_min = int(((location.x - extent.x - self.vehicle_width /2) - x_min ) / self.grid_resolution)
+        #     x_idx_max = int(((location.x  + extent.x + self.vehicle_width/2) - x_min ) / self.grid_resolution)
+
+        #     y_idx_min = int(((location.y - extent.y - self.vehicle_width/2 ) - y_min ) / self.grid_resolution)
+        #     y_idx_max = int(((location.y + extent.y + self.vehicle_width/2 ) - y_min ) / self.grid_resolution)
+
+        #     # print("x idx ", x_idx_min, x_idx_max  )
+        #     # print("y idx ", y_idx_min, y_idx_max )
+
+        #     for x_i in range(x_idx_min, x_idx_max +1):
+        #         for y_i in range(y_idx_min, y_idx_max+1):
+        #            grid_map[y_i, x_i] = 1 
+
+
+
+    
+
 
         self.grid_map = grid_map 
         return grid_map, offset 
@@ -191,7 +237,12 @@ class GlobalPlanner(Node):
         x,y, yaw, vel = self.get_current_state()
         self.start = (x,y, yaw)
         self.goal = (request.x,request.y)
+        start_time = time.time()
+        print("start time", start_time )
         path, explored_nodes = self.planner.a_star(self.start, self.goal)
+        end_time = time.time() 
+        print("end ", end_time )
+        print("time ", end_time - start_time)
         
 
         self.path = np.array(path)
@@ -208,12 +259,14 @@ class GlobalPlanner(Node):
             self.explored_nodes_pub.publish(vd_path_msg)
             return response
         
-        #print("path", self.path)
+        #print("path", path)
         self.path_kd_tree = sp.KDTree(self.path[:, 0:2])
         self.is_trajectory_generated = True
         response.message = "Global Path generated!"        
         self.traj_obj.create_path_funs(self.path)
         smooth_path = self.traj_obj.get_interpld_path()
+
+        print("smooth path :" , smooth_path[0:100, 0:3])
 
         path_arr =  np.array(smooth_path)
         vd_path_msg = VDPath()
@@ -279,20 +332,27 @@ class GlobalPlanner(Node):
         longitudinal_velocity = (vehicle_velocity.x * forward_vector.x +
                                  vehicle_velocity.y * forward_vector.y )
         
+        
         x = self.vehicle_transform.location.x
         y = self.vehicle_transform.location.y        
-        yaw = np.deg2rad(self.vehicle_transform.rotation.yaw)
+        yaw = math.radians(self.vehicle_transform.rotation.yaw)
 
-        if s_curr_flag == True:
-            _, index = self.path_kd_tree.query([x,y], 1)
-            s_current = self.traj_obj.waypoints[index][4] 
-            return (x, y, yaw, longitudinal_velocity, s_current)
-        else:
-            return (x, y, yaw, longitudinal_velocity)
+        #print("current location", x, " ", y)
+
+        # if s_curr_flag == True:
+        #     _, index = self.path_kd_tree.query([x,y], 1)
+        #     s_current = self.traj_obj.waypoints[index][4] 
+
+        #     print("index", index)
+        #     print("s_current", s_current)
+            
+
+        return (x, y, yaw, longitudinal_velocity)
+       
         
 
     def publish_odometry(self): 
-        x,y, yaw, vel, s_current = self.get_current_state(s_curr_flag = True)
+        x,y, yaw, vel = self.get_current_state(s_curr_flag = False)
         self.current_loc = self.vehicle.get_transform()
         odom_msg = VDpose()
         # current_time = self.sim_clock.now()
@@ -304,155 +364,156 @@ class GlobalPlanner(Node):
         # Position
         odom_msg.x = x
         odom_msg.y = y   
-        yaw = (math.radians(yaw)  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi   
+        #yaw = yaw #(yaw  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi   
         odom_msg.psi = yaw
         odom_msg.velocity = vel
-        odom_msg.distance = s_current
+        #odom_msg.distance = s_current
         # Assigning longitudinal and lateral velocities to odometry message (optional fields)        
         self.odom_pub.publish(odom_msg)  
 
-    # def publish_waypoints(self, N=10):       
-    #     #Retrieve waypoints        
-    #     waypoints, s_total = self.get_n_waypoints()
+    def publish_waypoints(self, N=10):       
+        #Retrieve waypoints        
+        waypoints, s_total = self.get_n_waypoints()
         
-    #     # print("*******************printing waypoints***************************")
-    #     # print(waypoints)
-    #     #Create PoseArray for waypoints
-    #     path_msg = VDtraj()
-    #     # current_time = self.sim_clock.now()        
-    #     # path_msg.header.stamp = current_time.to_msg()
-    #     # path_msg.header.frame_id = 'map'
-
-    #     way_point_list = []        
-    #     for i, wp in enumerate(waypoints):
-    #         if i ==0:
-    #             self.ref_waypoint = wp
-
-    #         pose_stamped = VDpose()
-    #         # pose_stamped.header = path_msg.header
-    #         # current_time = self.sim_clock.now()        
-    #         # pose_stamped.header.stamp = current_time.to_msg()
-    #         pose_stamped.x = float(wp[0])  #x pose
-    #         pose_stamped.y = float(wp[1])  #y pose
-    #         pose_stamped.psi = float(wp[2])  # s_total 
-    #         #yaw =  #(math.radians(float(wp[2])) + 2*np.pi) % (4*np.pi) - 2*np.pi              
-    #         pose_stamped.velocity = float(wp[3])
-    #         pose_stamped.total_distance = s_total  ##total track length     
-    #         path_msg.poses.append(pose_stamped) 
-
-    #     self.waypoints_pub.publish(path_msg)
-
-
-    # def is_goal_reached(self, point):
-    #     dist = np.sqrt((self.goal[0] - point[0])**2 + (self.goal[1] - point[1])**2)
-    #     #print("dist", dist)
-    #     if dist <= self.goal_margin:
-    #         return True
-    #     else:
-    #         return False
-
-
-    # def get_n_waypoints(self):
-    #     x,y, yaw, vel, s_current = self.get_current_state(s_curr_flag = True)
-    #     #print("current state yaw", yaw)        
-    #     goal_flag = self.is_goal_reached((x,y))              
-    #     vel = self.ref_vel
-    #     waypoints = []
-        
-    #     s_total = self.traj_obj.track_length
-    #     s_init = s_current
-        
-    #     if goal_flag:
-    #         point = self.traj_obj.traj_interpld(s_init)
-    #         yaw = point[2]
-    #         waypoints = [(self.goal[0], self.goal[1], yaw, 0)]
-            
-    #     else:                        
-                     
-    #         for i in range(1, self.N+1):  
-    #             dist = max(i * vel * (self.Tf /self.N), 1)         
-    #             s_new = s_init + dist
-    #             point = self.traj_obj.traj_interpld(s_new)
-    #             x = point[0]#self.x_interpld(s_new)
-    #             y = point[1]#self.y_interpld(s_new)                
-    #             yaw = (math.radians(point[2])  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
-    #             print("waypoints ", (x,y,yaw, self.ref_vel))
-    #             waypoints.append((x,y,yaw, self.ref_vel))            
-            
-    #     return waypoints, s_total   
-
-
-    def get_time_spanned_waypoints(self):
-        """
-        Generate waypoints spaced at consistent time intervals.
-    
-        Args:
-            vehicle: CARLA vehicle object
-            map: CARLA map object
-            total_time: Total time horizon (seconds)
-            delta_t: Time interval between waypoints (seconds)
-    
-        Returns:
-            List of time-spanned waypoints
-        """
-        map = self.vehicle.get_world().get_map()
-        current_waypoint = map.get_waypoint(self.vehicle.get_transform().location)
-        waypoints = []
-        #print("starting here")
-        for _ in range(int(self.N)):
-            velocity = self.vehicle.get_velocity()
-            forward_vector = self.vehicle.get_transform().get_forward_vector()
-            longitudinal_speed = (velocity.x * forward_vector.x +
-                                  velocity.y * forward_vector.y +
-                                  velocity.z * forward_vector.z)
-            # Calculate the distance to the next waypoint
-            distance = max(longitudinal_speed * self.Tf / self.N, 1 ) # Ensure non-zero distance
-            #print("dist ", distance)
-            next_waypoints = current_waypoint.next(distance)
-            #print("next wp :",next_waypoints[0].transform.location.x, next_waypoints[0].transform.location.y  )
-        
-            if next_waypoints:
-                current_waypoint = next_waypoints[0]  # Use the first waypoint in the list
-                waypoints.append(current_waypoint)
-            else:
-                break  # No more waypoints available (end of the road)
-            
-        return waypoints
-
-
-    def publish_waypoints(self, N=10):               
-        # Retrieve waypoints
-        waypoints = self.get_time_spanned_waypoints()
+        # print("*******************printing waypoints***************************")
+        # print(waypoints)
         #Create PoseArray for waypoints
         path_msg = VDtraj()
-        current_time = self.sim_clock.now()        
-        # path_msg.header.stamp = current_time.to_msg()
-        # path_msg.header.frame_id = 'map'
+        print("waypoint 1: ", waypoints[0])
 
-        way_point_list = []
+
+        way_point_list = []        
         for i, wp in enumerate(waypoints):
             if i ==0:
-                self.ref_waypoint = [wp.transform.location.x, wp.transform.location.y, wp.transform.rotation.yaw, 0]
+                self.ref_waypoint = wp
 
             pose_stamped = VDpose()
             # pose_stamped.header = path_msg.header
-            current_time = self.sim_clock.now()        
+            # current_time = self.sim_clock.now()        
             # pose_stamped.header.stamp = current_time.to_msg()
-            pose_stamped.x = wp.transform.location.x
-            pose_stamped.y = wp.transform.location.y
-            pose_stamped.psi = (math.radians(wp.transform.rotation.yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi
-            pose_stamped.velocity = self.ref_vel   
-            pose_stamped.total_distance = 0.0        
-            path_msg.poses.append(pose_stamped)  
+            pose_stamped.x = float(wp[0])  #x pose
+            pose_stamped.y = float(wp[1])  #y pose
+            pose_stamped.psi = float(wp[2])  # s_total                           
+            pose_stamped.velocity = float(wp[3])
+            pose_stamped.total_distance = s_total  ##total track length     
+            path_msg.poses.append(pose_stamped) 
+            #print("waypoint: ", [pose_stamped.x, pose_stamped.y, pose_stamped.psi])
+
         self.waypoints_pub.publish(path_msg)
+
+
+    def is_goal_reached(self, point):
+        dist = np.sqrt((self.goal[0] - point[0])**2 + (self.goal[1] - point[1])**2)
+        #print("dist", dist)
+        if dist <= self.goal_margin:
+            return True
+        else:
+            return False
+
+
+    def get_n_waypoints(self):
+        x,y, yaw, vel = self.get_current_state(s_curr_flag = True)
+        
+        
+        # self.s_current = self.s_current + self.last_velocity * self.time_period 
+        # s_init =  self.s_current  
+        goal_flag = self.is_goal_reached((x,y))  
+        waypoints = []        
+        s_total = self.traj_obj.track_length
+        _, index = self.path_kd_tree.query([x,y], 1)
+        s_init = self.traj_obj.waypoints[index][3]        
+        
+        if goal_flag:
+            point = self.traj_obj.traj_interpld(s_init)
+            yaw = point[2]
+            waypoints = [(self.goal[0], self.goal[1], yaw, 0)]
+            
+        else:                        
+                     
+            for i in range(1, self.N+1):  
+                dist = i * self.ref_vel * (self.Tf /self.N)         
+                s_new = s_init + dist
+                point = self.traj_obj.traj_interpld(s_new)
+                x = point[0]#self.x_interpld(s_new)
+                y = point[1]#self.y_interpld(s_new)                
+                yaw = point[2] #(point[2]  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
+                #print("waypoints ", (x,y,yaw, self.ref_vel))
+                waypoints.append((x,y,yaw, self.ref_vel))            
+        #self.last_velocity = vel    
+        return waypoints, s_total   
+
+
+    # def get_time_spanned_waypoints(self):
+    #     """
+    #     Generate waypoints spaced at consistent time intervals.
+    
+    #     Args:
+    #         vehicle: CARLA vehicle object
+    #         map: CARLA map object
+    #         total_time: Total time horizon (seconds)
+    #         delta_t: Time interval between waypoints (seconds)
+    
+    #     Returns:
+    #         List of time-spanned waypoints
+    #     """
+    #     map = self.vehicle.get_world().get_map()
+    #     current_waypoint = map.get_waypoint(self.vehicle.get_transform().location)
+    #     waypoints = []
+    #     #print("starting here")
+    #     for _ in range(int(self.N)):
+    #         velocity = self.vehicle.get_velocity()
+    #         forward_vector = self.vehicle.get_transform().get_forward_vector()
+    #         longitudinal_speed = (velocity.x * forward_vector.x +
+    #                               velocity.y * forward_vector.y +
+    #                               velocity.z * forward_vector.z)
+    #         # Calculate the distance to the next waypoint
+    #         distance = self.ref_vel  * self.Tf / self.N # Ensure non-zero distance
+    #         #print("dist ", distance)
+    #         next_waypoints = current_waypoint.next(distance)
+    #         #print("next wp :",next_waypoints[0].transform.location.x, next_waypoints[0].transform.location.y  )
+        
+    #         if next_waypoints:
+    #             current_waypoint = next_waypoints[0]  # Use the first waypoint in the list
+    #             waypoints.append(current_waypoint)
+    #         else:
+    #             break  # No more waypoints available (end of the road)
+            
+    #     return waypoints
+
+
+    # def publish_waypoints(self, N=10):               
+    #     # Retrieve waypoints
+    #     waypoints = self.get_time_spanned_waypoints()
+    #     #Create PoseArray for waypoints
+    #     path_msg = VDtraj()
+    #     current_time = self.sim_clock.now()        
+    #     # path_msg.header.stamp = current_time.to_msg()
+    #     # path_msg.header.frame_id = 'map'
+
+    #     way_point_list = []
+    #     for i, wp in enumerate(waypoints):
+    #         if i ==0:
+    #             self.ref_waypoint = [wp.transform.location.x, wp.transform.location.y, wp.transform.rotation.yaw, 0]
+
+    #         pose_stamped = VDpose()
+    #         # pose_stamped.header = path_msg.header
+    #         current_time = self.sim_clock.now()        
+    #         # pose_stamped.header.stamp = current_time.to_msg()
+    #         pose_stamped.x = wp.transform.location.x
+    #         pose_stamped.y = wp.transform.location.y
+    #         pose_stamped.psi = (math.radians(wp.transform.rotation.yaw) + 2*np.pi) % (4*np.pi) - 2*np.pi
+    #         pose_stamped.velocity = self.ref_vel   
+    #         pose_stamped.total_distance = 0.0      
+    #         #print("waypoint ", [pose_stamped.x, pose_stamped.y, pose_stamped.psi, pose_stamped.velocity] )  
+    #         path_msg.poses.append(pose_stamped)  
+    #     self.waypoints_pub.publish(path_msg)
 
 
     def cal_error(self):
         if self.ref_waypoint !=None and self.current_loc != None:
             norm_error =  np.sqrt((self.ref_waypoint[0] - self.current_loc.location.x)**2 + (self.ref_waypoint[1] - self.current_loc.location.y)**2)
             float_msg = Float32()
-            float_msg.data = norm_error
-            print("norm_error",norm_error)
+            float_msg.data = norm_error            
             self.err_pub.publish(float_msg)
 
     def timer_callback(self):

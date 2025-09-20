@@ -122,7 +122,7 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
   //initialize ref state and input variables
   Eigen::Matrix<double,kStateSize, kSamples> reference_states;
   Eigen::Matrix<double, kInputSize, kSamples> reference_inputs;
-  Eigen::Matrix<double,kParamSize, kSamples> reference_params;
+  
   reference_states = Eigen::Matrix<double,kStateSize, kSamples>::Zero();
   reference_inputs = Eigen::Matrix<double,kInputSize, kSamples>::Zero();
   
@@ -134,18 +134,17 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     
     for (int i=0; i < kSamples; i++)
     { 
-      //std::cout <<iterator->x << " " << iterator->y << " " << iterator->psi << " " << iterator->velocity << iterator->distance <<std::endl;
+      //std::cout << "ref recived " <<iterator->x << " " << iterator->y << " " << iterator->psi << " " << iterator->velocity << iterator->distance <<std::endl;
        
       reference_states.col(i) << iterator->x,
                                   iterator->y, 
                                   iterator->psi,
-                                  iterator->velocity,
-                                  iterator->distance;
+                                  iterator->velocity;
                                   
                                  
     
       reference_inputs.col(i) << 0, 0, 0;
-      reference_params.col(i) << iterator->total_distance;
+      
       iterator++;
     }
   }
@@ -158,15 +157,11 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     reference_states = (Eigen::Matrix<double, kStateSize, 1>() << filt_reference_msg->poses[0].x,
                                                                   filt_reference_msg->poses[0].y,
                                                                   filt_reference_msg->poses[0].psi,
-                                                                  filt_reference_msg->poses[0].velocity,
-                                                                  filt_reference_msg->poses[0].distance).finished().replicate(1, kSamples);
+                                                                  filt_reference_msg->poses[0].velocity).finished().replicate(1, kSamples);
     
     
     reference_inputs = (Eigen::Matrix<double, kInputSize, 1>() << 0,0,0).finished().replicate(1, kSamples);
-    reference_params << (Eigen::Matrix<double, kParamSize,1>() <<  filt_reference_msg->poses[0].total_distance).finished().replicate(1, kSamples);
-
-
-        
+            
     }
   
   else 
@@ -175,10 +170,10 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     Eigen::Matrix<double, kStateSize, 1> state = this->get_vd_current_state();
     for (int i=0; i < kSamples; i++)
     {       
-      reference_states.col(i) << state(0), state(1), state(2), 0, 0;
+      reference_states.col(i) << state(0), state(1), state(2), 0;
       //std::cout << "x :" <<state(0) << "y :" << state(1) << "z :" << state(2)<< '\n'; 
       reference_inputs.col(i) << 0,0,0;
-      reference_params.col(i) << 0;
+      
     }
     std::cout << "here in ref callback pt 2" << std::endl;
   }
@@ -186,40 +181,34 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
 
   controller_.setReferenceStates(reference_states);
   controller_.setReferenceInputs(reference_inputs);
-  controller_.setReferenceParams(reference_params);
+  
 
   
-  // run controller at reference frequency
-  //std::cout <<"running mpc controller now"<< '\n';  
+  // run controller at reference frequency 
   controller_.run();
 
   // publish control and predicted path
   publishControl();
-  //publishReference();
+  publishReference();
   publishPrediction();
 }
 
 void NMPCControlNodelet::odomCallback(const vd_msgs::msg::VDpose::SharedPtr odom_msg)
 {
   Eigen::Matrix<double, kStateSize, 1> state;
-  //frame_id_ = odom_msg->header.frame_id;
+  //rame_id_ = odom_msg->header.frame_id;
   state(0) = odom_msg->x;
   state(1) = odom_msg->y;
   state(2) = odom_msg->psi;
   state(3) = odom_msg->velocity;
-  state(4) = odom_msg->distance;
-  //std::cout << "state" <<  state << std::endl;    
+  
+  std::cout << " " <<  state << std::endl; 
+  std::cout << "odometery state" <<  state << std::endl;    
   this->vd_current_state = state;
   controller_.setState(state);
 }
  
 
-// void NMPCControlNodelet::pidCallback(const vd_msgs::msg::VDControlCMD::SharedPtr vd_msg)
-// {
-//   this->accel_cmd = vd_msg->acceleration;
-  
-// }
- 
 
 void NMPCControlNodelet::publishControl()
 { 
@@ -262,8 +251,12 @@ void NMPCControlNodelet::publishReference()
   path_msg.header.stamp = clock_.now();
   path_msg.header.frame_id = frame_id_;
   geometry_msgs::msg::PoseStamped pose;
+  std::cout << " " << std::endl;
+  std::cout << "Ref values here" << std::endl;
+
   for (int i=0; i < kSamples; i++)
   { 
+    std::cout << " pred x " << reference_states(0,i) << " pred_y " << reference_states(1,i) << " pred_yaw " << reference_states(2,i) << " pred_vel " << reference_states(3,i) << '\n';
     pose.header.stamp = clock_.now();
     pose.header.frame_id = frame_id_;
     pose.pose.position.x = reference_states(0,i);
@@ -287,6 +280,8 @@ void NMPCControlNodelet::publishPrediction()
   path_msg.header.stamp = clock_.now();
   path_msg.header.frame_id = frame_id_;
   geometry_msgs::msg::PoseStamped pose;
+
+  std::cout << " " << std::endl;
   std::cout << "Predicted values here" << std::endl;
   for (int i=0; i < kSamples; i++)
   { 

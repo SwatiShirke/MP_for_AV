@@ -67,14 +67,12 @@ int main()
     x_current[1] = 0.0;
     x_current[2] = 0.0;
     x_current[3] = 0.0;
-    x_current[4] = 0.0;
 
   
     x_current[0] = 0;
     x_current[1] = 0;
     x_current[2] = 0;
     x_current[3] = 0;
-    x_current[4] = 0;
     
   
 
@@ -93,8 +91,6 @@ int main()
     p[4] = 0;
     p[5] = 0;
     p[6] = 0;
-    p[7] = 0;
-    p[8] = 0;
 
     ackerman_model_acados_sim_update_params(capsule, p, NP);
   

@@ -36,12 +36,12 @@
 #include "acados_c/ocp_nlp_interface.h"
 #include "acados_c/external_function_interface.h"
 
-#define ACKERMAN_MODEL_NX     5
+#define ACKERMAN_MODEL_NX     4
 #define ACKERMAN_MODEL_NZ     0
 #define ACKERMAN_MODEL_NU     3
-#define ACKERMAN_MODEL_NP     9
+#define ACKERMAN_MODEL_NP     7
 #define ACKERMAN_MODEL_NBX    2
-#define ACKERMAN_MODEL_NBX0   5
+#define ACKERMAN_MODEL_NBX0   4
 #define ACKERMAN_MODEL_NBU    3
 #define ACKERMAN_MODEL_NSBX   0
 #define ACKERMAN_MODEL_NSBU   0
