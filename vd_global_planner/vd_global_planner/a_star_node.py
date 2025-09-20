@@ -31,7 +31,7 @@ class GlobalPlanner(Node):
         self.vehicle = None
         self.get_vehicle()           
         self.ref_vel = 5.00 #m/s  this will be removed from here, when trajectory optimization will be implemented
-
+        self.barrier = 0.25 #m/s barrier region depth
 
         #map settings
         self.lr = 2.56/2     # l = 3.86 m, w = 1.73 m 
@@ -40,7 +40,7 @@ class GlobalPlanner(Node):
         self.map = self.world.get_map()
         self.grid_resolution = 3.00    
         self.buffer = self.grid_resolution *20       
-        self.grid_map, self.offset = self.get_grid_map()
+        self.grid_map, self.offset, self.obstacle_list = self.get_grid_map()
 
 
         ##planner settings        
@@ -55,8 +55,8 @@ class GlobalPlanner(Node):
         self.angle_steps = 11
         self.sim_time = 1.00
         self.eval_time = 0.01
-        self.planner = a_star(self.grid_map, self.grid_resolution, self.offset, self.lr, self.lr, self.vehicle_width, 
-                              self.vel_min, self.vel_max, self.min_steer, self.max_steer, self.vel_steps, self.angle_steps, self.sim_time, self.eval_time)
+        self.planner = a_star(self.grid_map, self.grid_resolution, self.offset,self.obstacle_list, self.lr, self.lr, self.vehicle_width, 
+                              self.vel_min, self.vel_max, self.min_steer, self.max_steer, self.vel_steps, self.angle_steps, self.sim_time, self.eval_time, self.barrier)
             
         self.is_trajectory_generated = False
         self.current_s_len = 0
@@ -169,7 +169,7 @@ class GlobalPlanner(Node):
                
             grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]  = 0
             
- 
+        obstacle_list = self.get_obstacle_list()
 
         
 
@@ -224,7 +224,7 @@ class GlobalPlanner(Node):
 
 
         self.grid_map = grid_map 
-        return grid_map, offset 
+        return grid_map, offset, obstacle_list
         
     def check_if_reached(self, node1, node2):
         if np.linalg.norm(np.array(node1)-np.array(node2) ) <= self.resolution:
@@ -349,7 +349,26 @@ class GlobalPlanner(Node):
 
         return (x, y, yaw, longitudinal_velocity)
        
+    def get_obstacle_list(self):
+        actors = self.world.get_actors()
+        vehicles = actors.filter("vehicle.*")
+        walkers  = actors.filter("walker.pedestrian.*")
+        dyn_actors = list(vehicles) + list(walkers)
         
+        obstacle_list = []
+        for actor in dyn_actors:
+            # if actor.attributes.get('role_name') == "obstacle":
+            #     print("obstacle found!")
+            
+            bb = actor.bounding_box
+            extent = bb.extent
+            tf = actor.get_transform()
+            location = tf.location 
+            #[x, y, yaw, L, W]
+            point = [tf.location.x, tf.location.y, tf.rotation.yaw,bb.extent.x*2, bb.extent.y*2 ]
+            obstacle_list.append(point)
+        return obstacle_list 
+
 
     def publish_odometry(self): 
         x,y, yaw, vel = self.get_current_state(s_curr_flag = False)

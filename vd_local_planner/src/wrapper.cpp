@@ -75,12 +75,15 @@ Eigen::Matrix<double, kStateSize, 1> VD_state(Eigen::Matrix<double, kStateSize, 
 
 }
 
+//const Eigen::Ref<const Eigen::Matrix<double, kParamSize,kSamples>> params
 void NMPCWrapper::setTrajectory(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, kSamples>> states,
-                                const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> inputs)
+                                const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> inputs
+                                )
 {
   //std::cout << "I am at bp 3"<< '\n';
   acados_reference_states_.block(0, 0, kStateSize, kSamples) = states.block(0, 0, kStateSize, kSamples).template cast<double>();
   acados_reference_states_.block(kStateSize, 0, kInputSize, kSamples) = inputs.block(0, 0, kInputSize, kSamples).template cast<double>();  
+  //cados_reference_states_.block(kStateSize + kInputSize, 0, kParamSize, kSamples) = params.block(0, 0, kParamSize, kSamples).template cast<double>();
   acados_reference_end_state_.segment(0, kStateSize) = states.col(kSamples - 1).template cast<double>();
   
 }

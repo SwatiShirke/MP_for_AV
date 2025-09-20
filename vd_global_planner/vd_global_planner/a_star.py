@@ -13,6 +13,7 @@ import carla
 import networkx as nx
 from scipy.integrate import solve_ivp
 from vd_global_planner import carla_utils 
+from scipy.spatial import KDTree
 
 
 class Node:       
@@ -34,7 +35,7 @@ class Node:
 
 class a_star:
     
-    def __init__(self, grid_map, grid_resolution, offset, lr, lf, w, vel_min, vel_max, min_steer, max_steer, vel_steps, angle_steps, sim_time, eval_time):
+    def __init__(self, grid_map, grid_resolution, offset, obstacle_list, lr, lf, w, vel_min, vel_max, min_steer, max_steer, vel_steps, angle_steps, sim_time, eval_time, barrier):
         #grid_map = 2d np array
         #map = is carla map used during collision checking 
         #lf, lr: front and rear axel distance from CG
@@ -44,6 +45,8 @@ class a_star:
         self.grid_resolution = grid_resolution      
         self.threshold = 1
         self.offset = offset 
+        self.obstacle_list = obstacle_list
+        self.obs_tree = KDTree([p[:2] for p in obstacle_list])
         self.lr = lr
         self.lf = lf
         self.width = w
@@ -56,6 +59,8 @@ class a_star:
         self.steer_min = min_steer
         self.steer_max = max_steer
         self.open_dict = {}
+        self.margin_radius = 5 
+        self.barrier = barrier
 
 
     def get_path(self, goal_node, start_node ):        
@@ -105,7 +110,6 @@ class a_star:
         x, y = node
         return (round(x) , round(y))
 
-
     def get_hybrid_a_star_neighbours(self, parent_node):
         """The logic for Hybrid A* simulation is built here.
         The model has 3 inputs = [accel, steer_l, steer_r]"""
@@ -142,14 +146,28 @@ class a_star:
                     traj = np.transpose(sol.y)                   
                     traj = np.hstack((traj, np.ones((n,1)) * vel , np.ones((n,1)) *steer))    
                     traj = traj[1:, :]              #removed to handle remove duplicate problem
-
                     x, y, yaw, distance, vel, steer= traj[-1, :]     # extarct the position of the node, where the simulation reached 
                     node_index = self.snap_to_resolution((x,y))
 
                     if node_index == parent_node or node_index in n_index_list:
                         continue
+
+
+                    ##collision detection
+                    center = [x_current, y_current]
+                    idxs  = self.obs_tree.query_ball_point(center, r= self.margin_radius)
+                    obstacle_list = [self.obstacle_list[i] for i in idxs]
+                    for point in traj:
+                            is_collision = self.check_collision(point, obstacle_list)   
+                            if is_collision:
+                                break
+                                
+                                
+                    if is_collision:
+                        continue
                     
-                    if ( x >= x_off and x < cols-x_off and y >= y_off and y < rows - y_off ):                        
+                    if ( x >= x_off and x < cols-x_off and y >= y_off and y < rows - y_off ):                       
+                                        
                         cost = abs(distance)                        
                         n_node = Node( node_index, yaw, vel, steer ,cost ,parent_node, traj)
                         n_obj_list.append(n_node)
@@ -199,7 +217,58 @@ class a_star:
                         n_index_list.append(node_index) 
 
         return  n_index_list   
+
+    def check_collision(self, current_state, obstacle_list):
+        """
+        This function performs collision detection using Separarting axis theorem on Plytopes
+        state: vehicle's current state
+        obstacle_list: list of obstacles
+        """
+
+        #get vehicle's polytope corner points
+        x_vd, y_vd, yaw_vd, dist, vel, steer = current_state
+
+        R_mat = np.array([[math.cos(yaw_vd), -math.sin(yaw_vd)],
+                          [math.sin(yaw_vd), math.cos(yaw_vd)]])
+
+        half_l = (self.lf + self.lr)/2 + self.barrier
+        half_w = self.width/2 + self.barrier
+        corners_in_vd_frame = np.array([[x_vd + half_l, y_vd - half_w],
+                                [x_vd + half_l, y_vd + half_w],
+                                [x_vd - half_l, y_vd - half_w],
+                                [x_vd - half_l, y_vd + half_w]])
         
+        vd_corners_in_vd_world = (R_mat @ corners_in_vd_frame.T).T + np.array([x_vd, y_vd])
+        x_vd_w, y_vd_w = vd_corners_in_vd_world[:,0], vd_corners_in_vd_world[:,1]
+        x_min_vd, x_max_vd = np.min(x_vd_w), np.max(x_vd_w)
+        y_min_vd, y_max_vd = np.min(y_vd_w), np.max(y_vd_w)
+
+        #get obstacles corner 
+        #x, y , yaw, L, W 
+        for obs in obstacle_list:
+            x_obs, y_obs, yaw_obs, L_obs, W_obs = obs
+            half_l, half_w = L_obs /2, W_obs/2 
+            R_mat_obs = np.array([[math.cos(yaw_obs), -math.sin(yaw_obs)],
+                          [math.sin(yaw_obs), math.cos(yaw_obs)]])
+
+            corners_in_obs_frame = np.array([[x_obs + half_l, y_obs - half_w],
+                                [x_obs + half_l, y_obs + half_w],
+                                [x_obs - half_l, y_obs - half_w],
+                                [x_obs - half_l, y_obs + half_w]])
+
+            obs_corners_in_vd_world = (R_mat_obs @ corners_in_obs_frame.T).T + np.array([x_obs, y_obs])
+            x_vd_obs, y_vd_obs = obs_corners_in_vd_world[:,0], obs_corners_in_vd_world[:,1]
+            x_min_obs, x_max_obs = np.min(x_vd_obs), np.max(x_vd_obs)
+            y_min_obs, y_max_obs = np.min(y_vd_obs), np.max(y_vd_obs)
+
+            ##check collision and return true if true
+            ## if no collision then continue checking next obstacle
+            if(x_min_vd < x_min_obs and x_max_vd < x_min_obs) or (x_min_vd > x_max_obs and x_max_vd > x_max_obs) or (y_min_vd < y_min_obs and y_max_vd < y_min_obs) or (y_min_vd > y_max_obs and y_max_vd > y_max_obs):
+                continue
+            else:
+                return True 
+            
+        return False 
 
     def get_node_to_index(self,node):
         ##from real no (x,y) of node convert into index of an 2d array map        
