@@ -37,9 +37,10 @@ namespace nmpc_control_nodelet
     //punlsihers
     pub_control_cmd_ = this->create_publisher<carla_msgs::msg::CarlaEgoVehicleControl>("/carla/ego_vehicle/vehicle_control_cmd",qos_profile_);
     pub_ref_traj_ = this->create_publisher<nav_msgs::msg::Path>("reference_path", 1);
-    pub_pred_traj_ = this->create_publisher<nav_msgs::msg::Path>("predicted_path", 1);   
+    pub_pred_traj_ = this->create_publisher<vd_msgs::msg::VDtraj>("predicted_path", 1);   
     pub_vd_cmd_ = this->create_publisher<vd_msgs::msg::VDControlCMD>("mpc_cmd", qos_profile_);
 
+    
     //subscribers    
     sub_traj_cmd_ = this->create_subscription<vd_msgs::msg::VDtraj>(
       "/carla/ego_vehicle/waypoints", qos_profile_, std::bind(&NMPCControlNodelet::referenceCallback, this, std::placeholders::_1));
@@ -47,6 +48,7 @@ namespace nmpc_control_nodelet
       "/carla/ego_vehicle/odometry", qos_profile_, std::bind(&NMPCControlNodelet::odomCallback, this, std::placeholders::_1));
     // sub_pid_cmd_ = this->create_subscription<vd_msgs::msg::VDControlCMD>(
     //   "pid_control_cmd", qos_profile_, std::bind(&NMPCControlNodelet::pidCallback, this, std::placeholders::_1));
+    
     
     }
 
@@ -60,6 +62,9 @@ namespace nmpc_control_nodelet
     double hover_thrust_ = mass_ * gravity_;
     float accel_cmd;
     float ref_vel;
+    //double init_time;     //time at the start of optimization
+    rclcpp::Time init_time;
+    float Tf = 5.00;     // time frame for horizon 
     //double Eigen::Matrix<double, 3, 3> inertia_matrix_
     Eigen::Matrix<double, 3,3> mass_matrix_ = mass_ * Eigen::MatrixXd::Identity(3,3);
      
@@ -81,7 +86,7 @@ namespace nmpc_control_nodelet
     rclcpp::QoS create_custom_qos();
     rclcpp::Publisher<carla_msgs::msg::CarlaEgoVehicleControl>::SharedPtr pub_control_cmd_;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_ref_traj_;
-    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_pred_traj_;       
+    rclcpp::Publisher<vd_msgs::msg::VDtraj>::SharedPtr pub_pred_traj_;       
     rclcpp::Publisher<vd_msgs::msg::VDControlCMD>::SharedPtr pub_vd_cmd_;
 
 
@@ -139,7 +144,8 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
       reference_states.col(i) << iterator->x,
                                   iterator->y, 
                                   iterator->psi,
-                                  iterator->velocity;
+                                  iterator->velocity,
+                                  iterator->distance;
                                   
                                  
     
@@ -157,7 +163,8 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     reference_states = (Eigen::Matrix<double, kStateSize, 1>() << filt_reference_msg->poses[0].x,
                                                                   filt_reference_msg->poses[0].y,
                                                                   filt_reference_msg->poses[0].psi,
-                                                                  filt_reference_msg->poses[0].velocity).finished().replicate(1, kSamples);
+                                                                  filt_reference_msg->poses[0].velocity,
+                                                                  filt_reference_msg->poses[0].distance).finished().replicate(1, kSamples);
     
     
     reference_inputs = (Eigen::Matrix<double, kInputSize, 1>() << 0,0,0).finished().replicate(1, kSamples);
@@ -170,7 +177,7 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     Eigen::Matrix<double, kStateSize, 1> state = this->get_vd_current_state();
     for (int i=0; i < kSamples; i++)
     {       
-      reference_states.col(i) << state(0), state(1), state(2), 0;
+      reference_states.col(i) << state(0), state(1), state(2), 0, 0;
       //std::cout << "x :" <<state(0) << "y :" << state(1) << "z :" << state(2)<< '\n'; 
       reference_inputs.col(i) << 0,0,0;
       
@@ -185,10 +192,19 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
 
   
   // run controller at reference frequency 
+  // auto now = this->get_clock()->now();
+  // std::cout << now.seconds() << std::endl;
+  // this->init_time = now.seconds();
+
+  rclcpp::Time now = this->get_clock()->now();
+  this->init_time = now;
+
+
+
   controller_.run();
 
   // publish control and predicted path
-  publishControl();
+  //publishControl();
   publishReference();
   publishPrediction();
 }
@@ -202,47 +218,28 @@ void NMPCControlNodelet::odomCallback(const vd_msgs::msg::VDpose::SharedPtr odom
   state(2) = odom_msg->psi;
   state(3) = odom_msg->velocity;
   
-  std::cout << " " <<  state << std::endl; 
-  std::cout << "odometery state" <<  state << std::endl;    
+  // std::cout << " " <<  state << std::endl; 
+  // std::cout << "odometery state" <<  state << std::endl;    
   this->vd_current_state = state;
   controller_.setState(state);
 }
  
 
 
-void NMPCControlNodelet::publishControl()
-{ 
-  //std::cout << "here inside control" << std::endl;
-  Eigen::Matrix<double, kInputSize, 1> pred_input = controller_.getPredictedInput();
-  //carla_msgs::msg::CarlaEgoVehicleControl vd_control_msg;
-  //vd_control_msg.header.stamp = clock_.now();
+// void NMPCControlNodelet::publishControl()
+// { 
+//   //std::cout << "here inside control" << std::endl;
+//   Eigen::Matrix<double, kInputSize, 1> pred_input = controller_.getPredictedInput();
   
-  // if (this->accel_cmd >= 0)
-  // {
-  //   vd_control_msg.throttle = this->accel_cmd /8.5 ;
-  //   vd_control_msg.steer = (pred_input(1) + pred_input(2))/ (2 * 0.7) ; //40 degree steering angle 
-  //   vd_control_msg.brake = 0;
-  // }
-  // else
-  // {
-  //   vd_control_msg.throttle = 0;
-  //   vd_control_msg.steer = (pred_input(1) + pred_input(2))/(2 * 0.7);
-  //   vd_control_msg.brake = -1 * this->accel_cmd / 8.5;
-  // }
-  //std::cout<< "pred_input" << pred_input << '\n';
-  // int lf = 2.56/2;
-  // int lr = 2.56/2;
-  // float beta = atan2(lr , (lf + lr) * tan(vd_control_msg.steer));
 
-  //std::cout << "beta" << beta << std::endl;
-  //pub_control_cmd_->publish(vd_control_msg);
+//   vd_msgs::msg::VDControlCMD vd_control_msg;
+//   vd_control_msg.velocity = this->ref_vel;
+//   vd_control_msg.acceleration = pred_input(0);  
+//   vd_control_msg.steering_angle = (pred_input(1) + pred_input(2))/(2 * 0.7);
+//   pub_vd_cmd_->publish(vd_control_msg); 
+// }
 
-  vd_msgs::msg::VDControlCMD vd_control_msg;
-  vd_control_msg.velocity = this->ref_vel;
-  vd_control_msg.acceleration = pred_input(0);  
-  vd_control_msg.steering_angle = (pred_input(1) + pred_input(2))/(2 * 0.7);
-  pub_vd_cmd_->publish(vd_control_msg); 
-}
+
 
 void NMPCControlNodelet::publishReference()
 {
@@ -251,12 +248,12 @@ void NMPCControlNodelet::publishReference()
   path_msg.header.stamp = clock_.now();
   path_msg.header.frame_id = frame_id_;
   geometry_msgs::msg::PoseStamped pose;
-  std::cout << " " << std::endl;
-  std::cout << "Ref values here" << std::endl;
+  // std::cout << " " << std::endl;
+  // std::cout << "Ref values here" << std::endl;
 
   for (int i=0; i < kSamples; i++)
   { 
-    std::cout << " pred x " << reference_states(0,i) << " pred_y " << reference_states(1,i) << " pred_yaw " << reference_states(2,i) << " pred_vel " << reference_states(3,i) << '\n';
+    //std::cout << " pred x " << reference_states(0,i) << " pred_y " << reference_states(1,i) << " pred_yaw " << reference_states(2,i) << " pred_vel " << reference_states(3,i) << '\n';
     pose.header.stamp = clock_.now();
     pose.header.frame_id = frame_id_;
     pose.pose.position.x = reference_states(0,i);
@@ -269,34 +266,58 @@ void NMPCControlNodelet::publishReference()
     pose.pose.orientation.z = 0;
     path_msg.poses.push_back(pose);    
   }
-
   pub_ref_traj_->publish(path_msg);
 }
 
 void NMPCControlNodelet::publishPrediction()
 {
   Eigen::Matrix<double, kStateSize, kSamples> reference_states = controller_.getPredictedStates();
-  nav_msgs::msg::Path path_msg;
-  path_msg.header.stamp = clock_.now();
-  path_msg.header.frame_id = frame_id_;
-  geometry_msgs::msg::PoseStamped pose;
+  Eigen::Matrix<double, kInputSize, kSamples> pred_input = controller_.getPredictedInput();
 
-  std::cout << " " << std::endl;
-  std::cout << "Predicted values here" << std::endl;
+
+  vd_msgs::msg::VDtraj path_msg;
+  // path_msg.header.stamp = clock_.now();
+  // path_msg.header.frame_id = frame_id_;
+  vd_msgs::msg::VDpose pose; 
+
+  // std::cout << " " << std::endl;
+  // std::cout << "Predicted values here" << std::endl;
   for (int i=0; i < kSamples; i++)
   { 
-    std::cout << " pred x " << reference_states(0,i) << " pred_y " << reference_states(1,i) << " pred_yaw " << reference_states(2,i) << " pred_vel " << reference_states(3,i) << '\n';
-    pose.header.stamp = clock_.now();
-    pose.header.frame_id = frame_id_;
-    pose.pose.position.x = reference_states(0,i);
-    pose.pose.position.y = reference_states(1, i);
-    pose.pose.position.z = 0;
-    pose.pose.orientation.w = 1;
-    pose.pose.orientation.x = 0;
-    pose.pose.orientation.y = 0;
-    pose.pose.orientation.z = 0;
-      
+    
+    pose.x = reference_states(0,i);
+    pose.y = reference_states(1, i);
+    pose.psi = reference_states(2, i);
+    pose.velocity = reference_states(3, i);
+    pose.distance = reference_states(4, i);
+    pose.acceleration = pred_input(0, i);
+    pose.steering_angle = (pred_input(1,i) + pred_input(2,i))/2;  
+    
+    //std::cout << this->init_time << std::endl; 
+    //rclcpp::Duration dt = rclcpp::Duration::from_seconds((i+1) * this->Tf);
+    //rclcpp::Time temp = this->init_time + dt;
+    //pose.header.stamp.sec = this->init_time + (i+1.0) * this->Tf/ N;
+
+    // Inside your loop
+    rclcpp::Duration dt = rclcpp::Duration::from_seconds((i+1.0) * this->Tf / N);
+
+    // Add duration to init_time
+    rclcpp::Time temp = this->init_time + dt;
+
+    // Convert to ROS message type
+    pose.header.stamp = temp;  // ✅ if your ROS2 version has to_msg()
+
+
+    //std::cout << "time sec " << pose.header.stamp.sec <<  " nanosec "<< pose.header.stamp.nanosec << " predx " << pose.x << " pred_y " << pose.y << " pred_yaw " << pose.psi << " pred_vel " << pose.velocity << std::endl;
+    
+    //<<  " accel "<< pose.acceleration  << " steer "  << pose.steering_angle   << std::endl; 
+   
+    // auto temp = this->init_time  + (i+1) * this->Tf;
+    // pose.header.stamp = temp;   //rclcpp::Duration::from_seconds(
+    // std::cout << "pose.time_stamp.sec" << pose.time_stamp.sec << std::endl;
     path_msg.poses.push_back(pose);    
+    
+
   }
 
   

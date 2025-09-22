@@ -8,8 +8,8 @@ from scipy.spatial.transform import Rotation as R
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
     vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
-    #yaw_cost =  ( 1 - np.cos(ca.fabs(ref_vec[2] - state_vec[2])))  * weights[2]
-    yaw_cost = (ref_vec[2] - state_vec[2])**2 * weights[2]
+    yaw_cost =  ( 1 - np.cos(ca.fabs(ref_vec[2] - state_vec[2])))  * weights[2]
+    #yaw_cost = (ref_vec[2] - state_vec[2])**2 * weights[2]
     cost = pos_cost + yaw_cost + vel_cost       
     return cost 
 
@@ -97,7 +97,7 @@ def acados_controller(N, Tf, lf, lr):
     ocp.constraints.idxbu = np.array([0, 1, 2])
 
     #initial state contraints
-    ocp.constraints.x0 = np.array([0, 0, 0, 0] )
+    ocp.constraints.x0 = np.array([0, 0, 0, 0, 0] )
 
     #lower and upper bound constraints on states - velocity and angular velocities
     ocp.constraints.lbx = np.array([-2* np.pi ,vel_min])
@@ -139,7 +139,7 @@ def acados_controller(N, Tf, lf, lr):
 
 if __name__ == "__main__":
     N = 10
-    Tf = 1
+    Tf = 5
     lf = 2.56/2
     lr = 2.56/2
     #L =  2.5654

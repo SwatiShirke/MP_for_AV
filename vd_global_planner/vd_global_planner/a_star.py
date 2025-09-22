@@ -154,17 +154,17 @@ class a_star:
 
 
                     ##collision detection
-                    center = [x_current, y_current]
-                    idxs  = self.obs_tree.query_ball_point(center, r= self.margin_radius)
-                    obstacle_list = [self.obstacle_list[i] for i in idxs]
-                    for point in traj:
-                            is_collision = self.check_collision(point, obstacle_list)   
-                            if is_collision:
-                                break
+                    # center = [x_current, y_current]
+                    # idxs  = self.obs_tree.query_ball_point(center, r= self.margin_radius)
+                    # obstacle_list = [self.obstacle_list[i] for i in idxs]
+                    # for point in traj:
+                    #         is_collision = self.check_collision(point, obstacle_list)   
+                    #         if is_collision:
+                    #             break
                                 
                                 
-                    if is_collision:
-                        continue
+                    # if is_collision:
+                    #     continue
                     
                     if ( x >= x_off and x < cols-x_off and y >= y_off and y < rows - y_off ):                       
                                         
@@ -362,7 +362,7 @@ class a_star:
                     n_cost  =  n_obj.cost 
                     traj = n_obj.traj 
 
-
+                    print("n_index", n_index)
                     if n_index in closed_set:
                         continue  
                     

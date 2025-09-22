@@ -28,7 +28,7 @@ class GlobalPlanner(Node):
         self.world = self.client.get_world()
         
        
-        self.vehicle = None
+        self.vehicle = None 
         self.get_vehicle()           
         self.ref_vel = 5.00 #m/s  this will be removed from here, when trajectory optimization will be implemented
         self.barrier = 0.25 #m/s barrier region depth
@@ -67,8 +67,8 @@ class GlobalPlanner(Node):
 
         ## MPC settings
         self.N = 10         #horizon  steps
-        self.Tf = 1        # horizon time
-        self.time_period = 0.01 # timer period f = 100Hz 
+        self.Tf = 5        # horizon time
+        self.time_period = 0.05 # timer period MPC frequency = 100Hz 
 
         ##ROS pub sub
         qos_profile = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=1, reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE)
@@ -390,6 +390,7 @@ class GlobalPlanner(Node):
         # Assigning longitudinal and lateral velocities to odometry message (optional fields)        
         self.odom_pub.publish(odom_msg)  
 
+
     def publish_waypoints(self, N=10):       
         #Retrieve waypoints        
         waypoints, s_total = self.get_n_waypoints()
@@ -398,7 +399,7 @@ class GlobalPlanner(Node):
         # print(waypoints)
         #Create PoseArray for waypoints
         path_msg = VDtraj()
-        print("waypoint 1: ", waypoints[0])
+        #print("waypoint 1: ", waypoints[0])
 
 
         way_point_list = []        
@@ -449,14 +450,14 @@ class GlobalPlanner(Node):
             
         else:                        
                      
-            for i in range(1, self.N+1):  
+            for i in range(0, self.N):  
                 dist = i * self.ref_vel * (self.Tf /self.N)         
                 s_new = s_init + dist
                 point = self.traj_obj.traj_interpld(s_new)
                 x = point[0]#self.x_interpld(s_new)
                 y = point[1]#self.y_interpld(s_new)                
                 yaw = point[2] #(point[2]  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
-                #print("waypoints ", (x,y,yaw, self.ref_vel))
+                print("waypoints ", (x,y,yaw, self.ref_vel))
                 waypoints.append((x,y,yaw, self.ref_vel))            
         #self.last_velocity = vel    
         return waypoints, s_total   
@@ -545,9 +546,9 @@ class GlobalPlanner(Node):
             #publish global path to rosbag data saver, this path is not used by MPC
             
             
-            self.publish_odometry()
+            #self.publish_odometry()
             #cal nd publish norm error 
-            self.cal_error()
+            #self.cal_error()
             # =======================
             # Publish Trajectory
             # =======================

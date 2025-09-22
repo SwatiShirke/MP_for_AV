@@ -30,6 +30,7 @@ extern "C" {
 
 /* Add prefix to internal symbols */
 #define casadi_f0 CASADI_PREFIX(f0)
+#define casadi_fabs CASADI_PREFIX(fabs)
 #define casadi_s0 CASADI_PREFIX(s0)
 #define casadi_s1 CASADI_PREFIX(s1)
 #define casadi_s2 CASADI_PREFIX(s2)
@@ -54,13 +55,22 @@ extern "C" {
 
 casadi_real casadi_sq(casadi_real x) { return x*x;}
 
-static const casadi_int casadi_s0[8] = {4, 1, 0, 4, 0, 1, 2, 3};
+casadi_real casadi_fabs(casadi_real x) {
+/* Pre-c99 compatibility */
+#if __STDC_VERSION__ < 199901L
+  return x>0 ? x : -x;
+#else
+  return fabs(x);
+#endif
+}
+
+static const casadi_int casadi_s0[9] = {5, 1, 0, 5, 0, 1, 2, 3, 4};
 static const casadi_int casadi_s1[7] = {3, 1, 0, 3, 0, 1, 2};
 static const casadi_int casadi_s2[3] = {0, 0, 0};
-static const casadi_int casadi_s3[11] = {7, 1, 0, 7, 0, 1, 2, 3, 4, 5, 6};
+static const casadi_int casadi_s3[12] = {8, 1, 0, 8, 0, 1, 2, 3, 4, 5, 6, 7};
 static const casadi_int casadi_s4[5] = {1, 1, 0, 1, 0};
 
-/* ackerman_model_cost_ext_cost_fun:(i0[4],i1[3],i2[],i3[7])->(o0) */
+/* ackerman_model_cost_ext_cost_fun:(i0[5],i1[3],i2[],i3[8])->(o0) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
   casadi_real a0, a1, a2, a3, a4, a5, a6;
   a0=10.;
@@ -75,10 +85,13 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   a2=casadi_sq(a2);
   a2=(a0*a2);
   a1=(a1+a2);
-  a2=arg[3]? arg[3][2] : 0;
-  a3=arg[0]? arg[0][2] : 0;
+  a2=1.;
+  a3=arg[3]? arg[3][2] : 0;
+  a4=arg[0]? arg[0][2] : 0;
+  a3=(a3-a4);
+  a3=casadi_fabs(a3);
+  a3=cos(a3);
   a2=(a2-a3);
-  a2=casadi_sq(a2);
   a2=(a0*a2);
   a1=(a1+a2);
   a2=arg[3]? arg[3][3] : 0;

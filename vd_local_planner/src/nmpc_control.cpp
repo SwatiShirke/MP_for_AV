@@ -27,7 +27,7 @@ void NMPCControl::setMass(double mass) { wrapper_.setMass(mass); }
 void NMPCControl::setGravity(double gravity) { wrapper_.setGravity(gravity); }
 
 Eigen::Matrix<double, kStateSize, 1> NMPCControl::getPredictedState() { return predicted_states_.col(1);  }
-Eigen::Matrix<double, kInputSize, 1> NMPCControl::getPredictedInput() { return predicted_inputs_.col(0);  }
+Eigen::Matrix<double, kInputSize, kSamples> NMPCControl::getPredictedInput() { return predicted_inputs_;  }
 Eigen::Matrix<double, kStateSize, kSamples> NMPCControl::getPredictedStates() { return predicted_states_; }
 Eigen::Matrix<double, kStateSize, kSamples> NMPCControl::getReferenceStates() { return reference_states_; }
 Eigen::Matrix<double, kInputSize, kSamples> NMPCControl::getReferenceInputs() { return reference_inputs_; }

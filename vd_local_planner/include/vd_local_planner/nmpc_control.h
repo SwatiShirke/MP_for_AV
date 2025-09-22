@@ -23,7 +23,7 @@ public:
   void setMass(double mass);
   void setGravity(double gravity);
   Eigen::Matrix<double, kStateSize, 1> getPredictedState();
-  Eigen::Matrix<double, kInputSize, 1> getPredictedInput();
+  Eigen::Matrix<double, kInputSize, kSamples> getPredictedInput();
   Eigen::Matrix<double, kStateSize, kSamples> getPredictedStates();
   Eigen::Matrix<double, kStateSize, kSamples> getReferenceStates();
   Eigen::Matrix<double, kInputSize, kSamples> getReferenceInputs();
