@@ -17,7 +17,7 @@ public:
   void setOmega(const Eigen::Matrix<double, 3, 1> &omega);
   void setReferenceStates(const Eigen::Matrix<double, kStateSize, kSamples> &reference_states);
   void setReferenceInputs(const Eigen::Matrix<double, kInputSize, kSamples> &reference_inputs);  
-  //void setReferenceParams(const Eigen::Matrix<double, kParamSize, kSamples> &reference_params);
+  void setReferenceParams(const Eigen::Matrix<double, kParamSize, kSamples> &reference_params);
 
   Eigen::Matrix<double, kStateSize, 1> getState() {return current_state_;}
   void setMass(double mass);
@@ -38,7 +38,7 @@ private:
   Eigen::Matrix<double, kInputSize, kSamples> reference_inputs_;
   Eigen::Matrix<double, kStateSize, kSamples> predicted_states_;
   Eigen::Matrix<double, kInputSize, kSamples> predicted_inputs_;
-  //Eigen::Matrix<double, kParamSize, kSamples> reference_params_;
+  Eigen::Matrix<double, kParamSize, kSamples> reference_params_;
 
   NMPCWrapper wrapper_;
 };

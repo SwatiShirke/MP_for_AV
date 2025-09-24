@@ -855,7 +855,7 @@ int ackerman_model_acados_update_params(ackerman_model_solver_capsule* capsule, 
 {
     int solver_status = 0;
 
-    int casadi_np = 8;
+    int casadi_np = 11;
     if (casadi_np != np) {
         printf("acados_update_params: trying to set %i parameters for external functions."
             " External function has %i parameters. Exiting.\n", np, casadi_np);

@@ -18,16 +18,19 @@ from scipy.spatial import KDTree
 
 class Node:       
         
-    def __init__(self, grid_index,theta, velocity, steering_angle, cost,  parent_index, traj):        
+    def __init__(self, grid_index,theta, velocity, steering_angle, dist_from_source, other_cost,  parent_index, traj):        
         self.grid_index = grid_index
         self.theta = theta 
         self.velocity = velocity
         self.steering_angle = steering_angle 
-        self.cost = cost
+        self.dist_from_source = dist_from_source
+        self.other_cost = other_cost 
+        self.total_from_src_cost = dist_from_source + other_cost        
         self.parent_index = parent_index      
         self.traj = traj 
         
-        
+     
+
         
     def get_index(self):
         return self.grid_index
@@ -35,7 +38,7 @@ class Node:
 
 class a_star:
     
-    def __init__(self, grid_map, grid_resolution, offset, obstacle_list, lr, lf, w, vel_min, vel_max, min_steer, max_steer, vel_steps, angle_steps, sim_time, eval_time, barrier):
+    def __init__(self, carla_map, grid_map, grid_resolution, offset, obstacle_list, lr, lf, w, vel_min, vel_max, min_steer, max_steer, vel_steps, angle_steps, sim_time, eval_time, barrier):
         #grid_map = 2d np array
         #map = is carla map used during collision checking 
         #lf, lr: front and rear axel distance from CG
@@ -61,7 +64,15 @@ class a_star:
         self.open_dict = {}
         self.margin_radius = 5 
         self.barrier = barrier
-
+        self.carla_map = carla_map
+        self.K  = 5
+        self.velocity_steps = [self.vel_max] if self.vel_steps == 1 else np.linspace(self.vel_min, self.vel_max, self.vel_steps)
+        self.steer_steps = np.linspace(self.steer_min, self.steer_max, self.angle_steps)
+        self.turning_weight = 15
+        self.lateral_cost_weight = 0.5
+        self.lane_change_cost = 10
+        self.road_change_cost = 20
+        
 
     def get_path(self, goal_node, start_node ):        
         node = goal_node
@@ -108,6 +119,7 @@ class a_star:
 
     def snap_to_resolution(self, node):
         x, y = node
+        #x,y = (x/self.grid_resolution * self.grid_resolution) , (y/self.grid_resolution * self.grid_resolution)
         return (round(x) , round(y))
 
     def get_hybrid_a_star_neighbours(self, parent_node):
@@ -115,8 +127,7 @@ class a_star:
         The model has 3 inputs = [accel, steer_l, steer_r]"""
 
 
-        velocity_steps = [self.vel_max] if self.vel_steps == 1 else np.linspace(self.vel_min, self.vel_max, self.vel_steps)
-        steer_steps = np.linspace(self.steer_min, self.steer_max, self.angle_steps)
+        
 
         # print("steer_steps", steer_steps)
         # print("velocity_steps", velocity_steps)
@@ -127,14 +138,14 @@ class a_star:
         parent_obj = self.open_dict[parent_node]
         x_current, y_current = parent_node
 
-        theta_current, vel_current, parent_cost = parent_obj.theta, parent_obj.velocity, parent_obj.cost
+        theta_current, vel_current, parent_cost = parent_obj.theta, parent_obj.velocity, parent_obj.dist_from_source
         
 
         n_obj_list = []
         n_index_list = []
         trajectory_dict = {}
-        for vel in velocity_steps:
-            for steer in steer_steps:                   
+        for vel in self.velocity_steps:
+            for steer in self.steer_steps:                   
                     
                     U = [vel, steer]
                     X0 = [x_current, y_current, theta_current,parent_cost ]                   
@@ -147,10 +158,12 @@ class a_star:
                     traj = np.hstack((traj, np.ones((n,1)) * vel , np.ones((n,1)) *steer))    
                     traj = traj[1:, :]              #removed to handle remove duplicate problem
                     x, y, yaw, distance, vel, steer= traj[-1, :]     # extarct the position of the node, where the simulation reached 
-                    node_index = self.snap_to_resolution((x,y))
+                    node_index = self.snap_to_resolution((x,y))                    
 
                     if node_index == parent_node or node_index in n_index_list:
                         continue
+
+                    
 
 
                     ##collision detection
@@ -160,16 +173,24 @@ class a_star:
                     # for point in traj:
                     #         is_collision = self.check_collision(point, obstacle_list)   
                     #         if is_collision:
-                    #             break
-                                
+                    #             break                               
                                 
                     # if is_collision:
                     #     continue
                     
-                    if ( x >= x_off and x < cols-x_off and y >= y_off and y < rows - y_off ):                       
-                                        
-                        cost = abs(distance)                        
-                        n_node = Node( node_index, yaw, vel, steer ,cost ,parent_node, traj)
+                    if ( x >= x_off and x < cols-x_off and y >= y_off and y < rows - y_off ):      
+                        dist_from_source =    abs(distance) 
+                        lateral_cost = self.compute_lateral_cost(traj)
+                        turning_cost = self.compute_turning_cost(traj)
+                        lane_change_cost = self.compute_change_cost(traj[0,0:2], traj[-1,0:2])
+                        
+                        other_cost =  lateral_cost +  turning_cost + lane_change_cost
+
+                        # print("dist_from_source ",  dist_from_source)   
+                        # print("self.compute_lateral_cost(traj) ", lateral_cost)
+                        # print("self.compute_turning_cost(steer) ", turning_cost)    
+                        # print("lane_change_cost ", lane_change_cost )                             
+                        n_node = Node( node_index, yaw, vel, steer ,dist_from_source, other_cost ,parent_node, traj)
                         n_obj_list.append(n_node)
                         trajectory_dict[node_index] = traj 
                         n_index_list.append(node_index) 
@@ -179,6 +200,75 @@ class a_star:
      
         return n_obj_list
     
+    def compute_lateral_cost(self, traj):
+        cumm_alteral_distance = 0
+        
+        for point in traj:
+            cumm_alteral_distance += self.compute_distances(point[0:2])
+            
+        cost = self.lateral_cost_weight * cumm_alteral_distance
+        return cost
+
+
+    def compute_distances(self, point): 
+        #compute lateral distance of the point
+        x, y = point
+        point_n = carla.Location(x =x , y=y, z=0)
+        wp = self.carla_map.get_waypoint(point_n, project_to_road=True)
+        # returns (signed_lateral_dist)
+        lx = wp.transform.location.x
+        ly = wp.transform.location.y
+
+        dx = x - lx
+        dy = y - ly
+        
+
+        # compute signed lateral distance relative to lane heading
+        yaw = math.radians(wp.transform.rotation.yaw)
+        nx = math.cos(yaw + math.pi/2.0)
+        ny = math.sin(yaw + math.pi/2.0)
+        signed_lat = dx * nx + dy * ny  # positive -> one side, negative -> other
+
+        return abs(signed_lat)
+
+    def compute_turning_cost(self, traj):
+        # normalized_cost = change in yaw / length
+        
+
+        cost = abs(traj[0, 2] - traj[-1, 2]) / (traj[-1, 3] - traj[0, 3])
+        cost = cost * self.turning_weight
+        return cost
+
+    def compute_change_cost(self, start, end):
+
+        start_wp = self.carla_map.get_waypoint(
+            carla.Location(x=start[0], y=start[1], z=0.0),
+            project_to_road=True
+            )
+        end_wp = self.carla_map.get_waypoint(
+            carla.Location(x=end[0], y=end[1], z=0.0),
+            project_to_road=True
+        )
+
+        if start_wp is None or end_wp is None:
+            # If not on a drivable road, no cost defined
+            return float("inf")
+
+        # same road + same lane → no lane change
+        if start_wp.road_id == end_wp.road_id and start_wp.lane_id == end_wp.lane_id:
+            return 0.0
+
+        # lane id differs but road is same → lateral lane change
+        if start_wp.road_id == end_wp.road_id and start_wp.lane_id != end_wp.lane_id:
+            return self.lane_change_cost
+
+        if start_wp.road_id != end_wp.road_id and start_wp.lane_id != end_wp.lane_id:
+            return self.road_change_cost
+
+        # different road id (intersection, ramp, etc.)      
+        return self.lane_change_cost
+
+
     def test_state_lattice_planner(self, parent_node):
         velocity_steps = np.linspace(self.vel_min, self.vel_max, self.vel_steps)
         steer_steps = np.linspace(self.steer_min, self.steer_max, self.angle_steps)
@@ -321,9 +411,13 @@ class a_star:
         """  
         x,y, yaw = start
         start = self.snap_to_resolution((x,y)) 
-        goal = self.snap_to_resolution( goal)
-        print("start", x," ", y," ",  yaw )
-        print("goal", goal)
+
+        x_g, y_g, yaw_g = goal
+        goal = self.snap_to_resolution((x_g, y_g)) 
+         
+        
+        self.goal = goal 
+
 
         p_queue = heapdict()   
         self.open_dict = {}
@@ -332,7 +426,7 @@ class a_star:
         path = []
 
         #start node 
-        start_node = Node(start, yaw, 0,0,0, None, [] )
+        start_node = Node(start, yaw, 0,0,0,0, None, [] )
         self.open_dict[start_node.get_index()] = start_node         
         p_queue[start] = 0 + self.cal_heuristic_cost(start, goal)
         
@@ -342,7 +436,7 @@ class a_star:
         #loop until goal found or queue empty
         while p_queue:
             
-            node,cost = p_queue.popitem() 
+            node,node_total_cost = p_queue.popitem() 
             explored_nodes.append(node)         
             closed_set.append(node)
             
@@ -359,7 +453,7 @@ class a_star:
                 for n_obj in neighbour_list:
                     
                     n_index =  n_obj.grid_index 
-                    n_cost  =  n_obj.cost 
+                    n_cost  =  n_obj.total_from_src_cost 
                     traj = n_obj.traj 
 
                     print("n_index", n_index)
@@ -368,16 +462,20 @@ class a_star:
                     
                     x,y = n_index
                     if n_index in self.open_dict:
-                        n_old_cost = self.open_dict[n_index].cost
+                        n_old_cost = self.open_dict[n_index].total_from_src_cost
                     else:
                         self.open_dict[n_index] = n_obj
                         n_old_cost = float('inf')                                           
           
                     if self.grid_map[ int((y - self.offset[1])/self.grid_resolution),int((x - self.offset[0])/self.grid_resolution)] == 0 and  n_cost < n_old_cost:                     
 
-                        self.open_dict[n_index].cost = n_cost 
-                        self.open_dict[n_index].parent_index = node
-                        self.open_dict[n_index].traj = traj
+                        # self.open_dict[n_index].cost = n_cost 
+                        # self.open_dict[n_index].parent_index = node
+                        # self.open_dict[n_index].traj = traj
+                        self.open_dict[n_index] = n_obj
+
+                        # print("n_cost ", n_cost)
+                        # print("self.cal_heuristic_cost(n_index, goal) ", self.cal_heuristic_cost(n_index, goal))
                         total_cost = n_cost + self.cal_heuristic_cost(n_index, goal)
                         p_queue[n_index] = total_cost
         

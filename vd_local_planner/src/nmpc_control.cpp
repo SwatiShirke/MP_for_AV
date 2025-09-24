@@ -9,7 +9,7 @@ NMPCControl::NMPCControl()
     reference_inputs_(Eigen::Matrix<double, kInputSize, kSamples>::Zero()),
     predicted_states_(Eigen::Matrix<double, kStateSize, kSamples>::Zero()),
     predicted_inputs_(Eigen::Matrix<double, kInputSize, kSamples>::Zero()),  
-    //reference_params_(Eigen::Matrix<double, kParamSize, kSamples>::Zero()),  
+    reference_params_(Eigen::Matrix<double, kParamSize, kSamples>::Zero()),  
     solve_from_scratch_(true)
 {
   // initialize quaternion w to 1
@@ -22,7 +22,7 @@ void NMPCControl::setState(const Eigen::Matrix<double, kStateSize, 1> &state) { 
 //void NMPCControl::setOmega(const Eigen::Matrix<double, 3, 1> &omega) { current_state_.block(10, 0, 3, 1) = omega; }
 void NMPCControl::setReferenceStates(const Eigen::Matrix<double, kStateSize, kSamples> &reference_states) { reference_states_ = reference_states; }
 void NMPCControl::setReferenceInputs(const Eigen::Matrix<double, kInputSize, kSamples> &reference_inputs) { reference_inputs_ = reference_inputs; }
-//void NMPCControl::setReferenceParams(const Eigen::Matrix<double, kParamSize, kSamples> &reference_params) { reference_params_ = reference_params; }
+void NMPCControl::setReferenceParams(const Eigen::Matrix<double, kParamSize, kSamples> &reference_params) { reference_params_ = reference_params; }
 void NMPCControl::setMass(double mass) { wrapper_.setMass(mass); }
 void NMPCControl::setGravity(double gravity) { wrapper_.setGravity(gravity); }
 
@@ -35,7 +35,7 @@ Eigen::Matrix<double, kInputSize, kSamples> NMPCControl::getReferenceInputs() { 
 
 
 void NMPCControl::run()
-{  wrapper_.setTrajectory(reference_states_, reference_inputs_);
+{  wrapper_.setTrajectory(reference_states_, reference_inputs_, reference_params_);
 
     if (solve_from_scratch_)
   {

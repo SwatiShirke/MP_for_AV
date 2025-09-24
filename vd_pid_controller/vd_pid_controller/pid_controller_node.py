@@ -33,7 +33,7 @@ class PIDPublisher(Node):
 
         self.ref_vel = 0
         self.current_vel = 0
-        self.Kp = 0.5
+        self.Kp = 0.7
         self.Ki = 0.01
         self.Kd = 0.2
         self.cumm_error = 0
@@ -52,12 +52,9 @@ class PIDPublisher(Node):
         self.is_traj_available = False 
 
     def create_interpld_obj(self, path):
-        df = pd.read_csv(path)   
+        df = pd.read_csv(path)  
        
-        self.points = np.column_stack((df['velocity'].values, df['acceleration'].values))
-        # print("self.points", self.points[0])
-        # print("shape", self.points.shape)
-        # Pedal values (N,)
+        self.points = np.column_stack((df['velocity'].values, df['acceleration'].values))       
         self.values = df['pedal'].values
     
     # The interpolation function that takes velocity and acceleration arrays
@@ -98,13 +95,9 @@ class PIDPublisher(Node):
 
     def timer_callback(self): 
         if self.is_odom_available and self.is_traj_available:
-            #print("here..........")
-            ##get reference data       
-            # x, y = self.current_state[0:2]
-            # _, index = self.KD_tree.query([x,y], 1)
-            # s_init  = pose_list[index][4] 
-            # s_new  = s_init + self.current_vel * self.time_period
-            #next_point = self.traj_interpld(s_new)
+            # print("                  ")
+            # print("here..........")
+            
             now = self.get_clock().now()
             current_time = now.nanoseconds / 1e9
 
@@ -119,11 +112,15 @@ class PIDPublisher(Node):
 
             ##apply control
             ff_cmd = self.interpolate_pedal(self.current_vel,self.ref_accel)        
-            #print("ff_cmd", ff_cmd[0])
+            
 
             #apply pid here 
             error = self.ref_vel - self.current_vel
+            # print("self.ref_accel",  self.ref_accel)
             # print("curr_vel",self.current_vel )
+            # print("ff_cmd", ff_cmd[0])
+
+
             # print("self.ref_vel",self.ref_vel)
             # print("error", error)
             self.ref_max = self.ref_vel + self.vel_delta

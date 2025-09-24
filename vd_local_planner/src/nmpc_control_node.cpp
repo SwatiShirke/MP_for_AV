@@ -127,12 +127,16 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
   //initialize ref state and input variables
   Eigen::Matrix<double,kStateSize, kSamples> reference_states;
   Eigen::Matrix<double, kInputSize, kSamples> reference_inputs;
+  Eigen::Matrix<double, kParamSize, kSamples> reference_params;
   
   reference_states = Eigen::Matrix<double,kStateSize, kSamples>::Zero();
   reference_inputs = Eigen::Matrix<double,kInputSize, kSamples>::Zero();
+  reference_params = Eigen::Matrix<double,kParamSize, kSamples>::Zero();
   
   this->ref_vel = filt_reference_msg->poses[0].velocity;
   auto iterator(filt_reference_msg->poses.begin());
+
+  //std::cout << "vd current state" << this->vd_current_state << std::endl;
   
   if (filt_reference_msg->poses.size() > 1)
   { 
@@ -146,11 +150,10 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
                                   iterator->psi,
                                   iterator->velocity,
                                   iterator->distance;
-                                  
-                                 
+
     
       reference_inputs.col(i) << 0, 0, 0;
-      
+      reference_params.col(i) << iterator-> x_lane_center, iterator-> y_lane_center, iterator->yaw_lane_center; 
       iterator++;
     }
   }
@@ -168,7 +171,7 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     
     
     reference_inputs = (Eigen::Matrix<double, kInputSize, 1>() << 0,0,0).finished().replicate(1, kSamples);
-            
+    reference_params = (Eigen::Matrix<double, kParamSize, 1>() << filt_reference_msg->poses[0].x_lane_center, filt_reference_msg->poses[0].y_lane_center, filt_reference_msg->poses[0].yaw_lane_center).finished().replicate(1, kSamples);       
     }
   
   else 

@@ -52,7 +52,7 @@ namespace nmpc_control_nodelet
     static constexpr int kStateSize = ACKERMAN_MODEL_NX;
     static constexpr int kInputSize = ACKERMAN_MODEL_NU;
     static constexpr int kSamples = N;  
-    //static constexpr int kParamSize = NP - (NX +NU);   
+    static constexpr int kParamSize = NP - (NX +NU);   
     static constexpr int yRefSize = NP;
 
     struct solver_output
@@ -100,8 +100,8 @@ namespace nmpc_control_nodelet
 
     //const Eigen::Ref<const Eigen::Matrix<double, kParamSize,kSamples>> params
     void setTrajectory(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, kSamples>> states,
-                      const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> inputs
-                      );
+                      const Eigen::Ref<const Eigen::Matrix<double, kInputSize, kSamples>> inputs,
+                      const Eigen::Ref<const Eigen::Matrix<double, kParamSize, kSamples>> params);
     
     bool prepare(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, 1>> state);
     bool update(const Eigen::Ref<const Eigen::Matrix<double, kStateSize, 1>> state);

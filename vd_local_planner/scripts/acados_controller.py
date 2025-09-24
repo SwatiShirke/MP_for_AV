@@ -18,6 +18,18 @@ def cal_input_cost(input_vec, ref_vec, weights, prev_in, control_rate_weight):
     rate_cost = ca.dot((prev_in - input_vec)**2, control_rate_weight)
     return cost + rate_cost
 
+def cal_cost_to_lane_center(ref_lane_center, x_array, param_weights):
+    dx = ref_lane_center[0] - x_array[0]
+    dy = ref_lane_center[1] - x_array[1]
+    yaw = ref_lane_center[2]
+
+    nx = ca.cos(yaw + ca.pi / 2.0)
+    ny = ca.sin(yaw + ca.pi / 2.0)
+    cost = ca.fabs(dx * nx + dy * ny) * param_weights[0]
+
+    #cost = (ref_lane_center[0] - x_array[0])**2  * param_weights[0] +   (ref_lane_center[1] - x_array[1])**2 * param_weights[1]
+    return cost
+
 def get_constraints(x_array, prev_state, yaw_rate, u_aaray, prev_in, steer_rate):
     h_list = []    
     #yaw_const = ca.fabs(x_array[2] - prev_state[2])
@@ -25,6 +37,7 @@ def get_constraints(x_array, prev_state, yaw_rate, u_aaray, prev_in, steer_rate)
     steer2_constraint = ca.fabs(u_aaray[2] - prev_in[2])
     h_list = ca.vertcat( steer1_constraint, steer2_constraint)
     return h_list
+
 
 def acados_controller(N, Tf, lf, lr):
     #model configs param
@@ -63,24 +76,28 @@ def acados_controller(N, Tf, lf, lr):
     # x, y, yaw,  vel, s_len
     Q_mat = unscale * ca.vertcat(10, 10,   10, 10)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
-    Q_emat =  unscale * ca.vertcat(1000, 1000, 1000, 1000) 
+    Q_emat =  unscale * ca.vertcat(100, 100, 100, 100) 
     control_rate_weight = ca.vertcat(100, 100, 100)
     state_rate_weight = ca.vertcat(0, 0, 100, 0)
+    param_weights = ca.vertcat(10, 100)
     prev_in = ca.vertcat(0,0, 0)
     prev_state = ca.vertcat(0,0,0,0)
 
     x_array = model.x
     u_aaray = model.u 
     ref_array = model.p  # x, y, qw, qx,qy,qz, v, acc, del1, del2
+    ref_states = ref_array[0:5]
+    ref_u = ref_array[5:8]
+    ref_lane_center = ref_array[8:11]
 
-
-    state_error = cal_state_cost(x_array, ref_array, Q_mat, prev_state, state_rate_weight )    
-    input_error = cal_input_cost(u_aaray, ref_array[4:7], R_mat, prev_in, control_rate_weight)  
+    state_error = cal_state_cost(x_array, ref_states, Q_mat, prev_state, state_rate_weight )    
+    input_error = cal_input_cost(u_aaray, ref_u, R_mat, prev_in, control_rate_weight)  
+    cost_to_lane_center = cal_cost_to_lane_center(ref_lane_center, x_array, param_weights)
     
 
     ocp.cost.cost_type = 'EXTERNAL'
-    ocp.model.cost_expr_ext_cost = state_error + input_error 
-    ocp.model.cost_expr_ext_cost_0 = state_error  + input_error     
+    ocp.model.cost_expr_ext_cost = state_error + input_error + cost_to_lane_center
+    ocp.model.cost_expr_ext_cost_0 = state_error  + input_error + cost_to_lane_center  
     
     
 

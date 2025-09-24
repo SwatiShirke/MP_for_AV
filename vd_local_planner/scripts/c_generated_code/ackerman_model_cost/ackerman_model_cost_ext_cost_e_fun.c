@@ -65,13 +65,13 @@ casadi_real casadi_fabs(casadi_real x) {
 
 static const casadi_int casadi_s0[9] = {5, 1, 0, 5, 0, 1, 2, 3, 4};
 static const casadi_int casadi_s1[3] = {0, 0, 0};
-static const casadi_int casadi_s2[12] = {8, 1, 0, 8, 0, 1, 2, 3, 4, 5, 6, 7};
+static const casadi_int casadi_s2[15] = {11, 1, 0, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 static const casadi_int casadi_s3[5] = {1, 1, 0, 1, 0};
 
-/* ackerman_model_cost_ext_cost_e_fun:(i0[5],i1[],i2[],i3[8])->(o0) */
+/* ackerman_model_cost_ext_cost_e_fun:(i0[5],i1[],i2[],i3[11])->(o0) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
   casadi_real a0, a1, a2, a3, a4;
-  a0=1000.;
+  a0=100.;
   a1=arg[3]? arg[3][0] : 0;
   a2=arg[0]? arg[0][0] : 0;
   a1=(a1-a2);

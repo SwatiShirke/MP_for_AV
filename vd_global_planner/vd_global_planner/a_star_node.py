@@ -38,7 +38,8 @@ class GlobalPlanner(Node):
         self.lf = 2.56/2
         self.vehicle_width = 1.744
         self.map = self.world.get_map()
-        self.grid_resolution = 3.00    
+        self.resolution_K = 0.5
+        self.grid_resolution = round(self.resolution_K * self.ref_vel)  
         self.buffer = self.grid_resolution *20       
         self.grid_map, self.offset, self.obstacle_list = self.get_grid_map()
 
@@ -49,13 +50,13 @@ class GlobalPlanner(Node):
         
         self.vel_min = - self.ref_vel
         self.vel_max = self.ref_vel
-        self.min_steer = np.deg2rad(-60)
-        self.max_steer = np.deg2rad(+60) 
+        self.min_steer = np.deg2rad(-40)
+        self.max_steer = np.deg2rad(+40) 
         self.vel_steps = 1
         self.angle_steps = 11
         self.sim_time = 1.00
         self.eval_time = 0.01
-        self.planner = a_star(self.grid_map, self.grid_resolution, self.offset,self.obstacle_list, self.lr, self.lr, self.vehicle_width, 
+        self.planner = a_star(self.map, self.grid_map, self.grid_resolution, self.offset,self.obstacle_list, self.lr, self.lr, self.vehicle_width, 
                               self.vel_min, self.vel_max, self.min_steer, self.max_steer, self.vel_steps, self.angle_steps, self.sim_time, self.eval_time, self.barrier)
             
         self.is_trajectory_generated = False
@@ -63,7 +64,7 @@ class GlobalPlanner(Node):
         
         self.path_kd_tree = None
         self.init_vel = 1.00 #m/s used for predicting future points
-        self.goal_margin = 5.00 #m
+        self.goal_margin = 10.00 #m
 
         ## MPC settings
         self.N = 10         #horizon  steps
@@ -109,28 +110,81 @@ class GlobalPlanner(Node):
         return [np.round(x / self.grid_resolution) * self.grid_resolution, np.round(y / self.grid_resolution) * self.grid_resolution]
 
 
-    def expand_waypoint_to_lane_points(self, wp, lateral_res=0.5):
-        """
-        Expand a CARLA waypoint into a set of points across full lane width.
-        """
-        lateral_res = self.grid_resolution
+    # def expand_waypoint_to_lane_points(self, wp, lateral_res=0.5):
+    #     """
+    #     Expand a CARLA waypoint into a set of points across full lane width.
+    #     """
+    #     lateral_res = self.grid_resolution
 
+    #     loc = wp.transform.location
+    #     yaw = math.radians(wp.transform.rotation.yaw)
+
+    #     left_wp = wp.get_left_lane()
+    #     if left_wp.lane_type == carla.LaneType.Sidewalk:
+    #         barrier_region = 0.5 
+    #     else: 
+    #         barrier_region = 0.0
+    #     half_width = wp.lane_width * 0.5 - barrier_region
+
+    #     # Perpendicular unit vector to lane heading
+    #     nx = math.cos(yaw + math.pi / 2.0)
+    #     ny = math.sin(yaw + math.pi / 2.0)
+
+    #     num_samples = int((2 * half_width) / lateral_res) + 1
+    #     lane_points = []
+    #     for i in range(num_samples):
+    #         offset = -half_width + i * lateral_res
+    #         px = loc.x + nx * offset 
+    #         py = loc.y + ny * offset
+    #         lane_points.append((px, py))
+    #     return lane_points
+
+
+    def expand_waypoint_to_lane_points(self, wp):
         loc = wp.transform.location
         yaw = math.radians(wp.transform.rotation.yaw)
-        half_width = wp.lane_width * 0.5  #- self.vehicle_width/2
+
+        # Check for sidewalks
+        left_wp = wp.get_left_lane()
+        left_barrier = 0.5 if left_wp and left_wp.lane_type == carla.LaneType.Sidewalk else 0.0
+
+        right_wp = wp.get_right_lane()
+        right_barrier = 0.5 if right_wp and right_wp.lane_type == carla.LaneType.Sidewalk else 0.0
+
+        # Lane half-widths on each side
+        half_width_left = wp.lane_width * 0.5 - left_barrier
+        half_width_right = wp.lane_width * 0.5 - right_barrier
 
         # Perpendicular unit vector to lane heading
         nx = math.cos(yaw + math.pi / 2.0)
         ny = math.sin(yaw + math.pi / 2.0)
 
-        num_samples = int((2 * half_width) / lateral_res) + 1
+        # Sample points from -half_width_left to +half_width_right
         lane_points = []
-        for i in range(num_samples):
-            offset = -half_width + i * lateral_res
-            px = loc.x + nx * offset 
+
+        # Compute number of samples on left and right separately
+        num_samples_left = int(half_width_left / self.grid_resolution)
+        num_samples_right = int(half_width_right / self.grid_resolution)
+
+        # Sample left side (negative offsets)
+        for i in range(num_samples_left, 0, -1):
+            offset = -i * self.grid_resolution
+            px = loc.x + nx * offset
             py = loc.y + ny * offset
             lane_points.append((px, py))
+
+        # Include center point
+        lane_points.append((loc.x, loc.y))
+
+        # Sample right side (positive offsets)
+        for i in range(1, num_samples_right + 1):
+            offset = i * self.grid_resolution
+            px = loc.x + nx * offset
+            py = loc.y + ny * offset
+            lane_points.append((px, py))
+
         return lane_points
+
 
     def get_grid_map(self):
 
@@ -141,7 +195,8 @@ class GlobalPlanner(Node):
         free_points = []
         for wp in waypoints:
             if wp.lane_type == carla.LaneType.Driving:
-                lane_pts = self.expand_waypoint_to_lane_points(wp)
+                #lane_pts = self.expand_waypoint_to_lane_points(wp)
+                lane_pts = [(wp.transform.location.x, wp.transform.location.y )]
                 free_points.extend(lane_pts)
 
         free_points = np.array(free_points)
@@ -236,7 +291,16 @@ class GlobalPlanner(Node):
         self.get_logger().info('started generating global path')
         x,y, yaw, vel = self.get_current_state()
         self.start = (x,y, yaw)
-        self.goal = (request.x,request.y)
+
+        ## find yaw 
+        point = carla.Location(x =x , y=y, z=0)
+        wp = self.map.get_waypoint(point, project_to_road=True)  # project_to_road=True snaps to lane center
+        
+
+        print("goal yaw  ", wp.transform.rotation.yaw)
+
+
+        self.goal = (request.x,request.y, request.yaw)
         start_time = time.time()
         print("start time", start_time )
         path, explored_nodes = self.planner.a_star(self.start, self.goal)
@@ -415,7 +479,9 @@ class GlobalPlanner(Node):
             pose_stamped.y = float(wp[1])  #y pose
             pose_stamped.psi = float(wp[2])  # s_total                           
             pose_stamped.velocity = float(wp[3])
-            pose_stamped.total_distance = s_total  ##total track length     
+            pose_stamped.total_distance = s_total  ##total track length    
+            pose_stamped.x_lane_center =  float(wp[4])
+            pose_stamped.y_lane_center =  float(wp[5])
             path_msg.poses.append(pose_stamped) 
             #print("waypoint: ", [pose_stamped.x, pose_stamped.y, pose_stamped.psi])
 
@@ -430,36 +496,45 @@ class GlobalPlanner(Node):
         else:
             return False
 
+    def get_lane_center(self, point):
+        x, y = point
+        point_n = carla.Location(x =x , y=y, z=0)
+        wp = self.map.get_waypoint(point_n, project_to_road=True)
+        return (wp.transform.location.x, wp.transform.location.y, wp.transform.rotation.yaw)
 
     def get_n_waypoints(self):
-        x,y, yaw, vel = self.get_current_state(s_curr_flag = True)
-        
-        
-        # self.s_current = self.s_current + self.last_velocity * self.time_period 
-        # s_init =  self.s_current  
-        goal_flag = self.is_goal_reached((x,y))  
+        x,y, yaw, vel = self.get_current_state(s_curr_flag = True)  
+                  
         waypoints = []        
         s_total = self.traj_obj.track_length
         _, index = self.path_kd_tree.query([x,y], 1)
-        s_init = self.traj_obj.waypoints[index][3]        
-        
-        if goal_flag:
-            point = self.traj_obj.traj_interpld(s_init)
-            yaw = point[2]
-            waypoints = [(self.goal[0], self.goal[1], yaw, 0)]
-            
-        else:                        
+        s_init = self.traj_obj.waypoints[index][3]         
+                               
                      
-            for i in range(0, self.N):  
-                dist = i * self.ref_vel * (self.Tf /self.N)         
-                s_new = s_init + dist
-                point = self.traj_obj.traj_interpld(s_new)
-                x = point[0]#self.x_interpld(s_new)
-                y = point[1]#self.y_interpld(s_new)                
-                yaw = point[2] #(point[2]  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
-                print("waypoints ", (x,y,yaw, self.ref_vel))
-                waypoints.append((x,y,yaw, self.ref_vel))            
-        #self.last_velocity = vel    
+        for i in range(0, self.N):  
+            dist = i * self.ref_vel * (self.Tf /self.N)         
+            s_new = s_init + dist
+            point = self.traj_obj.traj_interpld(s_new)
+            if np.isnan(point).any():
+                print("Point contains NaN")
+                x, y, yaw = self.goal
+                lane_center = self.get_lane_center((x,y))
+                wp = (x, y, yaw, 0, lane_center[0], lane_center[1] , lane_center[2])
+                
+            else:
+                goal_flag = self.is_goal_reached((x,y)) 
+                if goal_flag:
+                    wp = (self.goal[0], self.goal[1], self.goal[2], 0, 0,0, 0)
+                else:
+                    x = point[0]#self.x_interpld(s_new)
+                    y = point[1]#self.y_interpld(s_new)                
+                    yaw = point[2] #(point[2]  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
+                    lane_center = self.get_lane_center((x,y))
+                    wp = (x,y,yaw, self.ref_vel,lane_center[0], lane_center[1] , lane_center[2])
+                    print("waypoints ", (x,y,yaw, self.ref_vel), lane_center[0], lane_center[1], lane_center[2])
+            waypoints.append(wp)    
+     
+           
         return waypoints, s_total   
 
 

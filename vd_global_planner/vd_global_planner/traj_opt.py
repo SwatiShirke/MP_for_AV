@@ -73,7 +73,7 @@ class Trajecotry():
         #self.traj_interpld = make_interp_spline(self.waypoints[:, 3], self.waypoints[:, 0:3], k=5)  
         
          
-        self.traj_interpld = CubicSpline(self.waypoints[:, 3], self.waypoints[:, 0:3])
+        self.traj_interpld = CubicSpline(self.waypoints[:, 3], self.waypoints[:, 0:3], extrapolate=False)
         
         #testing
         
