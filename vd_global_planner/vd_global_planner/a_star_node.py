@@ -3,7 +3,7 @@ from rclpy.node import Node
 from nav_msgs.msg import Path, Odometry
 from geometry_msgs.msg import PoseStamped
 from vd_msgs.srv import PlannerSrv
-from vd_msgs.msg import VDPath, VDpose, VDtraj
+from vd_msgs.msg import VDPath, VDpose, VDtraj, VDList
 import carla
 from vd_global_planner.a_star import a_star
 import numpy as np
@@ -80,6 +80,7 @@ class GlobalPlanner(Node):
         self.timer = self.create_timer(self.time_period, self.timer_callback)
         self.err_pub = self.create_publisher(Float32, '/norm_error', 1)
         self.explored_nodes_pub = self.create_publisher(VDPath, "explored_nodes", 1)
+        self.vd_list_pub = self.create_publisher(VDList, "neighbour_VDs", 1)
 
         ##traj object
         self.v_min = 0
@@ -92,6 +93,8 @@ class GlobalPlanner(Node):
         self.current_loc = None
         self.s_current = 0
         self.last_velocity = 0 
+        self.KNN = 5
+        self.radius = 5
         
 
     def get_vehicle(self):             
@@ -102,6 +105,7 @@ class GlobalPlanner(Node):
             if vehicle.attributes.get('role_name') == self.role_name:
                 print(f"Found vehicle with role_name: {self.role_name}, ID: {vehicle.id}")
                 self.vehicle = vehicle
+                self.ego_vehicle_ID = vehicle.id
         if self.vehicle == None:
             raise RuntimeError(f"Vehicle with ID {self.role_name} not found!")
            
@@ -500,7 +504,7 @@ class GlobalPlanner(Node):
         x, y = point
         point_n = carla.Location(x =x , y=y, z=0)
         wp = self.map.get_waypoint(point_n, project_to_road=True)
-        return (wp.transform.location.x, wp.transform.location.y, wp.transform.rotation.yaw)
+        return (wp.transform.location.x, wp.transform.location.y, math.radians(wp.transform.rotation.yaw))
 
     def get_n_waypoints(self):
         x,y, yaw, vel = self.get_current_state(s_curr_flag = True)  
@@ -516,7 +520,7 @@ class GlobalPlanner(Node):
             s_new = s_init + dist
             point = self.traj_obj.traj_interpld(s_new)
             if np.isnan(point).any():
-                print("Point contains NaN")
+                #print("Point contains NaN")
                 x, y, yaw = self.goal
                 lane_center = self.get_lane_center((x,y))
                 wp = (x, y, yaw, 0, lane_center[0], lane_center[1] , lane_center[2])
@@ -531,11 +535,62 @@ class GlobalPlanner(Node):
                     yaw = point[2] #(point[2]  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
                     lane_center = self.get_lane_center((x,y))
                     wp = (x,y,yaw, self.ref_vel,lane_center[0], lane_center[1] , lane_center[2])
-                    print("waypoints ", (x,y,yaw, self.ref_vel), lane_center[0], lane_center[1], lane_center[2])
+                    #print("waypoints ", (x,y,yaw, self.ref_vel), lane_center[0], lane_center[1], lane_center[2])
             waypoints.append(wp)    
      
            
         return waypoints, s_total   
+
+
+    def publish_neighbours(self):
+        # first find neighbours within a specificed radius and then filter KNN 
+        # created a ros message to list of KNN 
+        # for each vehcile, info = x, y,theta, length, width
+        # this is sent to mpc controller, it is used for polytopes creation by ROS nmpc control cpp node
+        # KNN value is set in yaml file of the planner
+
+        vd_list_msg = VDList()
+        nearby_vehicles = []
+        ego_loc = self.vehicle.get_location()
+        all_vehicles = self.world.get_actors().filter('vehicle.*')
+        for vehicle in all_vehicles:
+            if vehicle.id == self.ego_vehicle_ID:
+                continue  # skip self
+
+            dist = ego_loc.distance(vehicle.get_location())
+            if dist <= self.radius:                
+                vd_transform = vehicle.get_transform()
+                x, y = vd_transform.location.x, vd_transform.location.y
+                theta = (math.radians(vd_transform.rotation.yaw ) + 2*np.pi) % (4*np.pi) - 2*np.pi
+                bb = vehicle.bounding_box
+                L = bb.extent.x * 2
+                W = bb.extent.y * 2
+               
+                nearby_vehicles.append([x,y,theta, L, W, dist])
+                 
+        ##sort nearest neighbours
+        nn_vehicle_array = np.array(nearby_vehicles)
+        sorted_array = sorted( nn_vehicle_array, key = lambda x : x[-1] )
+        
+        try:
+            KNN_array = sorted_array[0:self.KNN]
+        except:
+            KNN_array = sorted_array
+        
+        vd_list = []
+        for vec in KNN_array:
+            vd_msg = VDpose()                  
+            vd_msg.x= vec[0]
+            vd_msg.y= vec[1]              
+            vd_msg.psi= vec[2]                   
+            vd_msg.length=vec[3]
+            vd_msg.width = vec[4]
+            #print("vd_msg", vd_msg)
+            vd_list.append(vd_msg) 
+        
+        vd_list_msg.vdlist = vd_list   
+        #print("nearby_vehicles", vd_list)                         
+        self.vd_list_pub.publish(vd_list_msg) 
 
 
     # def get_time_spanned_waypoints(self):
@@ -612,18 +667,12 @@ class GlobalPlanner(Node):
             self.err_pub.publish(float_msg)
 
     def timer_callback(self):
-        #print("inside timer")              
+                     
         if self.is_trajectory_generated:
-            """Publish odometry and trajectory data."""
-            # =======================
-            # Publish Odometry
-            # =======================
-            #publish global path to rosbag data saver, this path is not used by MPC
             
-            
-            #self.publish_odometry()
             #cal nd publish norm error 
             #self.cal_error()
+            self.publish_neighbours()
             # =======================
             # Publish Trajectory
             # =======================

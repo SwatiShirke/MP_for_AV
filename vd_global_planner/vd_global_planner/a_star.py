@@ -69,7 +69,7 @@ class a_star:
         self.velocity_steps = [self.vel_max] if self.vel_steps == 1 else np.linspace(self.vel_min, self.vel_max, self.vel_steps)
         self.steer_steps = np.linspace(self.steer_min, self.steer_max, self.angle_steps)
         self.turning_weight = 15
-        self.lateral_cost_weight = 0.5
+        self.lateral_cost_weight = 0.25
         self.lane_change_cost = 10
         self.road_change_cost = 20
         
@@ -184,7 +184,7 @@ class a_star:
                         turning_cost = self.compute_turning_cost(traj)
                         lane_change_cost = self.compute_change_cost(traj[0,0:2], traj[-1,0:2])
                         
-                        other_cost =  lateral_cost +  turning_cost + lane_change_cost
+                        other_cost =    turning_cost + lane_change_cost   #lateral_cost
 
                         # print("dist_from_source ",  dist_from_source)   
                         # print("self.compute_lateral_cost(traj) ", lateral_cost)
@@ -456,7 +456,7 @@ class a_star:
                     n_cost  =  n_obj.total_from_src_cost 
                     traj = n_obj.traj 
 
-                    print("n_index", n_index)
+                    #print("n_index", n_index)
                     if n_index in closed_set:
                         continue  
                     

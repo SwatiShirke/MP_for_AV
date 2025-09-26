@@ -10,3 +10,5 @@ float64 yaw_lane_center
 float64 total_distance
 float64 acceleration
 float64 steering_angle
+float64 length
+float64 width 

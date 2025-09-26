@@ -58,9 +58,9 @@ static const casadi_int casadi_s0[9] = {5, 1, 0, 5, 0, 1, 2, 3, 4};
 static const casadi_int casadi_s1[33] = {5, 5, 0, 5, 10, 15, 20, 25, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4};
 static const casadi_int casadi_s2[21] = {5, 3, 0, 5, 10, 15, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4, 0, 1, 2, 3, 4};
 static const casadi_int casadi_s3[7] = {3, 1, 0, 3, 0, 1, 2};
-static const casadi_int casadi_s4[15] = {11, 1, 0, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+static const casadi_int casadi_s4[45] = {41, 1, 0, 41, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40};
 
-/* ackerman_model_expl_vde_forw:(i0[5],i1[5x5],i2[5x3],i3[3],i4[11])->(o0[5],o1[5x5],o2[5x3]) */
+/* ackerman_model_expl_vde_forw:(i0[5],i1[5x5],i2[5x3],i3[3],i4[41])->(o0[5],o1[5x5],o2[5x3]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
   casadi_real a0, a1, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a2, a20, a3, a4, a5, a6, a7, a8, a9;
   a0=arg[0]? arg[0][3] : 0;

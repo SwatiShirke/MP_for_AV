@@ -13,7 +13,7 @@
 #include "vd_msgs/msg/v_dtraj.hpp"
 #include "vd_msgs/msg/v_dstate.hpp"
 #include "carla_msgs/msg/carla_ego_vehicle_control.hpp"
-
+#include "vd_msgs/msg/vd_list.hpp"  
 
 //#include "utils.hpp"
 namespace nmpc_control_nodelet
@@ -46,9 +46,9 @@ namespace nmpc_control_nodelet
       "/carla/ego_vehicle/waypoints", qos_profile_, std::bind(&NMPCControlNodelet::referenceCallback, this, std::placeholders::_1));
     sub_odometry_ = this->create_subscription<vd_msgs::msg::VDpose>(
       "/carla/ego_vehicle/odometry", qos_profile_, std::bind(&NMPCControlNodelet::odomCallback, this, std::placeholders::_1));
-    // sub_pid_cmd_ = this->create_subscription<vd_msgs::msg::VDControlCMD>(
-    //   "pid_control_cmd", qos_profile_, std::bind(&NMPCControlNodelet::pidCallback, this, std::placeholders::_1));
-    
+
+    sub_vd_list_ = this->create_subscription<vd_msgs::msg::VDList>(
+      "neighbour_VDs", qos_profile_, std::bind(&NMPCControlNodelet::VD_list_callback, this, std::placeholders::_1));
     
     }
 
@@ -67,7 +67,11 @@ namespace nmpc_control_nodelet
     float Tf = 5.00;     // time frame for horizon 
     //double Eigen::Matrix<double, 3, 3> inertia_matrix_
     Eigen::Matrix<double, 3,3> mass_matrix_ = mass_ * Eigen::MatrixXd::Identity(3,3);
-     
+    static constexpr int NO_OBJECTS = 5;    
+    static constexpr int PARAM_WINDOW =  6;                        // for each object, we have 14 params to set for mpc after optimization    
+    static constexpr int INPUT_OFFSET = 3;
+    std::vector<std::vector<float>> vd_list;
+
     // from odom callback
     std::string frame_id_;
     Eigen::Vector4d pre_odom_quat_;
@@ -81,6 +85,8 @@ namespace nmpc_control_nodelet
     void publishPrediction();
     void referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr reference_msg);
     void odomCallback(const vd_msgs::msg::VDpose::SharedPtr odom_msg);
+    void VD_list_callback(const vd_msgs::msg::VDList::SharedPtr VD_list_msg);
+    void set_ref_params(Eigen::Matrix<double, kParamSize, kSamples> &reference_params);
     //void pidCallback(const vd_msgs::msg::VDControlCMD::SharedPtr vd_msg);
 
     rclcpp::QoS create_custom_qos();
@@ -93,6 +99,7 @@ namespace nmpc_control_nodelet
     rclcpp::Subscription<vd_msgs::msg::VDtraj>::SharedPtr sub_traj_cmd_;
     rclcpp::Subscription<vd_msgs::msg::VDpose>::SharedPtr sub_odometry_;
     rclcpp::Subscription<vd_msgs::msg::VDControlCMD>::SharedPtr sub_pid_cmd_;
+    rclcpp::Subscription<vd_msgs::msg::VDList>::SharedPtr sub_vd_list_;
     
  };
 
@@ -122,6 +129,13 @@ rclcpp::QoS NMPCControlNodelet::create_custom_qos() {
 
 void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr reference_msg )
 { 
+  double total_time;
+  rclcpp::Time start_time;
+  rclcpp::Time end_time;
+
+  start_time = this->get_clock()->now();
+  
+
   vd_msgs::msg::VDtraj::SharedPtr filt_reference_msg(reference_msg);
   
   //initialize ref state and input variables
@@ -153,7 +167,10 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
 
     
       reference_inputs.col(i) << 0, 0, 0;
-      reference_params.col(i) << iterator-> x_lane_center, iterator-> y_lane_center, iterator->yaw_lane_center; 
+      reference_params.col(i).head(3) << iterator-> x_lane_center, iterator-> y_lane_center, iterator->yaw_lane_center; 
+
+      
+      
       iterator++;
     }
   }
@@ -171,8 +188,9 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     
     
     reference_inputs = (Eigen::Matrix<double, kInputSize, 1>() << 0,0,0).finished().replicate(1, kSamples);
-    reference_params = (Eigen::Matrix<double, kParamSize, 1>() << filt_reference_msg->poses[0].x_lane_center, filt_reference_msg->poses[0].y_lane_center, filt_reference_msg->poses[0].yaw_lane_center).finished().replicate(1, kSamples);       
-    }
+    reference_params.topRows(3) = (Eigen::Matrix<double, kParamSize, 1>() << filt_reference_msg->poses[0].x_lane_center, filt_reference_msg->poses[0].y_lane_center, filt_reference_msg->poses[0].yaw_lane_center).finished().replicate(1, kSamples);       
+    //  
+  }
   
   else 
   { 
@@ -188,29 +206,80 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     std::cout << "here in ref callback pt 2" << std::endl;
   }
 
-
+  //this->set_ref_params(reference_params);
   controller_.setReferenceStates(reference_states);
   controller_.setReferenceInputs(reference_inputs);
-  
+  controller_.setReferenceParams(reference_params);
 
-  
-  // run controller at reference frequency 
-  // auto now = this->get_clock()->now();
-  // std::cout << now.seconds() << std::endl;
-  // this->init_time = now.seconds();
-
+ 
   rclcpp::Time now = this->get_clock()->now();
   this->init_time = now;
 
-
+  std::cout << "set ref values" << std::endl;
 
   controller_.run();
-
+  std::cout << "ran the controller" << std::endl;
   // publish control and predicted path
   //publishControl();
   publishReference();
   publishPrediction();
+
+  end_time = this->get_clock()->now();
+  
+  total_time = (end_time - start_time).nanoseconds();
+  //std::cout << " total_time " << total_time << std::endl;
+
 }
+
+
+void NMPCControlNodelet::set_ref_params(Eigen::Matrix<double, kParamSize, kSamples> &reference_params)
+{
+
+  //set first 3 rows with lane center x, y yaw
+  double obj_x, obj_y, obj_theta, obj_vel, obj_length, obj_width;
+  std::cout << "I am here " << std::endl;
+  for(int i =0; i < vd_list.size(); ++i)
+  { 
+    obj_x = vd_list[i][0];
+    obj_y = vd_list[i][1];
+    obj_theta = vd_list[i][2];
+    obj_vel = vd_list[i][3];   
+    obj_length =  vd_list[i][4];
+    obj_width = vd_list[i][5];
+
+    //std::cout << "obj_x " << obj_x << "obj_y " << obj_y << "obj_theta " << obj_theta << "obj_vel " << obj_vel << "obj_length " << obj_length <<  "obj_width " << obj_width << std::end
+    reference_params.block((PARAM_WINDOW*i + INPUT_OFFSET),0 , PARAM_WINDOW, kSamples) = (Eigen::Matrix<double, PARAM_WINDOW, 1> () << 
+                                                                              obj_x, 
+                                                                              obj_y, 
+                                                                              obj_theta, 
+                                                                              obj_vel,
+                                                                              obj_length, 
+                                                                              obj_width).finished().replicate(1, kSamples);
+    std::cout << "saved params______________" << std::endl;
+                                                                              
+  }
+
+  
+  std::cout << "rows " << reference_params << std::endl;
+}
+
+
+void NMPCControlNodelet::VD_list_callback(const vd_msgs::msg::VDList::SharedPtr VD_list_msg)
+{ 
+  auto iterator = VD_list_msg->vdlist.begin();
+  this->vd_list.clear();
+  
+
+  while (iterator != VD_list_msg->vdlist.end())
+  {
+    this->vd_list.push_back({iterator->x, iterator->y, iterator->psi, iterator->velocity, iterator->length, iterator->width});
+    //std::cout << iterator->x << iterator->y << iterator->yaw << iterator->length << iterator->width << std::endl;
+    ++iterator;
+  } 
+  }
+
+  
+
 
 void NMPCControlNodelet::odomCallback(const vd_msgs::msg::VDpose::SharedPtr odom_msg)
 {

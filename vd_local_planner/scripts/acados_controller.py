@@ -3,12 +3,12 @@ from ackerman_model import ackerman_model
 import numpy as np
 import casadi as ca
 from scipy.spatial.transform import Rotation as R
-
+from utils import get_constraints
 
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
     vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
-    yaw_cost =  ( 1 - np.cos(ca.fabs(ref_vec[2] - state_vec[2])))  * weights[2]
+    yaw_cost =  ( 1 - np.cos(ca.fabs(ref_vec[2] - state_vec[2])))**2  * weights[2]
     #yaw_cost = (ref_vec[2] - state_vec[2])**2 * weights[2]
     cost = pos_cost + yaw_cost + vel_cost       
     return cost 
@@ -25,21 +25,13 @@ def cal_cost_to_lane_center(ref_lane_center, x_array, param_weights):
 
     nx = ca.cos(yaw + ca.pi / 2.0)
     ny = ca.sin(yaw + ca.pi / 2.0)
-    cost = ca.fabs(dx * nx + dy * ny) * param_weights[0]
+    cost = ca.fabs(dx * nx + dy * ny)**2 * param_weights[0]
 
     #cost = (ref_lane_center[0] - x_array[0])**2  * param_weights[0] +   (ref_lane_center[1] - x_array[1])**2 * param_weights[1]
     return cost
 
-def get_constraints(x_array, prev_state, yaw_rate, u_aaray, prev_in, steer_rate):
-    h_list = []    
-    #yaw_const = ca.fabs(x_array[2] - prev_state[2])
-    steer1_constraint = ca.fabs(u_aaray[1] - prev_in[1])
-    steer2_constraint = ca.fabs(u_aaray[2] - prev_in[2])
-    h_list = ca.vertcat( steer1_constraint, steer2_constraint)
-    return h_list
 
-
-def acados_controller(N, Tf, lf, lr):
+def acados_controller(N, Tf, lf, lr, vd_width, no_of_obs, no_of_obs_params, input_offset, barrier_width):
     #model configs param
     # N = params.N
     # Tf = params.Tf
@@ -58,7 +50,9 @@ def acados_controller(N, Tf, lf, lr):
     steer_rate = 0.01   #2.866242038 deg /sec
     yaw_rate = 0.1
 
-    model = ackerman_model(lf, lr)
+    
+
+    model = ackerman_model(lf, lr, no_of_obs, no_of_obs_params, input_offset)
     ocp.model = model
     
     ocp.dims.np = ocp.model.p.size()[0]
@@ -76,10 +70,10 @@ def acados_controller(N, Tf, lf, lr):
     # x, y, yaw,  vel, s_len
     Q_mat = unscale * ca.vertcat(10, 10,   10, 10)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
-    Q_emat =  unscale * ca.vertcat(100, 100, 100, 100) 
+    Q_emat =  unscale * ca.vertcat(1000, 1000, 1000, 1000) 
     control_rate_weight = ca.vertcat(100, 100, 100)
     state_rate_weight = ca.vertcat(0, 0, 100, 0)
-    param_weights = ca.vertcat(10, 100)
+    param_weights = ca.vertcat(100, 100) 
     prev_in = ca.vertcat(0,0, 0)
     prev_state = ca.vertcat(0,0,0,0)
 
@@ -88,16 +82,16 @@ def acados_controller(N, Tf, lf, lr):
     ref_array = model.p  # x, y, qw, qx,qy,qz, v, acc, del1, del2
     ref_states = ref_array[0:5]
     ref_u = ref_array[5:8]
-    ref_lane_center = ref_array[8:11]
-
+    ref_params = ref_array[8:]   #lane center x, y, yaw + 30 params for 5 vehicles, 6 for each 
+    # ref_lane_center = ref_params[0:3]
     state_error = cal_state_cost(x_array, ref_states, Q_mat, prev_state, state_rate_weight )    
     input_error = cal_input_cost(u_aaray, ref_u, R_mat, prev_in, control_rate_weight)  
-    cost_to_lane_center = cal_cost_to_lane_center(ref_lane_center, x_array, param_weights)
+    #cost_to_lane_center = cal_cost_to_lane_center(ref_lane_center, x_array, param_weights)
     
 
     ocp.cost.cost_type = 'EXTERNAL'
-    ocp.model.cost_expr_ext_cost = state_error + input_error + cost_to_lane_center
-    ocp.model.cost_expr_ext_cost_0 = state_error  + input_error + cost_to_lane_center  
+    ocp.model.cost_expr_ext_cost = state_error + input_error   #+ cost_to_lane_center
+    ocp.model.cost_expr_ext_cost_0 = state_error  + input_error  #+ cost_to_lane_center  
     
     
 
@@ -122,15 +116,14 @@ def acados_controller(N, Tf, lf, lr):
     ocp.constraints.idxbx = np.array([2,3] )
     
   
-    # ocp.model.uh = np.array([0.001, 0.001]) #np.array([yaw_rate, steer_rate,state_error])  
-    # set inequlaity constraints
-    # h_list = get_constraints(x_array, prev_state, yaw_rate, u_aaray, prev_in, steer_rate)
+    ##inequality constrainst
+    # h_list = get_constraints(x_array, ref_params, lf+lr, vd_width,  no_of_obs, no_of_obs_params, input_offset, barrier_width)
     # ocp.model.con_h_expr = h_list
     # ocp.dims.nh = h_list.shape[0]
-    # ocp.constraints.lh = np.array([0,0]) #np.array([0,0,0])        # yaw rate, delta rate constraints
-    # ocp.constraints.uh =   np.array([0.001, 0.001])#np.array([yaw_rate, steer_rate,state_error])             # Upper bound 
-    # ocp.model.lh = np.array([0,0]) # np.array([0,0,0])            # lower bound
-    # ocp.model.uh = np.array([0.001, 0.001]) #np.array([yaw_rate, steer_rate,state_error])  
+    # ocp.constraints.lh = np.array([0,0,0,0,0])  #np.array([0,0,0])        # yaw rate, delta rate constraints
+    # ocp.constraints.uh =  np.array([10,10,10,10,10])  #np.array([yaw_rate, steer_rate,state_error])             # Upper bound 
+    # ocp.model.lh = np.array([0,0,0,0,0])# np.array([0,0,0])            # lower bound
+    # ocp.model.uh = np.array([10,10,10,10,10]) #np.array([yaw_rate, steer_rate,state_error])  
 
     ##update last states and input for rate control
     prev_in =  u_aaray 
@@ -140,11 +133,14 @@ def acados_controller(N, Tf, lf, lr):
     ocp.solver_options.tf = Tf
     #ocp.solver_options.qp_solver = 'FULL_CONDENSING_QPOASES'
     ocp.solver_options.qp_solver = "PARTIAL_CONDENSING_HPIPM"
-    ocp.solver_options.nlp_solver_type = "SQP_RTI"
+    ocp.solver_options.nlp_solver_type = "SQP"
     ocp.solver_options.hessian_approx = "GAUSS_NEWTON"
     ocp.solver_options.integrator_type = "ERK"
     ocp.solver_options.sim_method_num_stages = 4
     ocp.solver_options.sim_method_num_steps = 3
+    # ocp.solver_options.regularize_method     = 'CONVEXIFY'
+    # ocp.solver_options.levenberg_marquardt   = 0.0000000001
+    #ocp.solver_options.ext_cost_num_hess = 1
 
 
     # create solver
@@ -159,5 +155,10 @@ if __name__ == "__main__":
     Tf = 5
     lf = 2.56/2
     lr = 2.56/2
+    no_of_obs = 5          # n obstalces in close vicinity are considered for collision avoidance 
+    no_of_obs_params = 6   #x, y, yaw, vel, lenght, width
+    input_offset = 3
+    vd_width = 1.77
+    barrier_width = 0.2
     #L =  2.5654
-    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr )
+    model, acados_solver, acados_integrator = acados_controller(N, Tf, lf, lr,vd_width,  no_of_obs, no_of_obs_params, input_offset, barrier_width)
