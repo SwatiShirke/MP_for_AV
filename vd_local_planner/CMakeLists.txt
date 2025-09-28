@@ -21,7 +21,7 @@ find_package(yaml-cpp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(rclcpp_components REQUIRED)
-find_package(carla_msgs REQUIRED)
+find_package(vd_carla_msgs REQUIRED)
 find_package(vd_msgs REQUIRED)
 
 # ARM NEON flags
@@ -57,7 +57,7 @@ set(dependencies
   tf2
   tf2_ros
   rclcpp_components
-  carla_msgs
+  vd_carla_msgs
 )
 
 

@@ -1,0 +1,590 @@
+[0.072s] DEBUG:colcon:Command line arguments: ['/usr/bin/colcon', 'build', '--cmake-args', '-DCMAKE_VERBOSE_MAKEFILE=ON']
+[0.072s] DEBUG:colcon:Parsed command line arguments: Namespace(log_base=None, log_level=None, verb_name='build', build_base='build', install_base='install', merge_install=False, symlink_install=False, test_result_base=None, continue_on_error=False, executor='parallel', parallel_workers=20, event_handlers=None, ignore_user_meta=False, metas=['./colcon.meta'], base_paths=['.'], packages_ignore=None, packages_ignore_regex=None, paths=None, packages_up_to=None, packages_up_to_regex=None, packages_above=None, packages_above_and_dependencies=None, packages_above_depth=None, packages_select_by_dep=None, packages_skip_by_dep=None, packages_skip_up_to=None, packages_select_build_failed=False, packages_skip_build_finished=False, packages_select_test_failures=False, packages_skip_test_passed=False, packages_select=None, packages_skip=None, packages_select_regex=None, packages_skip_regex=None, packages_start=None, packages_end=None, allow_overriding=[], cmake_args=['-DCMAKE_VERBOSE_MAKEFILE=ON'], cmake_target=None, cmake_target_skip_unavailable=False, cmake_clean_cache=False, cmake_clean_first=False, cmake_force_configure=False, ament_cmake_args=None, catkin_cmake_args=None, catkin_skip_building_tests=False, mixin_files=None, mixin=None, verb_parser=<colcon_mixin.mixin.mixin_argument.MixinArgumentDecorator object at 0x769e223a12d0>, verb_extension=<colcon_core.verb.build.BuildVerb object at 0x769e224b6080>, main=<bound method BuildVerb.main of <colcon_core.verb.build.BuildVerb object at 0x769e224b6080>>, mixin_verb=('build',))
+[0.096s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) check parameters
+[0.096s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) check parameters
+[0.096s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) check parameters
+[0.097s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) check parameters
+[0.097s] Level 1:colcon.colcon_core.package_discovery:discover_packages(colcon_meta) discover
+[0.097s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) discover
+[0.097s] INFO:colcon.colcon_core.package_discovery:Crawling recursively for packages in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV'
+[0.097s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ignore', 'ignore_ament_install']
+[0.097s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore'
+[0.097s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ignore_ament_install'
+[0.097s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_pkg']
+[0.097s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_pkg'
+[0.097s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['colcon_meta']
+[0.097s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'colcon_meta'
+[0.097s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['ros']
+[0.097s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'ros'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['cmake', 'python']
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'cmake'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extensions ['python_setup_py']
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(.) by extension 'python_setup_py'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extensions ['ignore', 'ignore_ament_install']
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(build) by extension 'ignore'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(build) ignored
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extensions ['ignore', 'ignore_ament_install']
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extension 'ignore'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extension 'ignore_ament_install'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extensions ['colcon_pkg']
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extension 'colcon_pkg'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extensions ['colcon_meta']
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extension 'colcon_meta'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extensions ['ros']
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extension 'ros'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extensions ['cmake', 'python']
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extension 'cmake'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extension 'python'
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extensions ['python_setup_py']
+[0.107s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client) by extension 'python_setup_py'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extensions ['ignore', 'ignore_ament_install']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extension 'ignore'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extension 'ignore_ament_install'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extensions ['colcon_pkg']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extension 'colcon_pkg'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extensions ['colcon_meta']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extension 'colcon_meta'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extensions ['ros']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extension 'ros'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extensions ['cmake', 'python']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extension 'cmake'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extension 'python'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extensions ['python_setup_py']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/_out) by extension 'python_setup_py'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extensions ['ignore', 'ignore_ament_install']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extension 'ignore'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extension 'ignore_ament_install'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extensions ['colcon_pkg']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extension 'colcon_pkg'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extensions ['colcon_meta']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extension 'colcon_meta'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extensions ['ros']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extension 'ros'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extensions ['cmake', 'python']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extension 'cmake'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extension 'python'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extensions ['python_setup_py']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(carla_client/pedal_maps) by extension 'python_setup_py'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extensions ['ignore', 'ignore_ament_install']
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(install) by extension 'ignore'
+[0.108s] Level 1:colcon.colcon_core.package_identification:_identify(install) ignored
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extensions ['ignore', 'ignore_ament_install']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(log) by extension 'ignore'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(log) ignored
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extensions ['ignore', 'ignore_ament_install']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extension 'ignore'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extension 'ignore_ament_install'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extensions ['colcon_pkg']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extension 'colcon_pkg'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extensions ['colcon_meta']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extension 'colcon_meta'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extensions ['ros']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extension 'ros'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extensions ['cmake', 'python']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extension 'cmake'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extension 'python'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extensions ['python_setup_py']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(multi_topic_bag) by extension 'python_setup_py'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(vd_carla_msgs) by extensions ['ignore', 'ignore_ament_install']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(vd_carla_msgs) by extension 'ignore'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(vd_carla_msgs) by extension 'ignore_ament_install'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(vd_carla_msgs) by extensions ['colcon_pkg']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(vd_carla_msgs) by extension 'colcon_pkg'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(vd_carla_msgs) by extensions ['colcon_meta']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(vd_carla_msgs) by extension 'colcon_meta'
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(vd_carla_msgs) by extensions ['ros']
+[0.109s] Level 1:colcon.colcon_core.package_identification:_identify(vd_carla_msgs) by extension 'ros'
+[0.111s] DEBUG:colcon.colcon_core.package_identification:Package 'vd_carla_msgs' with type 'ros.ament_cmake' and name 'vd_carla_msgs'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_cmd_sender) by extensions ['ignore', 'ignore_ament_install']
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_cmd_sender) by extension 'ignore'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_cmd_sender) by extension 'ignore_ament_install'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_cmd_sender) by extensions ['colcon_pkg']
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_cmd_sender) by extension 'colcon_pkg'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_cmd_sender) by extensions ['colcon_meta']
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_cmd_sender) by extension 'colcon_meta'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_cmd_sender) by extensions ['ros']
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_cmd_sender) by extension 'ros'
+[0.111s] DEBUG:colcon.colcon_core.package_identification:Package 'vd_cmd_sender' with type 'ros.ament_python' and name 'vd_cmd_sender'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_data_saver) by extensions ['ignore', 'ignore_ament_install']
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_data_saver) by extension 'ignore'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_data_saver) by extension 'ignore_ament_install'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_data_saver) by extensions ['colcon_pkg']
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_data_saver) by extension 'colcon_pkg'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_data_saver) by extensions ['colcon_meta']
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_data_saver) by extension 'colcon_meta'
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_data_saver) by extensions ['ros']
+[0.111s] Level 1:colcon.colcon_core.package_identification:_identify(vd_data_saver) by extension 'ros'
+[0.112s] DEBUG:colcon.colcon_core.package_identification:Package 'vd_data_saver' with type 'ros.ament_python' and name 'vd_data_saver'
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_global_planner) by extensions ['ignore', 'ignore_ament_install']
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_global_planner) by extension 'ignore'
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_global_planner) by extension 'ignore_ament_install'
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_global_planner) by extensions ['colcon_pkg']
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_global_planner) by extension 'colcon_pkg'
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_global_planner) by extensions ['colcon_meta']
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_global_planner) by extension 'colcon_meta'
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_global_planner) by extensions ['ros']
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_global_planner) by extension 'ros'
+[0.112s] DEBUG:colcon.colcon_core.package_identification:Package 'vd_global_planner' with type 'ros.ament_python' and name 'vd_global_planner'
+[0.112s] Level 1:colcon.colcon_core.package_identification:_identify(vd_local_planner) by extensions ['ignore', 'ignore_ament_install']
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_local_planner) by extension 'ignore'
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_local_planner) by extension 'ignore_ament_install'
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_local_planner) by extensions ['colcon_pkg']
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_local_planner) by extension 'colcon_pkg'
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_local_planner) by extensions ['colcon_meta']
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_local_planner) by extension 'colcon_meta'
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_local_planner) by extensions ['ros']
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_local_planner) by extension 'ros'
+[0.113s] DEBUG:colcon.colcon_core.package_identification:Package 'vd_local_planner' with type 'ros.ament_cmake' and name 'vd_local_planner'
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_msgs) by extensions ['ignore', 'ignore_ament_install']
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_msgs) by extension 'ignore'
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_msgs) by extension 'ignore_ament_install'
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_msgs) by extensions ['colcon_pkg']
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_msgs) by extension 'colcon_pkg'
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_msgs) by extensions ['colcon_meta']
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_msgs) by extension 'colcon_meta'
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_msgs) by extensions ['ros']
+[0.113s] Level 1:colcon.colcon_core.package_identification:_identify(vd_msgs) by extension 'ros'
+[0.114s] DEBUG:colcon.colcon_core.package_identification:Package 'vd_msgs' with type 'ros.ament_cmake' and name 'vd_msgs'
+[0.114s] Level 1:colcon.colcon_core.package_identification:_identify(vd_pid_controller) by extensions ['ignore', 'ignore_ament_install']
+[0.114s] Level 1:colcon.colcon_core.package_identification:_identify(vd_pid_controller) by extension 'ignore'
+[0.114s] Level 1:colcon.colcon_core.package_identification:_identify(vd_pid_controller) by extension 'ignore_ament_install'
+[0.114s] Level 1:colcon.colcon_core.package_identification:_identify(vd_pid_controller) by extensions ['colcon_pkg']
+[0.114s] Level 1:colcon.colcon_core.package_identification:_identify(vd_pid_controller) by extension 'colcon_pkg'
+[0.114s] Level 1:colcon.colcon_core.package_identification:_identify(vd_pid_controller) by extensions ['colcon_meta']
+[0.114s] Level 1:colcon.colcon_core.package_identification:_identify(vd_pid_controller) by extension 'colcon_meta'
+[0.114s] Level 1:colcon.colcon_core.package_identification:_identify(vd_pid_controller) by extensions ['ros']
+[0.114s] Level 1:colcon.colcon_core.package_identification:_identify(vd_pid_controller) by extension 'ros'
+[0.122s] DEBUG:colcon.colcon_core.package_identification:Package 'vd_pid_controller' with type 'ros.ament_python' and name 'vd_pid_controller'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(vd_state_estimator) by extensions ['ignore', 'ignore_ament_install']
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(vd_state_estimator) by extension 'ignore'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(vd_state_estimator) by extension 'ignore_ament_install'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(vd_state_estimator) by extensions ['colcon_pkg']
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(vd_state_estimator) by extension 'colcon_pkg'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(vd_state_estimator) by extensions ['colcon_meta']
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(vd_state_estimator) by extension 'colcon_meta'
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(vd_state_estimator) by extensions ['ros']
+[0.122s] Level 1:colcon.colcon_core.package_identification:_identify(vd_state_estimator) by extension 'ros'
+[0.122s] DEBUG:colcon.colcon_core.package_identification:Package 'vd_state_estimator' with type 'ros.ament_python' and name 'vd_state_estimator'
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(recursive) using defaults
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) discover
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(ignore) using defaults
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) discover
+[0.122s] Level 1:colcon.colcon_core.package_discovery:discover_packages(path) using defaults
+[0.137s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) check parameters
+[0.137s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) discover
+[0.138s] DEBUG:colcon.colcon_installed_package_information.package_discovery:Found 383 installed packages in /opt/ros/humble
+[0.139s] Level 1:colcon.colcon_core.package_discovery:discover_packages(prefix_path) using defaults
+[0.167s] Level 5:colcon.colcon_core.verb:set package 'vd_carla_msgs' build argument 'cmake_args' from command line to '['-DCMAKE_VERBOSE_MAKEFILE=ON']'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_carla_msgs' build argument 'cmake_target' from command line to 'None'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_carla_msgs' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_carla_msgs' build argument 'cmake_clean_cache' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_carla_msgs' build argument 'cmake_clean_first' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_carla_msgs' build argument 'cmake_force_configure' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_carla_msgs' build argument 'ament_cmake_args' from command line to 'None'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_carla_msgs' build argument 'catkin_cmake_args' from command line to 'None'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_carla_msgs' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.168s] DEBUG:colcon.colcon_core.verb:Building package 'vd_carla_msgs' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': ['-DCMAKE_VERBOSE_MAKEFILE=ON'], 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs', 'merge_install': False, 'path': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_carla_msgs', 'symlink_install': False, 'test_result_base': None}
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_cmd_sender' build argument 'cmake_args' from command line to '['-DCMAKE_VERBOSE_MAKEFILE=ON']'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_cmd_sender' build argument 'cmake_target' from command line to 'None'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_cmd_sender' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_cmd_sender' build argument 'cmake_clean_cache' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_cmd_sender' build argument 'cmake_clean_first' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_cmd_sender' build argument 'cmake_force_configure' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_cmd_sender' build argument 'ament_cmake_args' from command line to 'None'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_cmd_sender' build argument 'catkin_cmake_args' from command line to 'None'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_cmd_sender' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.168s] DEBUG:colcon.colcon_core.verb:Building package 'vd_cmd_sender' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_cmd_sender', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': ['-DCMAKE_VERBOSE_MAKEFILE=ON'], 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender', 'merge_install': False, 'path': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_cmd_sender', 'symlink_install': False, 'test_result_base': None}
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_data_saver' build argument 'cmake_args' from command line to '['-DCMAKE_VERBOSE_MAKEFILE=ON']'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_data_saver' build argument 'cmake_target' from command line to 'None'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_data_saver' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_data_saver' build argument 'cmake_clean_cache' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_data_saver' build argument 'cmake_clean_first' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_data_saver' build argument 'cmake_force_configure' from command line to 'False'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_data_saver' build argument 'ament_cmake_args' from command line to 'None'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_data_saver' build argument 'catkin_cmake_args' from command line to 'None'
+[0.168s] Level 5:colcon.colcon_core.verb:set package 'vd_data_saver' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.168s] DEBUG:colcon.colcon_core.verb:Building package 'vd_data_saver' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_data_saver', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': ['-DCMAKE_VERBOSE_MAKEFILE=ON'], 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver', 'merge_install': False, 'path': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_data_saver', 'symlink_install': False, 'test_result_base': None}
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_global_planner' build argument 'cmake_args' from command line to '['-DCMAKE_VERBOSE_MAKEFILE=ON']'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_global_planner' build argument 'cmake_target' from command line to 'None'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_global_planner' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_global_planner' build argument 'cmake_clean_cache' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_global_planner' build argument 'cmake_clean_first' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_global_planner' build argument 'cmake_force_configure' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_global_planner' build argument 'ament_cmake_args' from command line to 'None'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_global_planner' build argument 'catkin_cmake_args' from command line to 'None'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_global_planner' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.169s] DEBUG:colcon.colcon_core.verb:Building package 'vd_global_planner' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_global_planner', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': ['-DCMAKE_VERBOSE_MAKEFILE=ON'], 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner', 'merge_install': False, 'path': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_global_planner', 'symlink_install': False, 'test_result_base': None}
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_msgs' build argument 'cmake_args' from command line to '['-DCMAKE_VERBOSE_MAKEFILE=ON']'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_msgs' build argument 'cmake_target' from command line to 'None'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_msgs' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_msgs' build argument 'cmake_clean_cache' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_msgs' build argument 'cmake_clean_first' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_msgs' build argument 'cmake_force_configure' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_msgs' build argument 'ament_cmake_args' from command line to 'None'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_msgs' build argument 'catkin_cmake_args' from command line to 'None'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_msgs' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.169s] DEBUG:colcon.colcon_core.verb:Building package 'vd_msgs' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': ['-DCMAKE_VERBOSE_MAKEFILE=ON'], 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs', 'merge_install': False, 'path': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs', 'symlink_install': False, 'test_result_base': None}
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_state_estimator' build argument 'cmake_args' from command line to '['-DCMAKE_VERBOSE_MAKEFILE=ON']'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_state_estimator' build argument 'cmake_target' from command line to 'None'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_state_estimator' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_state_estimator' build argument 'cmake_clean_cache' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_state_estimator' build argument 'cmake_clean_first' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_state_estimator' build argument 'cmake_force_configure' from command line to 'False'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_state_estimator' build argument 'ament_cmake_args' from command line to 'None'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_state_estimator' build argument 'catkin_cmake_args' from command line to 'None'
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_state_estimator' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.169s] DEBUG:colcon.colcon_core.verb:Building package 'vd_state_estimator' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_state_estimator', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': ['-DCMAKE_VERBOSE_MAKEFILE=ON'], 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator', 'merge_install': False, 'path': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_state_estimator', 'symlink_install': False, 'test_result_base': None}
+[0.169s] Level 5:colcon.colcon_core.verb:set package 'vd_local_planner' build argument 'cmake_args' from command line to '['-DCMAKE_VERBOSE_MAKEFILE=ON']'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_local_planner' build argument 'cmake_target' from command line to 'None'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_local_planner' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_local_planner' build argument 'cmake_clean_cache' from command line to 'False'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_local_planner' build argument 'cmake_clean_first' from command line to 'False'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_local_planner' build argument 'cmake_force_configure' from command line to 'False'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_local_planner' build argument 'ament_cmake_args' from command line to 'None'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_local_planner' build argument 'catkin_cmake_args' from command line to 'None'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_local_planner' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.170s] DEBUG:colcon.colcon_core.verb:Building package 'vd_local_planner' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': ['-DCMAKE_VERBOSE_MAKEFILE=ON'], 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner', 'merge_install': False, 'path': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_local_planner', 'symlink_install': False, 'test_result_base': None}
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_pid_controller' build argument 'cmake_args' from command line to '['-DCMAKE_VERBOSE_MAKEFILE=ON']'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_pid_controller' build argument 'cmake_target' from command line to 'None'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_pid_controller' build argument 'cmake_target_skip_unavailable' from command line to 'False'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_pid_controller' build argument 'cmake_clean_cache' from command line to 'False'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_pid_controller' build argument 'cmake_clean_first' from command line to 'False'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_pid_controller' build argument 'cmake_force_configure' from command line to 'False'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_pid_controller' build argument 'ament_cmake_args' from command line to 'None'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_pid_controller' build argument 'catkin_cmake_args' from command line to 'None'
+[0.170s] Level 5:colcon.colcon_core.verb:set package 'vd_pid_controller' build argument 'catkin_skip_building_tests' from command line to 'False'
+[0.170s] DEBUG:colcon.colcon_core.verb:Building package 'vd_pid_controller' with the following arguments: {'ament_cmake_args': None, 'build_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_pid_controller', 'catkin_cmake_args': None, 'catkin_skip_building_tests': False, 'cmake_args': ['-DCMAKE_VERBOSE_MAKEFILE=ON'], 'cmake_clean_cache': False, 'cmake_clean_first': False, 'cmake_force_configure': False, 'cmake_target': None, 'cmake_target_skip_unavailable': False, 'install_base': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller', 'merge_install': False, 'path': '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_pid_controller', 'symlink_install': False, 'test_result_base': None}
+[0.170s] INFO:colcon.colcon_core.executor:Executing jobs using 'parallel' executor
+[0.171s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete
+[0.171s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_carla_msgs' with build type 'ament_cmake'
+[0.171s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_carla_msgs'
+[0.173s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_core.shell.bat': Not used on non-Windows systems
+[0.173s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.173s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.175s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs' with build type 'ament_cmake'
+[0.175s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs'
+[0.175s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.175s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.177s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_cmd_sender' with build type 'ament_python'
+[0.177s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_cmd_sender', 'ament_prefix_path')
+[0.177s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/hook/ament_prefix_path.ps1'
+[0.177s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/hook/ament_prefix_path.dsv'
+[0.178s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/hook/ament_prefix_path.sh'
+[0.178s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.178s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.180s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_data_saver' with build type 'ament_python'
+[0.180s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_data_saver', 'ament_prefix_path')
+[0.180s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/hook/ament_prefix_path.ps1'
+[0.180s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/hook/ament_prefix_path.dsv'
+[0.180s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/hook/ament_prefix_path.sh'
+[0.181s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.181s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.182s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_global_planner' with build type 'ament_python'
+[0.182s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_global_planner', 'ament_prefix_path')
+[0.182s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/hook/ament_prefix_path.ps1'
+[0.183s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/hook/ament_prefix_path.dsv'
+[0.183s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/hook/ament_prefix_path.sh'
+[0.183s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.183s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.185s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_state_estimator' with build type 'ament_python'
+[0.185s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_state_estimator', 'ament_prefix_path')
+[0.185s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/hook/ament_prefix_path.ps1'
+[0.185s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/hook/ament_prefix_path.dsv'
+[0.186s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/hook/ament_prefix_path.sh'
+[0.186s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.186s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.191s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_carla_msgs -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs
+[0.192s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs
+[0.362s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_cmd_sender'
+[0.362s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.362s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.548s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_data_saver'
+[0.549s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.549s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.723s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_global_planner'
+[0.723s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.723s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[0.897s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_state_estimator'
+[0.897s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[0.897s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[1.339s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_data_saver': PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_data_saver/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_data_saver build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_data_saver/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_data_saver/install.log --single-version-externally-managed install_data
+[1.361s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_cmd_sender': PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_cmd_sender/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_cmd_sender build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_cmd_sender/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_cmd_sender/install.log --single-version-externally-managed install_data
+[1.364s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_global_planner': PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_global_planner/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_global_planner build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_global_planner/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_global_planner/install.log --single-version-externally-managed install_data
+[1.374s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_state_estimator': PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_state_estimator/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_state_estimator build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_state_estimator/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_state_estimator/install.log --single-version-externally-managed install_data
+[1.710s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_data_saver' returned '0': PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_data_saver/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_data_saver build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_data_saver/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_data_saver/install.log --single-version-externally-managed install_data
+[1.713s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver' for CMake module files
+[1.713s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver' for CMake config files
+[1.714s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/lib'
+[1.714s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/bin'
+[1.715s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/lib/pkgconfig/vd_data_saver.pc'
+[1.715s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/lib/python3.10/site-packages'
+[1.715s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_data_saver', 'pythonpath')
+[1.715s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/hook/pythonpath.ps1'
+[1.716s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/hook/pythonpath.dsv'
+[1.716s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/hook/pythonpath.sh'
+[1.717s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/bin'
+[1.717s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_data_saver)
+[1.717s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/package.ps1'
+[1.718s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/package.dsv'
+[1.719s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/package.sh'
+[1.720s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/package.bash'
+[1.721s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/vd_data_saver/package.zsh'
+[1.722s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_data_saver/share/colcon-core/packages/vd_data_saver)
+[1.744s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator' for CMake module files
+[1.745s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_state_estimator' returned '0': PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_state_estimator/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_state_estimator build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_state_estimator/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_state_estimator/install.log --single-version-externally-managed install_data
+[1.745s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator' for CMake config files
+[1.745s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/lib'
+[1.745s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/bin'
+[1.745s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/lib/pkgconfig/vd_state_estimator.pc'
+[1.745s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/lib/python3.10/site-packages'
+[1.745s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_state_estimator', 'pythonpath')
+[1.746s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/hook/pythonpath.ps1'
+[1.746s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/hook/pythonpath.dsv'
+[1.746s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/hook/pythonpath.sh'
+[1.746s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/bin'
+[1.746s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_state_estimator)
+[1.747s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/package.ps1'
+[1.747s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/package.dsv'
+[1.747s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/package.sh'
+[1.747s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/package.bash'
+[1.748s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/vd_state_estimator/package.zsh'
+[1.748s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_state_estimator/share/colcon-core/packages/vd_state_estimator)
+[1.748s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender' for CMake module files
+[1.749s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender' for CMake config files
+[1.749s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_cmd_sender' returned '0': PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_cmd_sender/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_cmd_sender build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_cmd_sender/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_cmd_sender/install.log --single-version-externally-managed install_data
+[1.749s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/lib'
+[1.749s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/bin'
+[1.750s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/lib/pkgconfig/vd_cmd_sender.pc'
+[1.750s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/lib/python3.10/site-packages'
+[1.750s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_cmd_sender', 'pythonpath')
+[1.750s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/hook/pythonpath.ps1'
+[1.750s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/hook/pythonpath.dsv'
+[1.750s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/hook/pythonpath.sh'
+[1.751s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/bin'
+[1.751s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_cmd_sender)
+[1.751s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/package.ps1'
+[1.751s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/package.dsv'
+[1.752s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/package.sh'
+[1.752s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/package.bash'
+[1.752s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/vd_cmd_sender/package.zsh'
+[1.752s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_cmd_sender/share/colcon-core/packages/vd_cmd_sender)
+[1.753s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner' for CMake module files
+[1.753s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_global_planner' returned '0': PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_global_planner/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_global_planner build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_global_planner/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_global_planner/install.log --single-version-externally-managed install_data
+[1.754s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner' for CMake config files
+[1.755s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/lib'
+[1.755s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/bin'
+[1.755s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/lib/pkgconfig/vd_global_planner.pc'
+[1.755s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/lib/python3.10/site-packages'
+[1.755s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_global_planner', 'pythonpath')
+[1.755s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/hook/pythonpath.ps1'
+[1.756s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/hook/pythonpath.dsv'
+[1.756s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/hook/pythonpath.sh'
+[1.757s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/bin'
+[1.757s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_global_planner)
+[1.757s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/package.ps1'
+[1.758s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/package.dsv'
+[1.758s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/package.sh'
+[1.759s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/package.bash'
+[1.759s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/vd_global_planner/package.zsh'
+[1.759s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_global_planner/share/colcon-core/packages/vd_global_planner)
+[2.387s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_carla_msgs -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs
+[2.389s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake --build /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs -- -j20 -l20
+[2.394s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_msgs -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs
+[2.395s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake --build /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs -- -j20 -l20
+[4.049s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake --build /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs -- -j20 -l20
+[4.108s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake --install /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs
+[4.149s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_carla_msgs)
+[4.149s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs' for CMake module files
+[4.149s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake --install /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_carla_msgs
+[4.150s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs' for CMake config files
+[4.150s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_carla_msgs', 'cmake_prefix_path')
+[4.150s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/cmake_prefix_path.ps1'
+[4.150s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/cmake_prefix_path.dsv'
+[4.150s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/cmake_prefix_path.sh'
+[4.151s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib'
+[4.151s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_carla_msgs', 'ld_library_path_lib')
+[4.151s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/ld_library_path_lib.ps1'
+[4.151s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/ld_library_path_lib.dsv'
+[4.151s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/ld_library_path_lib.sh'
+[4.152s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/bin'
+[4.152s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib/pkgconfig/vd_carla_msgs.pc'
+[4.152s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib/python3.10/site-packages'
+[4.152s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/bin'
+[4.152s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.ps1'
+[4.152s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.dsv'
+[4.152s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.sh'
+[4.153s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.bash'
+[4.153s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.zsh'
+[4.153s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/colcon-core/packages/vd_carla_msgs)
+[4.208s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_carla_msgs)
+[4.209s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs' for CMake module files
+[4.209s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs' for CMake config files
+[4.209s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_carla_msgs', 'cmake_prefix_path')
+[4.209s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/cmake_prefix_path.ps1'
+[4.210s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/cmake_prefix_path.dsv'
+[4.210s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/cmake_prefix_path.sh'
+[4.210s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib'
+[4.210s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_carla_msgs', 'ld_library_path_lib')
+[4.210s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/ld_library_path_lib.ps1'
+[4.211s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/ld_library_path_lib.dsv'
+[4.211s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/hook/ld_library_path_lib.sh'
+[4.211s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/bin'
+[4.211s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib/pkgconfig/vd_carla_msgs.pc'
+[4.211s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib/python3.10/site-packages'
+[4.211s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/bin'
+[4.212s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.ps1'
+[4.212s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.dsv'
+[4.212s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.sh'
+[4.212s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.bash'
+[4.213s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/vd_carla_msgs/package.zsh'
+[4.213s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/share/colcon-core/packages/vd_carla_msgs)
+[4.750s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake --build /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs -- -j20 -l20
+[5.004s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake --install /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs
+[5.067s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_msgs)
+[5.067s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs' for CMake module files
+[5.068s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs' returned '0': CMAKE_PREFIX_PATH=/opt/ros/humble /opt/cmake-3.28.3-linux-x86_64/bin/cmake --install /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_msgs
+[5.068s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs' for CMake config files
+[5.068s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_msgs', 'cmake_prefix_path')
+[5.068s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/cmake_prefix_path.ps1'
+[5.069s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/cmake_prefix_path.dsv'
+[5.069s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/cmake_prefix_path.sh'
+[5.069s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib'
+[5.069s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_msgs', 'ld_library_path_lib')
+[5.069s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/ld_library_path_lib.ps1'
+[5.070s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/ld_library_path_lib.dsv'
+[5.070s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/ld_library_path_lib.sh'
+[5.070s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/bin'
+[5.070s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib/pkgconfig/vd_msgs.pc'
+[5.070s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib/python3.10/site-packages'
+[5.070s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/bin'
+[5.071s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.ps1'
+[5.071s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.dsv'
+[5.071s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.sh'
+[5.072s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.bash'
+[5.072s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.zsh'
+[5.072s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/colcon-core/packages/vd_msgs)
+[5.303s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_msgs)
+[5.303s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs' for CMake module files
+[5.303s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs' for CMake config files
+[5.304s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_msgs', 'cmake_prefix_path')
+[5.304s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/cmake_prefix_path.ps1'
+[5.304s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/cmake_prefix_path.dsv'
+[5.304s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/cmake_prefix_path.sh'
+[5.305s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib'
+[5.305s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_msgs', 'ld_library_path_lib')
+[5.305s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/ld_library_path_lib.ps1'
+[5.305s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/ld_library_path_lib.dsv'
+[5.305s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/hook/ld_library_path_lib.sh'
+[5.305s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/bin'
+[5.305s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib/pkgconfig/vd_msgs.pc'
+[5.306s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib/python3.10/site-packages'
+[5.306s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/bin'
+[5.306s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.ps1'
+[5.306s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.dsv'
+[5.307s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.sh'
+[5.307s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.bash'
+[5.307s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/vd_msgs/package.zsh'
+[5.307s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/share/colcon-core/packages/vd_msgs)
+[5.308s] INFO:colcon.colcon_ros.task.ament_cmake.build:Building ROS package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_local_planner' with build type 'ament_cmake'
+[5.308s] INFO:colcon.colcon_cmake.task.cmake.build:Building CMake package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_local_planner'
+[5.308s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[5.308s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[5.310s] INFO:colcon.colcon_ros.task.ament_python.build:Building ROS package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_pid_controller' with build type 'ament_python'
+[5.310s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_pid_controller', 'ament_prefix_path')
+[5.310s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/hook/ament_prefix_path.ps1'
+[5.311s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/hook/ament_prefix_path.dsv'
+[5.311s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/hook/ament_prefix_path.sh'
+[5.311s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[5.311s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[5.318s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner': AMENT_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib:/opt/hsl/ma27:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/usr/share/gazebo/../../lib/x86_64-linux-gnu/gazebo-11/plugins:/home/swati/acados/lib:/home/swati/acados/mpcenv/lib:/home/swati/.casadi_cpp/lib:/opt/hsl/lib PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /opt/cmake-3.28.3-linux-x86_64/bin/cmake /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_local_planner -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner
+[5.490s] INFO:colcon.colcon_core.task.python.build:Building Python package in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_pid_controller'
+[5.490s] INFO:colcon.colcon_core.shell:Skip shell extension 'powershell' for command environment: Not usable outside of PowerShell
+[5.490s] DEBUG:colcon.colcon_core.shell:Skip shell extension 'dsv' for command environment
+[5.933s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_pid_controller': AMENT_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs LD_LIBRARY_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib:/opt/hsl/ma27:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/usr/share/gazebo/../../lib/x86_64-linux-gnu/gazebo-11/plugins:/home/swati/acados/lib:/home/swati/acados/mpcenv/lib:/home/swati/.casadi_cpp/lib:/opt/hsl/lib PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_pid_controller/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/lib/python3.10/site-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_pid_controller build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_pid_controller/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_pid_controller/install.log --single-version-externally-managed install_data
+[6.303s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller' for CMake module files
+[6.304s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_pid_controller' returned '0': AMENT_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs LD_LIBRARY_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib:/opt/hsl/ma27:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/usr/share/gazebo/../../lib/x86_64-linux-gnu/gazebo-11/plugins:/home/swati/acados/lib:/home/swati/acados/mpcenv/lib:/home/swati/.casadi_cpp/lib:/opt/hsl/lib PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_pid_controller/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/lib/python3.10/site-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated setup.py egg_info --egg-base ../build/vd_pid_controller build --build-base /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_pid_controller/build install --record /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_pid_controller/install.log --single-version-externally-managed install_data
+[6.304s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller' for CMake config files
+[6.304s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/lib'
+[6.304s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/bin'
+[6.304s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/lib/pkgconfig/vd_pid_controller.pc'
+[6.305s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/lib/python3.10/site-packages'
+[6.305s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_pid_controller', 'pythonpath')
+[6.305s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/hook/pythonpath.ps1'
+[6.305s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/hook/pythonpath.dsv'
+[6.305s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/hook/pythonpath.sh'
+[6.306s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/bin'
+[6.306s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_pid_controller)
+[6.306s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/package.ps1'
+[6.306s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/package.dsv'
+[6.306s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/package.sh'
+[6.307s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/package.bash'
+[6.307s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/vd_pid_controller/package.zsh'
+[6.307s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_pid_controller/share/colcon-core/packages/vd_pid_controller)
+[6.470s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner' returned '0': AMENT_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib:/opt/hsl/ma27:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/usr/share/gazebo/../../lib/x86_64-linux-gnu/gazebo-11/plugins:/home/swati/acados/lib:/home/swati/acados/mpcenv/lib:/home/swati/.casadi_cpp/lib:/opt/hsl/lib PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /opt/cmake-3.28.3-linux-x86_64/bin/cmake /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_local_planner -DCMAKE_VERBOSE_MAKEFILE=ON -DCMAKE_INSTALL_PREFIX=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner
+[6.471s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner': AMENT_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib:/opt/hsl/ma27:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/usr/share/gazebo/../../lib/x86_64-linux-gnu/gazebo-11/plugins:/home/swati/acados/lib:/home/swati/acados/mpcenv/lib:/home/swati/.casadi_cpp/lib:/opt/hsl/lib PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /opt/cmake-3.28.3-linux-x86_64/bin/cmake --build /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner -- -j20 -l20
+[28.788s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner' returned '0': AMENT_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib:/opt/hsl/ma27:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/usr/share/gazebo/../../lib/x86_64-linux-gnu/gazebo-11/plugins:/home/swati/acados/lib:/home/swati/acados/mpcenv/lib:/home/swati/.casadi_cpp/lib:/opt/hsl/lib PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /opt/cmake-3.28.3-linux-x86_64/bin/cmake --build /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner -- -j20 -l20
+[28.838s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoking command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner': AMENT_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib:/opt/hsl/ma27:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/usr/share/gazebo/../../lib/x86_64-linux-gnu/gazebo-11/plugins:/home/swati/acados/lib:/home/swati/acados/mpcenv/lib:/home/swati/.casadi_cpp/lib:/opt/hsl/lib PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /opt/cmake-3.28.3-linux-x86_64/bin/cmake --install /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner
+[28.877s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_local_planner)
+[28.878s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner' for CMake module files
+[28.878s] DEBUG:colcon.colcon_core.event_handler.log_command:Invoked command in '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner' returned '0': AMENT_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:${AMENT_PREFIX_PATH} CMAKE_PREFIX_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs:/opt/ros/humble LD_LIBRARY_PATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/lib:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/lib:/opt/hsl/ma27:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib:/usr/share/gazebo/../../lib/x86_64-linux-gnu/gazebo-11/plugins:/home/swati/acados/lib:/home/swati/acados/mpcenv/lib:/home/swati/.casadi_cpp/lib:/opt/hsl/lib PYTHONPATH=/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_msgs/local/lib/python3.10/dist-packages:/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_carla_msgs/local/lib/python3.10/dist-packages:${PYTHONPATH} /opt/cmake-3.28.3-linux-x86_64/bin/cmake --install /home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/build/vd_local_planner
+[28.879s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner' for CMake config files
+[28.879s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_local_planner', 'cmake_prefix_path')
+[28.879s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/cmake_prefix_path.ps1'
+[28.880s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/cmake_prefix_path.dsv'
+[28.880s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/cmake_prefix_path.sh'
+[28.881s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/lib'
+[28.881s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_local_planner', 'ld_library_path_lib')
+[28.881s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/ld_library_path_lib.ps1'
+[28.881s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/ld_library_path_lib.dsv'
+[28.881s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/ld_library_path_lib.sh'
+[28.882s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/bin'
+[28.882s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/lib/pkgconfig/vd_local_planner.pc'
+[28.882s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/lib/python3.10/site-packages'
+[28.882s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/bin'
+[28.882s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.ps1'
+[28.883s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.dsv'
+[28.883s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.sh'
+[28.883s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.bash'
+[28.883s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.zsh'
+[28.884s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/colcon-core/packages/vd_local_planner)
+[28.912s] Level 1:colcon.colcon_core.environment:create_environment_scripts_only(vd_local_planner)
+[28.912s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner' for CMake module files
+[28.913s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner' for CMake config files
+[28.913s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_local_planner', 'cmake_prefix_path')
+[28.913s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/cmake_prefix_path.ps1'
+[28.914s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/cmake_prefix_path.dsv'
+[28.914s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/cmake_prefix_path.sh'
+[28.915s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/lib'
+[28.915s] Level 1:colcon.colcon_core.shell:create_environment_hook('vd_local_planner', 'ld_library_path_lib')
+[28.916s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/ld_library_path_lib.ps1'
+[28.916s] INFO:colcon.colcon_core.shell:Creating environment descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/ld_library_path_lib.dsv'
+[28.917s] INFO:colcon.colcon_core.shell:Creating environment hook '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/hook/ld_library_path_lib.sh'
+[28.918s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/bin'
+[28.918s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/lib/pkgconfig/vd_local_planner.pc'
+[28.918s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/lib/python3.10/site-packages'
+[28.919s] Level 1:colcon.colcon_core.environment:checking '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/bin'
+[28.919s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.ps1'
+[28.920s] INFO:colcon.colcon_core.shell:Creating package descriptor '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.dsv'
+[28.921s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.sh'
+[28.921s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.bash'
+[28.922s] INFO:colcon.colcon_core.shell:Creating package script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/vd_local_planner/package.zsh'
+[28.922s] Level 1:colcon.colcon_core.environment:create_file_with_runtime_dependencies(/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/vd_local_planner/share/colcon-core/packages/vd_local_planner)
+[28.923s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:closing loop
+[28.923s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:loop closed
+[28.923s] DEBUG:colcon.colcon_parallel_executor.executor.parallel:run_until_complete finished with '0'
+[28.923s] DEBUG:colcon.colcon_core.event_reactor:joining thread
+[28.930s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.terminal_notifier': Not used on non-Darwin systems
+[28.930s] INFO:colcon.colcon_core.plugin_system:Skipping extension 'colcon_notification.desktop_notification.win32': Not used on non-Windows systems
+[28.930s] INFO:colcon.colcon_notification.desktop_notification:Sending desktop notification using 'notify2'
+[28.942s] DEBUG:colcon.colcon_core.event_reactor:joined thread
+[28.942s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/local_setup.ps1'
+[28.943s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/_local_setup_util_ps1.py'
+[28.944s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/setup.ps1'
+[28.945s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/local_setup.sh'
+[28.945s] INFO:colcon.colcon_core.shell:Creating prefix util module '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/_local_setup_util_sh.py'
+[28.946s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/setup.sh'
+[28.947s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/local_setup.bash'
+[28.947s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/setup.bash'
+[28.948s] INFO:colcon.colcon_core.shell:Creating prefix script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/local_setup.zsh'
+[28.949s] INFO:colcon.colcon_core.shell:Creating prefix chain script '/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/install/setup.zsh'

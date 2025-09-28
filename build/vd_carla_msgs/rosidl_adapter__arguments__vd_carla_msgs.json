@@ -1,0 +1,6 @@
+{
+  "package_name": "vd_carla_msgs",
+  "non_idl_tuples": [
+    "/home/swati/Motion_Planning/MP_for_AV/src/MP_for_AV/vd_carla_msgs:msg/CarlaEgoVehicleControl.msg"
+  ]
+}

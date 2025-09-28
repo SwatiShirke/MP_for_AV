@@ -1,0 +1,6 @@
+source;share/vd_data_saver/hook/pythonpath.ps1
+source;share/vd_data_saver/hook/pythonpath.dsv
+source;share/vd_data_saver/hook/pythonpath.sh
+source;share/vd_data_saver/hook/ament_prefix_path.ps1
+source;share/vd_data_saver/hook/ament_prefix_path.dsv
+source;share/vd_data_saver/hook/ament_prefix_path.sh

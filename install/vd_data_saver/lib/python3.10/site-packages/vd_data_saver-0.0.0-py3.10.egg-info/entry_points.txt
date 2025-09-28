@@ -1,0 +1,2 @@
+[console_scripts]
+data_saver_node = vd_data_saver.data_saver_node:main

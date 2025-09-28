@@ -12,7 +12,7 @@
 #include "vd_msgs/msg/v_dpose.hpp"
 #include "vd_msgs/msg/v_dtraj.hpp"
 #include "vd_msgs/msg/v_dstate.hpp"
-#include "carla_msgs/msg/carla_ego_vehicle_control.hpp"
+#include "vd_carla_msgs/msg/carla_ego_vehicle_control.hpp"
 #include "vd_msgs/msg/vd_list.hpp"  
 
 //#include "utils.hpp"
@@ -35,7 +35,7 @@ namespace nmpc_control_nodelet
     //set qos
     auto qos_profile_ = this->create_custom_qos();
     //punlsihers
-    pub_control_cmd_ = this->create_publisher<carla_msgs::msg::CarlaEgoVehicleControl>("/carla/ego_vehicle/vehicle_control_cmd",qos_profile_);
+    pub_control_cmd_ = this->create_publisher<vd_carla_msgs::msg::CarlaEgoVehicleControl>("/carla/ego_vehicle/vehicle_control_cmd",qos_profile_);
     pub_ref_traj_ = this->create_publisher<nav_msgs::msg::Path>("reference_path", 1);
     pub_pred_traj_ = this->create_publisher<vd_msgs::msg::VDtraj>("predicted_path", 1);   
     pub_vd_cmd_ = this->create_publisher<vd_msgs::msg::VDControlCMD>("mpc_cmd", qos_profile_);
@@ -90,7 +90,7 @@ namespace nmpc_control_nodelet
     //void pidCallback(const vd_msgs::msg::VDControlCMD::SharedPtr vd_msg);
 
     rclcpp::QoS create_custom_qos();
-    rclcpp::Publisher<carla_msgs::msg::CarlaEgoVehicleControl>::SharedPtr pub_control_cmd_;
+    rclcpp::Publisher<vd_carla_msgs::msg::CarlaEgoVehicleControl>::SharedPtr pub_control_cmd_;
     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pub_ref_traj_;
     rclcpp::Publisher<vd_msgs::msg::VDtraj>::SharedPtr pub_pred_traj_;       
     rclcpp::Publisher<vd_msgs::msg::VDControlCMD>::SharedPtr pub_vd_cmd_;
