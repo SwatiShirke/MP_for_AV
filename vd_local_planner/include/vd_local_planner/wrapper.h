@@ -140,6 +140,9 @@ namespace nmpc_control_nodelet
     Eigen::Map<Eigen::Matrix<double, kStateSize, kSamples, Eigen::ColMajor>> acados_states_{acados_out.x_out};
     Eigen::Map<Eigen::Matrix<double, kInputSize, kSamples, Eigen::ColMajor>> acados_inputs_{acados_out.u_out};
     Eigen::Matrix<real_t, kInputSize, 1> kVDInput_ = (Eigen::Matrix<real_t, kInputSize, 1>() << 0,0,0).finished();
+    Eigen::Matrix<double, kParamSize, 1> KRefParam_ = (Eigen::Matrix<double, kParamSize, 1>() << 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0).finished();
+
+
     };
 
-}// namespace control nodelet ends here
+}// namespace control nodelet ends here  

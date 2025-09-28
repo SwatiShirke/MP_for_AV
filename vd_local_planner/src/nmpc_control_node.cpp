@@ -145,11 +145,13 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
   
   reference_states = Eigen::Matrix<double,kStateSize, kSamples>::Zero();
   reference_inputs = Eigen::Matrix<double,kInputSize, kSamples>::Zero();
-  reference_params = Eigen::Matrix<double,kParamSize, kSamples>::Zero();
+  reference_params = Eigen::Matrix<double,kParamSize, kSamples>::Zero() * 0.01;
   
   this->ref_vel = filt_reference_msg->poses[0].velocity;
   auto iterator(filt_reference_msg->poses.begin());
 
+
+  std::cout << "before update " << reference_params << std::endl;
   //std::cout << "vd current state" << this->vd_current_state << std::endl;
   
   if (filt_reference_msg->poses.size() > 1)
@@ -167,12 +169,25 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
 
     
       reference_inputs.col(i) << 0, 0, 0;
-      reference_params.col(i).head(3) << iterator-> x_lane_center, iterator-> y_lane_center, iterator->yaw_lane_center; 
+      reference_params.col(i).head(33) << iterator->x_lane_center,
+                                         iterator->y_lane_center,
+                                         iterator->yaw_lane_center,    
+                                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+                                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+                                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 
+                                         0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                         0.0,0.0,0.0;
 
-      
-      
+      // reference_params.col(i).head(3) << iterator->x_lane_center,
+      //                                    iterator->y_lane_center,
+      //                                    iterator->yaw_lane_center;
+                                    
+      std::cout << "after updates " << reference_params << std::endl;
       iterator++;
     }
+
+    //reference_params.block(3, 0, 30, kSamples).setZero();
+
   }
   else if(filt_reference_msg->poses.size() == 1)
   { 
@@ -188,7 +203,7 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     
     
     reference_inputs = (Eigen::Matrix<double, kInputSize, 1>() << 0,0,0).finished().replicate(1, kSamples);
-    reference_params.topRows(3) = (Eigen::Matrix<double, kParamSize, 1>() << filt_reference_msg->poses[0].x_lane_center, filt_reference_msg->poses[0].y_lane_center, filt_reference_msg->poses[0].yaw_lane_center).finished().replicate(1, kSamples);       
+    //reference_params.topRows(33) = (Eigen::Matrix<double, kParamSize, 1>() << filt_reference_msg->poses[0].x_lane_center, filt_reference_msg->poses[0].y_lane_center, filt_reference_msg->poses[0].yaw_lane_center, 0.1).finished().replicate(1, kSamples);       
     //  
   }
   
@@ -207,6 +222,8 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
   }
 
   //this->set_ref_params(reference_params);
+
+  std::cout << "atfer update 30 " << reference_params << std::endl;
   controller_.setReferenceStates(reference_states);
   controller_.setReferenceInputs(reference_inputs);
   controller_.setReferenceParams(reference_params);
@@ -238,6 +255,9 @@ void NMPCControlNodelet::set_ref_params(Eigen::Matrix<double, kParamSize, kSampl
   //set first 3 rows with lane center x, y yaw
   double obj_x, obj_y, obj_theta, obj_vel, obj_length, obj_width;
   std::cout << "I am here " << std::endl;
+  std::cout << "before setting 30 vals vals " << reference_params << std::endl;
+  reference_params.block(3, 0, 30, kSamples).setOnes();
+
   for(int i =0; i < vd_list.size(); ++i)
   { 
     obj_x = vd_list[i][0];
@@ -260,7 +280,7 @@ void NMPCControlNodelet::set_ref_params(Eigen::Matrix<double, kParamSize, kSampl
   }
 
   
-  std::cout << "rows " << reference_params << std::endl;
+  
 }
 
 

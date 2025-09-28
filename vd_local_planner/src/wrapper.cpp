@@ -45,6 +45,18 @@ std::cout << "I am at bp 1"<< '\n';
 //initialize references y and yN.
 acados_reference_states_.block(0, 0, kStateSize, kSamples) = VD_state.replicate(1, kSamples).template cast<double>();
 acados_reference_states_.block(kStateSize, 0, kInputSize, kSamples) = kVDInput_.replicate(1, kSamples);
+
+
+std::cout << "acados_reference_states_: " 
+          << acados_reference_states_.rows() << " x " << acados_reference_states_.cols() << std::endl;
+std::cout << "Block start row: " << (kStateSize + kInputSize)
+          << ", block rows: " << kParamSize 
+          << ", block cols: " << kSamples << std::endl;
+std::cout << "KRefParam_: " << KRefParam_.rows() << " x " << KRefParam_.cols() << std::endl;
+
+
+acados_reference_states_.block(kStateSize + kInputSize, 0, kParamSize, 1) = KRefParam_.replicate(1, 1);
+
 // std::cout << acados_reference_states_ << '\n';
 // std::cout << "" << '\n';
 // std::cout << "" << '\n';
@@ -58,6 +70,7 @@ void NMPCWrapper::initStates()
 Eigen::Matrix<double, kStateSize, 1> VD_state(Eigen::Matrix<double, kStateSize, 1>::Zero());
   //hover_state(6) = 1.0;
   kVDInput_ = (Eigen::Matrix<real_t, kInputSize, 1>() << 0.0, 0.0, 0.0).finished();
+  
 
   // initialize states x and xN and input u.
   acados_initial_state_ = VD_state.template cast<double>();
@@ -71,6 +84,7 @@ Eigen::Matrix<double, kStateSize, 1> VD_state(Eigen::Matrix<double, kStateSize, 
   std::cout << "I am at bp 2"<< '\n';
   acados_reference_states_.block(0, 0, kStateSize, kSamples) = VD_state.replicate(1, kSamples).template cast<double>();
   acados_reference_states_.block(kStateSize, 0, kInputSize, kSamples) = kVDInput_.replicate(1, kSamples);
+  acados_reference_states_.block(kStateSize + kInputSize, 0, kParamSize, kSamples) = KRefParam_.replicate(1, kSamples);
   acados_reference_end_state_.segment(0, kStateSize) = VD_state.template cast<double>();
 
 }

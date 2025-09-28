@@ -8,8 +8,8 @@ from utils import get_constraints
 def cal_state_cost(state_vec, ref_vec, weights, prev_state, state_rate_weight):
     pos_cost = ca.dot((ref_vec[0:2] - state_vec[0:2])**2, weights[0:2])
     vel_cost = (ref_vec[3] - state_vec[3])**2 * weights[3]
-    yaw_cost =  ( 1 - np.cos(ca.fabs(ref_vec[2] - state_vec[2])))**2  * weights[2]
-    #yaw_cost = (ref_vec[2] - state_vec[2])**2 * weights[2]
+    #yaw_cost =  ( 1 - np.cos(ca.fabs(ref_vec[2] - state_vec[2])))**2  * weights[2]
+    yaw_cost = (ref_vec[2] - state_vec[2])**2 * weights[2]
     cost = pos_cost + yaw_cost + vel_cost       
     return cost 
 
@@ -68,7 +68,7 @@ def acados_controller(N, Tf, lf, lr, vd_width, no_of_obs, no_of_obs_params, inpu
     unscale = 1
     #cost matricesq
     # x, y, yaw,  vel, s_len
-    Q_mat = unscale * ca.vertcat(10, 10,   10, 10)
+    Q_mat = unscale * ca.vertcat(100, 100,   100, 100)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
     Q_emat =  unscale * ca.vertcat(1000, 1000, 1000, 1000) 
     control_rate_weight = ca.vertcat(100, 100, 100)

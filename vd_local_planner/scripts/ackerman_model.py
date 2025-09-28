@@ -49,7 +49,7 @@ def ackerman_model(lf, lr, no_of_obs, no_obs_params, input_offset):
     model.x0 = np.array([0.0,0,0,0, 0]) 
     nx = model.x.rows()
     nu = model.u.rows()    
-    reference_param = SX.sym('references', (nx + nu  + 33) , 1) # instead of yaw angle, we are getting quaternions
+    reference_param = SX.sym('references', (nx + nu + 33) , 1) # instead of yaw angle, we are getting quaternions
     model.p = reference_param    
     model.name = model_name
     return model
