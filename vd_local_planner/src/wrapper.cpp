@@ -49,6 +49,7 @@ std::cout << "I am at bp 1"<< '\n';
 acados_reference_states_.block(0, 0, kStateSize, kSamples) = VD_state.replicate(1, kSamples).template cast<double>();
 acados_reference_states_.block(kStateSize, 0, kInputSize, kSamples) = kVDInput_.replicate(1, kSamples);
 
+
 // std::cout << acados_reference_states_ << '\n';
 // std::cout << "" << '\n';
 // std::cout << "" << '\n';
@@ -76,6 +77,7 @@ Eigen::Matrix<double, kStateSize, 1> VD_state(Eigen::Matrix<double, kStateSize, 
   std::cout << "I am at bp 2"<< '\n';
   acados_reference_states_.block(0, 0, kStateSize, kSamples) = VD_state.replicate(1, kSamples).template cast<double>();
   acados_reference_states_.block(kStateSize, 0, kInputSize, kSamples) = kVDInput_.replicate(1, kSamples);
+  acados_reference_states_.block(kStateSize + kInputSize,0 ,kCBF_params, kSamples) = kCBFParams_.replicate(1, kSamples);
   acados_reference_end_state_.segment(0, kStateSize) = VD_state.template cast<double>();
 
 }
