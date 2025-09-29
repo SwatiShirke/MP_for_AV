@@ -514,7 +514,7 @@ class GlobalPlanner(Node):
         _, index = self.path_kd_tree.query([x,y], 1)
         s_init = self.traj_obj.waypoints[index][3]         
                                
-                     
+        print("  ")           
         for i in range(0, self.N):  
             dist = i * self.ref_vel * (self.Tf /self.N)         
             s_new = s_init + dist
@@ -535,7 +535,7 @@ class GlobalPlanner(Node):
                     yaw = point[2] #(point[2]  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
                     lane_center = self.get_lane_center((x,y))
                     wp = (x,y,yaw, self.ref_vel,lane_center[0], lane_center[1] , lane_center[2])
-                    #print("waypoints ", (x,y,yaw, self.ref_vel), lane_center[0], lane_center[1], lane_center[2])
+                    print("waypoints ", (x,y,yaw, self.ref_vel, lane_center[0], lane_center[1], lane_center[2]))
             waypoints.append(wp)    
      
            

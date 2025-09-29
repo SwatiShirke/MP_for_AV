@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np 
 from scipy.interpolate import interp2d
 from scipy.interpolate import griddata
-from vd_carla_msgs.msg import CarlaEgoVehicleControl
+from carla_msgs.msg import CarlaEgoVehicleControl
 from scipy.interpolate import CubicSpline
 import scipy.spatial as sp
 
@@ -143,7 +143,7 @@ class PIDPublisher(Node):
             current_time = self.sim_clock.now() 
             msg.header.stamp = current_time.to_msg()
 
-            #print("self.accel_cmd",self.accel_cmd )
+            print("self.accel_cmd",self.accel_cmd )
             if self.accel_cmd >= 0:
                 msg.throttle = self.accel_cmd 
                 msg.steer = self.ref_steering_angle

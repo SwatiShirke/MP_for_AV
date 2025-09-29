@@ -1,1 +1,0 @@
-vd_msgs/VDpose[] poses

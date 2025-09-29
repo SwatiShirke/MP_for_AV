@@ -13,14 +13,14 @@ def generate_launch_description():
             parameters=[{'use_sim_time': True}]
         ),
 
-        # #Node 2: Start MPC Controller
-        # Node(
-        #     package='vd_local_planner',
-        #     executable='vd_nmpc_node',
-        #     name='vd_local_planner',
-        #     output='screen',
-        #     parameters=[{'use_sim_time': True}]
-        # ),
+        #Node 2: Start MPC Controller
+        Node(
+            package='test_pkg',
+            executable='vd_nmpc_node',
+            name='test_pkg',
+            output='screen',
+            parameters=[{'use_sim_time': True}]
+        ),
 
         # Node 3: Start ROS Bag Node
         Node(
