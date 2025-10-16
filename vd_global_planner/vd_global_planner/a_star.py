@@ -68,9 +68,9 @@ class a_star:
         self.K  = 5
         self.velocity_steps = [self.vel_max] if self.vel_steps == 1 else np.linspace(self.vel_min, self.vel_max, self.vel_steps)
         self.steer_steps = np.linspace(self.steer_min, self.steer_max, self.angle_steps)
-        self.turning_weight = 15
-        self.lateral_cost_weight = 0.25
-        self.lane_change_cost = 10
+        self.turning_weight = 15 
+        self.lateral_cost_weight = 0.5
+        self.lane_change_cost = 20
         self.road_change_cost = 20
         
 
@@ -184,7 +184,7 @@ class a_star:
                         turning_cost = self.compute_turning_cost(traj)
                         lane_change_cost = self.compute_change_cost(traj[0,0:2], traj[-1,0:2])
                         
-                        other_cost =    turning_cost + lane_change_cost   #lateral_cost
+                        other_cost =    turning_cost + lane_change_cost  + lateral_cost
 
                         # print("dist_from_source ",  dist_from_source)   
                         # print("self.compute_lateral_cost(traj) ", lateral_cost)
@@ -212,24 +212,39 @@ class a_star:
 
     def compute_distances(self, point): 
         #compute lateral distance of the point
+        # x, y = point
+        # point_n = carla.Location(x =x , y=y, z=0)
+        # wp = self.carla_map.get_waypoint(point_n, project_to_road=True)
+        # # returns (signed_lateral_dist)
+        # lx = wp.transform.location.x
+        # ly = wp.transform.location.y
+
+        # dx = x - lx
+        # dy = y - ly
+        
+
+        # # compute signed lateral distance relative to lane heading
+        # yaw = math.radians(wp.transform.rotation.yaw)
+        # nx = math.cos(yaw + math.pi/2.0)
+        # ny = math.sin(yaw + math.pi/2.0)
+        # signed_lat = dx * nx + dy * ny  # positive -> one side, negative -> other
+
+        # return abs(signed_lat)
+
         x, y = point
         point_n = carla.Location(x =x , y=y, z=0)
         wp = self.carla_map.get_waypoint(point_n, project_to_road=True)
-        # returns (signed_lateral_dist)
-        lx = wp.transform.location.x
-        ly = wp.transform.location.y
+        cx = wp.transform.location.x
+        cy = wp.transform.location.y
 
-        dx = x - lx
-        dy = y - ly
-        
-
-        # compute signed lateral distance relative to lane heading
+        P_center = np.array([cx, cy])
+        P_vd = np.asarray([x,y])
         yaw = math.radians(wp.transform.rotation.yaw)
-        nx = math.cos(yaw + math.pi/2.0)
-        ny = math.sin(yaw + math.pi/2.0)
-        signed_lat = dx * nx + dy * ny  # positive -> one side, negative -> other
-
-        return abs(signed_lat)
+        t = np.array([np.cos(yaw), np.sin(yaw)])
+        n = np.array([-np.sin(yaw), np.cos(yaw)]) # left normal
+        d_signed = float(n.dot(P_vd - P_center))
+        return abs(d_signed)
+    
 
     def compute_turning_cost(self, traj):
         # normalized_cost = change in yaw / length
