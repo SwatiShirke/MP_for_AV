@@ -1,4 +1,7 @@
 N : 10
 Tf : 5.0
-d_safe : 1.0
+d_safe : 0.5
 polytope_margin : 0.1
+KNN : 5
+no_of_params : 6 
+dist_threshold : 10.0 

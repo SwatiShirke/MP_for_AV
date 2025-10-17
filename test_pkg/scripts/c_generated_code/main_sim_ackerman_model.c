@@ -124,9 +124,6 @@ int main()
     p[35] = 0;
     p[36] = 0;
     p[37] = 0;
-    p[38] = 0;
-    p[39] = 0;
-    p[40] = 0;
 
     ackerman_model_acados_sim_update_params(capsule, p, NP);
   

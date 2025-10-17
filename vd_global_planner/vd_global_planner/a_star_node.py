@@ -94,7 +94,7 @@ class GlobalPlanner(Node):
         self.s_current = 0
         self.last_velocity = 0 
         self.KNN = 5
-        self.radius = 5
+        self.dist_threshold = 10
         
 
     def get_vehicle(self):             
@@ -334,7 +334,7 @@ class GlobalPlanner(Node):
         self.traj_obj.create_path_funs(self.path)
         smooth_path = self.traj_obj.get_interpld_path()
 
-        print("smooth path :" , smooth_path[0:100, 0:3])
+        #print("smooth path :" , smooth_path[0:100, 0:3])
 
         path_arr =  np.array(smooth_path)
         vd_path_msg = VDPath()
@@ -514,7 +514,7 @@ class GlobalPlanner(Node):
         _, index = self.path_kd_tree.query([x,y], 1)
         s_init = self.traj_obj.waypoints[index][3]         
                                
-        print("  ")           
+        #print("  ")           
         for i in range(0, self.N):  
             dist = i * self.ref_vel * (self.Tf /self.N)         
             s_new = s_init + dist
@@ -535,7 +535,7 @@ class GlobalPlanner(Node):
                     yaw = point[2] #(point[2]  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi
                     lane_center = self.get_lane_center((x,y))
                     wp = (x,y,yaw, self.ref_vel,lane_center[0], lane_center[1] , lane_center[2])
-                    print("waypoints ", (x,y,yaw, self.ref_vel, lane_center[0], lane_center[1], lane_center[2]))
+                    #print("waypoints ", (x,y,yaw, self.ref_vel, lane_center[0], lane_center[1], lane_center[2]))
             waypoints.append(wp)    
      
            
@@ -558,7 +558,7 @@ class GlobalPlanner(Node):
                 continue  # skip self
 
             dist = ego_loc.distance(vehicle.get_location())
-            if dist <= self.radius:                
+            if dist <= self.dist_threshold:                
                 vd_transform = vehicle.get_transform()
                 x, y = vd_transform.location.x, vd_transform.location.y
                 theta = (math.radians(vd_transform.rotation.yaw ) + 2*np.pi) % (4*np.pi) - 2*np.pi

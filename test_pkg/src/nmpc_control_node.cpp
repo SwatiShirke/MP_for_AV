@@ -69,7 +69,7 @@ namespace nmpc_control_nodelet
     
     static constexpr int NO_OBJECTS = 5;    
     static constexpr int PARAM_WINDOW =  6;                        // for each object, we have 6 params to set for mpc after optimization    
-    static constexpr int INPUT_OFFSET = 3;
+    static constexpr int INPUT_OFFSET = 0;
     std::vector<std::vector<float>> vd_list;
 
     // from odom callback
@@ -150,15 +150,15 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
   this->ref_vel = filt_reference_msg->poses[0].velocity;
   auto iterator(filt_reference_msg->poses.begin());
 
-  std::cout << "  " << std::endl;
-  std::cout << "vd current state" << this->vd_current_state << std::endl;
+  // std::cout << "  " << std::endl;
+  // std::cout << "vd current state" << this->vd_current_state << std::endl;
   
   if (filt_reference_msg->poses.size() > 1)
   { 
     
     for (int i=0; i < kSamples; i++)
     { 
-      std::cout << "ref recived x, y psi, vel " <<iterator->x << " " << iterator->y << " " << iterator->psi << " " << iterator->velocity <<std::endl;
+      //std::cout << "ref recived x, y psi, vel " <<iterator->x << " " << iterator->y << " " << iterator->psi << " " << iterator->velocity <<std::endl;
        
       reference_states.col(i) << iterator->x,
                                   iterator->y, 
@@ -168,12 +168,7 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
 
     
       reference_inputs.col(i) << 0, 0, 0;
-      reference_params.col(i).head(3) << iterator->x_lane_center,
-                                         iterator->y_lane_center,
-                                         iterator->yaw_lane_center;    
-                                        
-
-                                    
+                                 
      
       iterator++;
     }
@@ -195,13 +190,12 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     
     
     reference_inputs = (Eigen::Matrix<double, kInputSize, 1>() << 0,0,0).finished().replicate(1, kSamples);
-    //reference_params.topRows(33) = (Eigen::Matrix<double, kCBF_params, 1>() << filt_reference_msg->poses[0].x_lane_center, filt_reference_msg->poses[0].y_lane_center, filt_reference_msg->poses[0].yaw_lane_center, 0.1).finished().replicate(1, kSamples);       
-    //  
+     
   }
   
   else 
   { 
-    std::cout << "here in ref callback" << std::endl;
+    //std::cout << "here in ref callback" << std::endl;
     Eigen::Matrix<double, kStateSize, 1> state = this->get_vd_current_state();
     for (int i=0; i < kSamples; i++)
     {       
@@ -210,10 +204,10 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
       reference_inputs.col(i) << 0,0,0;
       
     }
-    std::cout << "here in ref callback pt 2" << std::endl;
+    //std::cout << "here in ref callback pt 2" << std::endl;
   }
 
-  //this->set_ref_params(reference_params);
+  this->set_ref_params(reference_params);
 
   // std::cout << "atfer update 30 " << reference_params << std::endl;
   controller_.setReferenceStates(reference_states);
@@ -224,10 +218,10 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
   rclcpp::Time now = this->get_clock()->now();
   this->init_time = now;
 
-  std::cout << "set ref values" << std::endl;
+  //std::cout << "set ref values" << std::endl;
 
   controller_.run();
-  std::cout << "ran the controller" << std::endl;
+  //std::cout << "ran the controller" << std::endl;
   // publish control and predicted path
   //publishControl();
   publishReference();
@@ -246,9 +240,7 @@ void NMPCControlNodelet::set_ref_params(Eigen::Matrix<double, kCBF_params, kSamp
 
   //set first 3 rows with lane center x, y yaw
   double obj_x, obj_y, obj_theta, obj_vel, obj_length, obj_width;
-  std::cout << "I am here " << std::endl;
-  std::cout << "before setting 30 vals vals " << reference_params << std::endl;
-  reference_params.block(3, 0, 30, kSamples).setOnes();
+  
 
   for(int i =0; i < vd_list.size(); ++i)
   { 
@@ -259,7 +251,7 @@ void NMPCControlNodelet::set_ref_params(Eigen::Matrix<double, kCBF_params, kSamp
     obj_length =  vd_list[i][4];
     obj_width = vd_list[i][5];
 
-    //std::cout << "obj_x " << obj_x << "obj_y " << obj_y << "obj_theta " << obj_theta << "obj_vel " << obj_vel << "obj_length " << obj_length <<  "obj_width " << obj_width << std::end
+    //std::cout << "obj_x " << obj_x << "obj_y " << obj_y << "obj_theta " << obj_theta << "obj_vel " << obj_vel << "obj_length " << obj_length <<  "obj_width " << obj_width << std::end;
     reference_params.block((PARAM_WINDOW*i + INPUT_OFFSET),0 , PARAM_WINDOW, kSamples) = (Eigen::Matrix<double, PARAM_WINDOW, 1> () << 
                                                                               obj_x, 
                                                                               obj_y, 
@@ -267,10 +259,11 @@ void NMPCControlNodelet::set_ref_params(Eigen::Matrix<double, kCBF_params, kSamp
                                                                               obj_vel,
                                                                               obj_length, 
                                                                               obj_width).finished().replicate(1, kSamples);
-    std::cout << "saved params______________" << std::endl;
+    //std::cout << "saved params______________" << std::endl;
                                                                               
   }
 
+  //std::cout << "ref params " << reference_params << std::endl; 
   
   
 }
@@ -366,7 +359,7 @@ void NMPCControlNodelet::publishPrediction()
   vd_msgs::msg::VDpose pose; 
 
   // std::cout << " " << std::endl;
-  std::cout << "Predicted values here" << std::endl;
+  //std::cout << "Predicted values here" << std::endl;
   for (int i=0; i < kSamples; i++)
   { 
     
@@ -393,7 +386,7 @@ void NMPCControlNodelet::publishPrediction()
     pose.header.stamp = temp;  // ✅ if your ROS2 version has to_msg()
 
 
-    std::cout << "time sec " << pose.header.stamp.sec <<  " nanosec "<< pose.header.stamp.nanosec << " predx " << pose.x << " pred_y " << pose.y << " pred_yaw " << pose.psi << " pred_vel " << pose.velocity <<  " accel "<< pose.acceleration  << " steer "  << pose.steering_angle   << std::endl; 
+    //std::cout << "time sec " << pose.header.stamp.sec <<  " nanosec "<< pose.header.stamp.nanosec << " predx " << pose.x << " pred_y " << pose.y << " pred_yaw " << pose.psi << " pred_vel " << pose.velocity <<  " accel "<< pose.acceleration  << " steer "  << pose.steering_angle   << std::endl; 
    
     // auto temp = this->init_time  + (i+1) * this->Tf;
     // pose.header.stamp = temp;   //rclcpp::Duration::from_seconds(

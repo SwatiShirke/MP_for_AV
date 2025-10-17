@@ -2,7 +2,7 @@ from casadi import *
 from acados_template import AcadosModel
 
 
-def ackerman_model(lf, lr, KNN):
+def ackerman_model(lf, lr, d_safe, KNN, no_of_params, dist_threshold):
     polytope_params_n = 6    
     model_name = "ackerman_model"
     model = AcadosModel()   
@@ -54,7 +54,7 @@ def ackerman_model(lf, lr, KNN):
     model.x0 = np.array([0.0,0,0,0, 0])
     nx = model.x.rows()
     nu = model.u.rows()    
-    reference_param = SX.sym('references', (nx + nu + 33), 1) # instead of yaw angle, we are getting quaternions
+    reference_param = SX.sym('references', (nx + nu + no_of_params * KNN), 1) # instead of yaw angle, we are getting quaternions
     model.p = reference_param
     model.name = model_name
 

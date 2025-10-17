@@ -17,6 +17,10 @@ class Controller_params:
     Tf : float
     polytope_margin : float # in meters, polytope margin 
     d_safe : float    #safe distance between 2 polytopes can be >= 0 
+    KNN : int          ## no of surrounding obstacles to be considered in polytope constraints, this also used in mpc 
+                       ## controller setup
+    no_of_params : int 
+    dist_threshold : float
 
 @dataclass
 class Planner_params:
@@ -24,7 +28,7 @@ class Planner_params:
     buffer_grid : int # no of buffer grids added on each side of grid map
     KNN : int          ## no of surrounding obstacles to be considered in polytope constraints, this also used in mpc 
                        ## controller setup
-
+    resolution_K : float  
 
 
 class read_params():

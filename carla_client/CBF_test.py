@@ -328,19 +328,17 @@ class World(object):
     
         # Spawn a single ego vehicle (Lincoln MKZ)
         # print(type(spawn_points[1]))        
-        # transform = carla.Transform(carla.Location(x= -60, y=30), carla.Rotation(yaw=180)) 
-        
-        # # vehicle_bp = random.choice(vehicle_blueprints) 
-        # vehicle_bp = self.world.get_blueprint_library().find('vehicle.mini.cooper')  
-        # vehicle_bp.set_attribute('role_name', 'obstacle')     
-        # self.test_vehicle = self.world.spawn_actor(vehicle_bp, transform)
+        transform = carla.Transform(carla.Location(x= -53 , y=24.5), carla.Rotation(yaw=180)) 
+        vehicle_bp = self.world.get_blueprint_library().find('vehicle.mini.cooper')  
+        vehicle_bp.set_attribute('role_name', 'obstacle')     
+        self.test_vehicle = self.world.spawn_actor(vehicle_bp, transform)
 
-        #  # Spawn a single ego vehicle (Lincoln MKZ)
-        # # print(type(spawn_points[1]))        
-        # transform = carla.Transform(carla.Location(x=-54, y=26), carla.Rotation(yaw=180)) 
-        # # vehicle_bp = random.choice(vehicle_blueprints) 
-        # vehicle_bp = self.world.get_blueprint_library().find('vehicle.mini.cooper')       
-        # self.test_vehicle2 = self.world.spawn_actor(vehicle_bp, transform)
+        ##spwn vd 3 
+        transform = carla.Transform(carla.Location(x= -41 , y=80.0), carla.Rotation(yaw=90)) 
+        vehicle_bp = self.world.get_blueprint_library().find('vehicle.mini.cooper')  
+        vehicle_bp.set_attribute('role_name', 'obstacle')     
+        self.test_vehicle = self.world.spawn_actor(vehicle_bp, transform)
+       
 
         # print(self.player.attributes)
 

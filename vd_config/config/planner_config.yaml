@@ -1,4 +1,7 @@
 grid_res : 1.0
 buffer_grid : 2
 KNN : 5
+resolution_K : 0.5
+
+ 
 

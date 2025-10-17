@@ -37,7 +37,7 @@
 #define ACKERMAN_MODEL_NX     5
 #define ACKERMAN_MODEL_NZ     0
 #define ACKERMAN_MODEL_NU     3
-#define ACKERMAN_MODEL_NP     41
+#define ACKERMAN_MODEL_NP     38
 
 #ifdef __cplusplus
 extern "C" {
