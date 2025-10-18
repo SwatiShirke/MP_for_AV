@@ -26,7 +26,8 @@ def read_vehicle_bag_data(bag_path):
         '/carla/ego_vehicle/vehicle_control_cmd',
         '/carla/ego_vehicle/waypoints',
         '/norm_error',  # Include norm_error topic
-        'explored_nodes'
+        'explored_nodes',
+        'predicted_path'
     ]
     topic_data = {topic: [] for topic in topics}
 
@@ -59,6 +60,15 @@ def read_vehicle_bag_data(bag_path):
                     topic_data[topic_name].append((time_sec, first_pose.x, first_pose.y, first_pose.psi,
                                                    first_pose.velocity,  # Yaw
                                                    first_pose.distance))  # Reference velocity
+                    
+            if topic_name == 'predicted_path':
+                msg = deserialize_message(serialized_msg, VDtraj)
+                if len(msg.poses) > 0:
+                    first_pose = msg.poses[1]
+                    topic_data[topic_name].append((time_sec, first_pose.x, first_pose.y, first_pose.psi,
+                                                   first_pose.velocity,  # Yaw
+                                                   first_pose.distance))  # Reference velocity
+            
             if topic_name == '/norm_error':  # Read norm error values
                 msg = deserialize_message(serialized_msg, Float32)
                 topic_data[topic_name].append((time_sec, msg.data))  # Store norm_error values
@@ -66,6 +76,7 @@ def read_vehicle_bag_data(bag_path):
             if topic_name == 'explored_nodes':                
                 msg = deserialize_message(serialized_msg, VDPath)                
                 topic_data[topic_name].append((time_sec, msg.x_val, msg.y_val))
+          
 
     return topic_data
 
@@ -98,28 +109,31 @@ def compute_norm_error_rmse(topic_data):
         return None
 
 def plot_vehicle_data(topic_data):
-    if  topic_data['/carla/ego_vehicle/odometry'] != [] and topic_data['/carla/ego_vehicle/waypoints'] != []:
+    if  topic_data['/carla/ego_vehicle/odometry'] != [] and topic_data['/carla/ego_vehicle/waypoints'] != [] and topic_data['predicted_path'] != []:
         odom_times, odom_x, odom_y, odom_yaw, odom_long_vel, odom_distance = zip(*topic_data['/carla/ego_vehicle/odometry'])
         traj_times, traj_x, traj_y, traj_yaw, traj_ref_vel, ref_distance = zip(*topic_data['/carla/ego_vehicle/waypoints'])
+        mpc_pred_times, mpc_pred_x, mpc_pred_y, mpc_pred_yaw, mpc_pred_ref_vel, mpc_pred_distance = zip(*topic_data['predicted_path'])
 
         # Plot X Position
         plt.figure()
         plt.plot(odom_x, odom_y, label='Vehicle pose', linestyle='-')
-        plt.plot(traj_x, traj_y, label='Waypoints', linestyle='--')
+        plt.plot(traj_x, traj_y, label='Hybrid A* Path', linestyle='--')
+        plt.plot(mpc_pred_x, mpc_pred_y, label='MPC Predicted Path', linestyle='-.')
         plt.legend()
         plt.xlabel('X Position')
         plt.ylabel('Y Position')
-        plt.title('Vehicle Position vs Waypoints')
+        plt.title('Vehicle Position vs Reference Waypoints')
         plt.grid(True)
         #plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))  # Fix time axis
 
         plt.figure()
         plt.plot(odom_times, odom_x, label='Vehicle X')
         plt.plot(traj_times, traj_x, label='Waypoints X', linestyle='--')
+        plt.plot(mpc_pred_times, mpc_pred_x, label='MPC Predicted Path X', linestyle='-.')
         plt.legend()
         plt.xlabel('Time (seconds)')
         plt.ylabel('X Position')
-        plt.title('Vehicle X Position vs Waypoints')
+        plt.title('Vehicle X Position vs Waypoints') 
         plt.grid(True)
         plt.gca().xaxis.set_major_formatter(ticker.ScalarFormatter(useOffset=False))  # Fix time axis
         
@@ -127,6 +141,7 @@ def plot_vehicle_data(topic_data):
         plt.figure()
         plt.plot(odom_times, odom_y, label='Vehicle Y')
         plt.plot(traj_times, traj_y, label='Waypoints Y', linestyle='--')
+        plt.plot(mpc_pred_times, mpc_pred_y, label='MPC Predicted Path Y', linestyle='-.')
         plt.legend()
         plt.xlabel('Time (seconds)')
         plt.ylabel('Y Position')
@@ -138,6 +153,7 @@ def plot_vehicle_data(topic_data):
         plt.figure()
         plt.plot(odom_times, odom_yaw, label='Yaw Angle')
         plt.plot(traj_times, traj_yaw, label='Reference Yaw', linestyle='--')
+        plt.plot(mpc_pred_times, traj_yaw, label='Reference Yaw', linestyle='--')
         plt.legend()
         plt.xlabel('Time (seconds)')
         plt.ylabel('Yaw Angle')

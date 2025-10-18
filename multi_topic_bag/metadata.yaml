@@ -1,0 +1,56 @@
+rosbag2_bagfile_information:
+  version: 5
+  storage_identifier: sqlite3
+  duration:
+    nanoseconds: 17771099430
+  starting_time:
+    nanoseconds_since_epoch: 31313519634
+  message_count: 274
+  topics_with_message_count:
+    - topic_metadata:
+        name: explored_nodes
+        type: vd_msgs/msg/VDPath
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 0
+    - topic_metadata:
+        name: /norm_error
+        type: std_msgs/msg/Float32
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 0
+    - topic_metadata:
+        name: /carla/ego_vehicle/waypoints
+        type: vd_msgs/msg/VDtraj
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 0
+    - topic_metadata:
+        name: global_path
+        type: vd_msgs/msg/VDPath
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 0
+    - topic_metadata:
+        name: /carla/ego_vehicle/vehicle_control_cmd
+        type: carla_msgs/msg/CarlaEgoVehicleControl
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 0
+    - topic_metadata:
+        name: /carla/ego_vehicle/odometry
+        type: vd_msgs/msg/VDpose
+        serialization_format: cdr
+        offered_qos_profiles: ""
+      message_count: 274
+  compression_format: ""
+  compression_mode: ""
+  relative_file_paths:
+    - multi_topic_bag_0.db3
+  files:
+    - path: multi_topic_bag_0.db3
+      starting_time:
+        nanoseconds_since_epoch: 31313519634
+      duration:
+        nanoseconds: 17771099430
+      message_count: 274
