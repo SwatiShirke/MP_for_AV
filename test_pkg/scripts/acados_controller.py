@@ -42,10 +42,10 @@ def acados_controller(N, Tf, lf, lr, track_width, L, W,  d_safe, KNN, no_of_para
     unscale = 1
     #cost matricesq
     # x, y, yaw, pitch, roll, vel
-    Q_mat = unscale * ca.vertcat(100,100,100, 100)
+    Q_mat = unscale * ca.vertcat(1000,1000,1000, 1000)
     R_mat = unscale * ca.vertcat( 1e-8, 1e-8, 1e-8)
     Q_emat =  unscale * ca.vertcat(1000, 1000,  1000, 500) 
-    control_rate_weight = ca.vertcat(100, 100, 100)
+    control_rate_weight = ca.vertcat(50, 50, 50)
     state_rate_weight = ca.vertcat(0, 0, 100, 0)
     prev_in = ca.vertcat(0,0,0)
     prev_state = ca.vertcat(0,0,0,0)

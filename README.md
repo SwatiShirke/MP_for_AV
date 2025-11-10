@@ -16,6 +16,13 @@ python3 CBF_test.py
 cd Motion_Planning/MP_for_AV
 source install/setup.bash
 
-#start planner
 
+#start planner
 ros2 service call /global_plan_srv vd_msgs/srv/PlannerSrv "{x: 19.39, y: 130.46, yaw: 0.1590}"
+
+ros2 service call /global_plan_srv vd_msgs/srv/PlannerSrv "{x: 57.57, y: -67.85, yaw: 0.60}"
+
+longest dist
+Point A: (-110.96, 59.69, 0.60)
+
+Point B: (57.57, -67.85, 0.60)

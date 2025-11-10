@@ -57,5 +57,4 @@ def ackerman_model(lf, lr, d_safe, KNN, no_of_params, dist_threshold):
     reference_param = SX.sym('references', (nx + nu + no_of_params * KNN), 1) # instead of yaw angle, we are getting quaternions
     model.p = reference_param
     model.name = model_name
-
     return model

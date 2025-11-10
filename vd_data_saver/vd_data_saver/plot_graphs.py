@@ -27,7 +27,8 @@ def read_vehicle_bag_data(bag_path):
         '/carla/ego_vehicle/waypoints',
         '/norm_error',  # Include norm_error topic
         'explored_nodes',
-        'predicted_path'
+        'predicted_path',
+        '/vehicle_est_pose'
     ]
     topic_data = {topic: [] for topic in topics}
 
@@ -50,6 +51,13 @@ def read_vehicle_bag_data(bag_path):
                 topic_data[topic_name].append((time_sec, msg.x, msg.y, msg.psi,
                                                msg.velocity,  # Yaw angle
                                                msg.distance))  # Longitudinal velocity
+            if topic_name == "/vehicle_est_pose":
+                print("got est data")
+                msg = deserialize_message(serialized_msg, VDpose)
+                topic_data[topic_name].append((time_sec, msg.x, msg.y, msg.psi,
+                                               msg.velocity,  # Yaw angle
+                                               msg.distance))  # Longitudinal velocity   
+
             if topic_name == '/carla/ego_vehicle/vehicle_control_cmd':
                 msg = deserialize_message(serialized_msg, CarlaEgoVehicleControl)
                 topic_data[topic_name].append((time_sec, msg.throttle, msg.brake, msg.steer))
@@ -111,14 +119,16 @@ def compute_norm_error_rmse(topic_data):
 def plot_vehicle_data(topic_data):
     if  topic_data['/carla/ego_vehicle/odometry'] != [] and topic_data['/carla/ego_vehicle/waypoints'] != [] and topic_data['predicted_path'] != []:
         odom_times, odom_x, odom_y, odom_yaw, odom_long_vel, odom_distance = zip(*topic_data['/carla/ego_vehicle/odometry'])
+        est_times, est_x, est_y, est_yaw, est_long_vel, est_distance = zip(*topic_data['/vehicle_est_pose'])
         traj_times, traj_x, traj_y, traj_yaw, traj_ref_vel, ref_distance = zip(*topic_data['/carla/ego_vehicle/waypoints'])
         mpc_pred_times, mpc_pred_x, mpc_pred_y, mpc_pred_yaw, mpc_pred_ref_vel, mpc_pred_distance = zip(*topic_data['predicted_path'])
 
         # Plot X Position
         plt.figure()
-        plt.plot(odom_x, odom_y, label='Vehicle pose', linestyle='-')
+        plt.plot(odom_x, odom_y, label='Ground truth pose', linestyle='-')
         plt.plot(traj_x, traj_y, label='Hybrid A* Path', linestyle='--')
-        plt.plot(mpc_pred_x, mpc_pred_y, label='MPC Predicted Path', linestyle='-.')
+        plt.plot(est_x, est_y, label='Estimated Pose', linestyle='-.')
+        #plt.plot(mpc_pred_x, mpc_pred_y, label='MPC Predicted Path', linestyle='-.')
         plt.legend()
         plt.xlabel('X Position')
         plt.ylabel('Y Position')

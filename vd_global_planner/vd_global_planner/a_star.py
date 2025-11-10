@@ -83,8 +83,7 @@ class a_star:
             node = self.open_dict[node].parent_index
         path_list.append(start_node)
         path_list.reverse()
-
-        
+      
 
         traj = []
         
@@ -119,15 +118,14 @@ class a_star:
 
     def snap_to_resolution(self, node):
         x, y = node
-        #x,y = (x/self.grid_resolution * self.grid_resolution) , (y/self.grid_resolution * self.grid_resolution)
-        return (round(x) , round(y))
+        node_r = (round(x) , round(y))
+        #x,y = (int(x/self.grid_resolution) * self.grid_resolution) , (int(y/self.grid_resolution) * self.grid_resolution)
+        return node_r
 
     def get_hybrid_a_star_neighbours(self, parent_node):
         """The logic for Hybrid A* simulation is built here.
         The model has 3 inputs = [accel, steer_l, steer_r]"""
-
-
-        
+     
 
         # print("steer_steps", steer_steps)
         # print("velocity_steps", velocity_steps)
@@ -161,22 +159,25 @@ class a_star:
                     node_index = self.snap_to_resolution((x,y))                    
 
                     if node_index == parent_node or node_index in n_index_list:
+                        print("here")
                         continue
 
                     
 
 
                     ##collision detection
-                    # center = [x_current, y_current]
-                    # idxs  = self.obs_tree.query_ball_point(center, r= self.margin_radius)
-                    # obstacle_list = [self.obstacle_list[i] for i in idxs]
-                    # for point in traj:
-                    #         is_collision = self.check_collision(point, obstacle_list)   
-                    #         if is_collision:
-                    #             break                               
+                    center = [x_current, y_current]
+                    idxs  = self.obs_tree.query_ball_point(center, r= self.margin_radius)
+                    obstacle_list = [self.obstacle_list[i] for i in idxs]
+                    for point in traj:
+                            print("point", point)
+                            is_collision = self.check_collision(point)   
+                            if is_collision:
+                                break                               
                                 
-                    # if is_collision:
-                    #     continue
+                    if is_collision:
+                       print("collision detected")
+                       continue 
                     
                     if ( x >= x_off and x < cols-x_off and y >= y_off and y < rows - y_off ):      
                         dist_from_source =    abs(distance) 
@@ -195,8 +196,8 @@ class a_star:
                         trajectory_dict[node_index] = traj 
                         n_index_list.append(node_index) 
 
-        # print("parent node ", parent_node )
-        # print("n_index_list ", n_index_list)
+        print("parent node ", parent_node )
+        print("n_index_list ", n_index_list)
      
         return n_obj_list
     
@@ -283,7 +284,23 @@ class a_star:
         # different road id (intersection, ramp, etc.)      
         return self.lane_change_cost
 
+    def is_goal_within_radius(self, node, goal, r):
+        """
+        Check if a node is within a radius r of a goal.
 
+        Parameters:
+            node: tuple (x, y) of node coordinates
+            goal: tuple (x, y) of goal coordinates
+            r: radius
+
+        Returns:
+            True if node is within radius r of goal, False otherwise
+        """
+        dx = node[0] - goal[0]
+        dy = node[1] - goal[1]
+        distance = math.sqrt(dx**2 + dy**2)
+        return distance <= r
+    
     def test_state_lattice_planner(self, parent_node):
         velocity_steps = np.linspace(self.vel_min, self.vel_max, self.vel_steps)
         steer_steps = np.linspace(self.steer_min, self.steer_max, self.angle_steps)
@@ -323,55 +340,65 @@ class a_star:
 
         return  n_index_list   
 
-    def check_collision(self, current_state, obstacle_list):
+    def check_collision(self, current_state):
         """
         This function performs collision detection using Separarting axis theorem on Plytopes
         state: vehicle's current state
         obstacle_list: list of obstacles
         """
+        #print("current_state", current_state[0:2])
+        x, y = current_state[0], current_state[1]
+        x_off, y_off = self.offset
+
+        if self.grid_map[int((y-y_off)/self.grid_resolution), int((x-x_off)/ self.grid_resolution)] == 1:
+            #print("here detected", int((y-y_off)/self.grid_resolution), int((x-x_off)/ self.grid_resolution))
+            return True
+
 
         #get vehicle's polytope corner points
-        x_vd, y_vd, yaw_vd, dist, vel, steer = current_state
+        # x_vd, y_vd, yaw_vd, dist, vel, steer = current_state
 
-        R_mat = np.array([[math.cos(yaw_vd), -math.sin(yaw_vd)],
-                          [math.sin(yaw_vd), math.cos(yaw_vd)]])
+        # R_mat = np.array([[math.cos(yaw_vd), -math.sin(yaw_vd)],
+        #                   [math.sin(yaw_vd), math.cos(yaw_vd)]])
 
-        half_l = (self.lf + self.lr)/2 + self.barrier
-        half_w = self.width/2 + self.barrier
-        corners_in_vd_frame = np.array([[x_vd + half_l, y_vd - half_w],
-                                [x_vd + half_l, y_vd + half_w],
-                                [x_vd - half_l, y_vd - half_w],
-                                [x_vd - half_l, y_vd + half_w]])
+        # half_l = (self.lf + self.lr)/2 + self.barrier
+        # half_w = self.width/2 + self.barrier
+        # corners_in_vd_frame = np.array([[x_vd + half_l, y_vd - half_w],
+        #                         [x_vd + half_l, y_vd + half_w],
+        #                         [x_vd - half_l, y_vd - half_w],
+        #                         [x_vd - half_l, y_vd + half_w]])
         
-        vd_corners_in_vd_world = (R_mat @ corners_in_vd_frame.T).T + np.array([x_vd, y_vd])
-        x_vd_w, y_vd_w = vd_corners_in_vd_world[:,0], vd_corners_in_vd_world[:,1]
-        x_min_vd, x_max_vd = np.min(x_vd_w), np.max(x_vd_w)
-        y_min_vd, y_max_vd = np.min(y_vd_w), np.max(y_vd_w)
+        # vd_corners_in_vd_world = (R_mat @ corners_in_vd_frame.T).T + np.array([x_vd, y_vd])
+        # x_vd_w, y_vd_w = vd_corners_in_vd_world[:,0], vd_corners_in_vd_world[:,1]
+        # x_min_vd, x_max_vd = np.min(x_vd_w), np.max(x_vd_w)
+        # y_min_vd, y_max_vd = np.min(y_vd_w), np.max(y_vd_w)
 
-        #get obstacles corner 
-        #x, y , yaw, L, W 
-        for obs in obstacle_list:
-            x_obs, y_obs, yaw_obs, L_obs, W_obs = obs
-            half_l, half_w = L_obs /2, W_obs/2 
-            R_mat_obs = np.array([[math.cos(yaw_obs), -math.sin(yaw_obs)],
-                          [math.sin(yaw_obs), math.cos(yaw_obs)]])
+        # #get obstacles corner 
+        # #x, y , yaw, L, W 
+        # for obs in obstacle_list:
+        #     x_obs, y_obs, yaw_obs, L_obs, W_obs = obs
+        #     half_l, half_w = L_obs /2, W_obs/2 
+        #     R_mat_obs = np.array([[math.cos(yaw_obs), -math.sin(yaw_obs)],
+        #                   [math.sin(yaw_obs), math.cos(yaw_obs)]])
 
-            corners_in_obs_frame = np.array([[x_obs + half_l, y_obs - half_w],
-                                [x_obs + half_l, y_obs + half_w],
-                                [x_obs - half_l, y_obs - half_w],
-                                [x_obs - half_l, y_obs + half_w]])
+        #     corners_in_obs_frame = np.array([[x_obs + half_l, y_obs - half_w],
+        #                         [x_obs + half_l, y_obs + half_w],
+        #                         [x_obs - half_l, y_obs - half_w],
+        #                         [x_obs - half_l, y_obs + half_w]])
 
-            obs_corners_in_vd_world = (R_mat_obs @ corners_in_obs_frame.T).T + np.array([x_obs, y_obs])
-            x_vd_obs, y_vd_obs = obs_corners_in_vd_world[:,0], obs_corners_in_vd_world[:,1]
-            x_min_obs, x_max_obs = np.min(x_vd_obs), np.max(x_vd_obs)
-            y_min_obs, y_max_obs = np.min(y_vd_obs), np.max(y_vd_obs)
+        #     obs_corners_in_vd_world = (R_mat_obs @ corners_in_obs_frame.T).T + np.array([x_obs, y_obs])
+        #     x_vd_obs, y_vd_obs = obs_corners_in_vd_world[:,0], obs_corners_in_vd_world[:,1]
+        #     x_min_obs, x_max_obs = np.min(x_vd_obs), np.max(x_vd_obs)
+        #     y_min_obs, y_max_obs = np.min(y_vd_obs), np.max(y_vd_obs)
 
-            ##check collision and return true if true
-            ## if no collision then continue checking next obstacle
-            if(x_min_vd < x_min_obs and x_max_vd < x_min_obs) or (x_min_vd > x_max_obs and x_max_vd > x_max_obs) or (y_min_vd < y_min_obs and y_max_vd < y_min_obs) or (y_min_vd > y_max_obs and y_max_vd > y_max_obs):
-                continue
-            else:
-                return True 
+        #     ##check collision and return true if true
+        #     ## if no collision then continue checking next obstacle
+        #     if(x_min_vd < x_min_obs and x_max_vd < x_min_obs) or (x_min_vd > x_max_obs and x_max_vd > x_max_obs) or (y_min_vd < y_min_obs and y_max_vd < y_min_obs) or (y_min_vd > y_max_obs and y_max_vd > y_max_obs):
+        #         continue
+        #     else:
+        #         return True 
+            
+
             
         return False 
 
@@ -457,9 +484,9 @@ class a_star:
             
             
             
-            if node == goal:
+            if self.is_goal_within_radius(node, goal, 1.0):
                 print("path found!")
-                path = self.get_path(goal, start)                
+                path = self.get_path(node, start)                
                 return path, explored_nodes
             else:    
                          

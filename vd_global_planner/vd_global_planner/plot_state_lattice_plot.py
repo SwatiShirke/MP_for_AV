@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Start and updated neighbors
-start = (-65, 24)
-neighbors = [(-65, 20), (-59, 21), (-58, 24), (-59, 27), (-65, 28)]
+start = (-41.0, 4.4)
+neighbors = [(-44.7, 1.8), (-42.6, -0.2), (-40.1, -0.5), (-37.8, 0.7), (-36.6, 3.3)]
 
 # Plot start node
 plt.scatter(start[1], start[0], color="red", s=100, label="Start")  # note swapped: (y,x)
@@ -22,10 +22,10 @@ plt.legend()
 plt.grid(True)
 
 # Set ticks with resolution 0.25
+resolution = 3
 x_min, x_max = plt.xlim()
 y_min, y_max = plt.ylim()
-plt.xticks(np.arange(np.floor(x_min), np.ceil(x_max) + 4, 4))
-plt.yticks(np.arange(np.floor(y_min), np.ceil(y_max) + 4, 4))
-
+plt.xticks(np.arange(np.floor(x_min), np.ceil(x_max) + resolution, resolution))
+plt.yticks(np.arange(np.floor(y_min), np.ceil(y_max) + resolution, resolution))
 plt.show()
 

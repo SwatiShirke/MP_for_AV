@@ -44,17 +44,26 @@ namespace nmpc_control_nodelet
     //subscribers    
     sub_traj_cmd_ = this->create_subscription<vd_msgs::msg::VDtraj>(
       "/carla/ego_vehicle/waypoints", qos_profile_, std::bind(&NMPCControlNodelet::referenceCallback, this, std::placeholders::_1));
-    sub_odometry_ = this->create_subscription<vd_msgs::msg::VDpose>(
-      "/carla/ego_vehicle/odometry", qos_profile_, std::bind(&NMPCControlNodelet::odomCallback, this, std::placeholders::_1));
-
     sub_vd_list_ = this->create_subscription<vd_msgs::msg::VDList>(
-      "neighbour_VDs", qos_profile_, std::bind(&NMPCControlNodelet::VD_list_callback, this, std::placeholders::_1));
-    
+        "neighbour_VDs", qos_profile_, std::bind(&NMPCControlNodelet::VD_list_callback, this, std::placeholders::_1));
+
+
+    if (this->is_odom_state_estimate == true)
+    {  
+      sub_odometry_ = this->create_subscription<vd_msgs::msg::VDpose>(
+      "/vehicle_est_pose", qos_profile_, std::bind(&NMPCControlNodelet::odomCallback, this, std::placeholders::_1));    
+      
+    }
+    else{
+      sub_odometry_ = this->create_subscription<vd_msgs::msg::VDpose>(
+        "/carla/ego_vehicle/odometry", qos_profile_, std::bind(&NMPCControlNodelet::odomCallback, this, std::placeholders::_1));
+    }
     }
 
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   
   private:
+    bool is_odom_state_estimate = true;
     NMPCControl controller_;
     rclcpp::Clock clock_;
     double mass_ = 0.278;
@@ -84,7 +93,7 @@ namespace nmpc_control_nodelet
     void publishReference();
     void publishPrediction();
     void referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr reference_msg);
-    void odomCallback(const vd_msgs::msg::VDpose::SharedPtr odom_msg);
+    void odomCallback(const vd_msgs::msg::VDpose::SharedPtr odom_msg);    
     void VD_list_callback(const vd_msgs::msg::VDList::SharedPtr VD_list_msg);
     void set_ref_params(Eigen::Matrix<double, kCBF_params, kSamples> &reference_params);
     //void pidCallback(const vd_msgs::msg::VDControlCMD::SharedPtr vd_msg);
@@ -97,7 +106,7 @@ namespace nmpc_control_nodelet
 
 
     rclcpp::Subscription<vd_msgs::msg::VDtraj>::SharedPtr sub_traj_cmd_;
-    rclcpp::Subscription<vd_msgs::msg::VDpose>::SharedPtr sub_odometry_;
+    rclcpp::Subscription<vd_msgs::msg::VDpose>::SharedPtr sub_odometry_;    
     rclcpp::Subscription<vd_msgs::msg::VDControlCMD>::SharedPtr sub_pid_cmd_;
     rclcpp::Subscription<vd_msgs::msg::VDList>::SharedPtr sub_vd_list_;
     
@@ -300,7 +309,7 @@ void NMPCControlNodelet::odomCallback(const vd_msgs::msg::VDpose::SharedPtr odom
   this->vd_current_state = state;
   controller_.setState(state);
 }
- 
+
 
 
 // void NMPCControlNodelet::publishControl()

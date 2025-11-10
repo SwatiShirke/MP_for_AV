@@ -20,6 +20,7 @@ class GlobalPlanner(Node):
     def __init__(self):
         super().__init__('global_planner')
 
+        self.is_odom_state_estimate = True  # if ture - then state estimation is used else ground truth is used
         #Connect to CARLA               
         self.clock = Clock() #wall clock
         self.sim_clock = self.get_clock() #sim clock
@@ -28,8 +29,10 @@ class GlobalPlanner(Node):
         self.world = self.client.get_world()
         
        
-        self.vehicle = None 
-        self.get_vehicle()           
+        ##get vehicle info
+        self.vehicle, self.ego_vehicle_ID = self.get_vehicle("hero") 
+        self.obstacle_vehicle, self.obstacle_vd_ID = self.get_vehicle("obstacle1") 
+                      
         self.ref_vel = 5.00 #m/s  this will be removed from here, when trajectory optimization will be implemented
         self.barrier = 0.25 #m/s barrier region depth
 
@@ -39,7 +42,7 @@ class GlobalPlanner(Node):
         self.vehicle_width = 1.744
         self.map = self.world.get_map()
         self.resolution_K = 0.5
-        self.grid_resolution = round(self.resolution_K * self.ref_vel)  
+        self.grid_resolution =  0.5 #round(self.resolution_K * self.ref_vel)  
         self.buffer = self.grid_resolution *20       
         self.grid_map, self.offset, self.obstacle_list = self.get_grid_map()
 
@@ -53,7 +56,7 @@ class GlobalPlanner(Node):
         self.min_steer = np.deg2rad(-40)
         self.max_steer = np.deg2rad(+40) 
         self.vel_steps = 1
-        self.angle_steps = 11
+        self.angle_steps = 5
         self.sim_time = 1.00
         self.eval_time = 0.01
         self.planner = a_star(self.map, self.grid_map, self.grid_resolution, self.offset,self.obstacle_list, self.lr, self.lr, self.vehicle_width, 
@@ -81,6 +84,7 @@ class GlobalPlanner(Node):
         self.err_pub = self.create_publisher(Float32, '/norm_error', 1)
         self.explored_nodes_pub = self.create_publisher(VDPath, "explored_nodes", 1)
         self.vd_list_pub = self.create_publisher(VDList, "neighbour_VDs", 1)
+        self.state_sub = self.create_subscription(VDpose, '/vehicle_est_pose',self.state_cb, qos_profile)
 
         ##traj object
         self.v_min = 0
@@ -96,53 +100,24 @@ class GlobalPlanner(Node):
         self.KNN = 5
         self.dist_threshold = 10
         
-
-    def get_vehicle(self):             
-        self.role_name = "hero"               
-        
+    def get_vehicle(self, role_name):             
+        vehicle, ego_vehicle_ID = None, None            
+        print("role_name", role_name)
         vehicles = self.world.get_actors().filter('vehicle.*')
         for vehicle in vehicles:
-            if vehicle.attributes.get('role_name') == self.role_name:
-                print(f"Found vehicle with role_name: {self.role_name}, ID: {vehicle.id}")
-                self.vehicle = vehicle
-                self.ego_vehicle_ID = vehicle.id
-        if self.vehicle == None:
-            raise RuntimeError(f"Vehicle with ID {self.role_name} not found!")
+            if vehicle.attributes.get('role_name') == role_name:
+                print(f"Found vehicle with role_name: {role_name}, ID: {vehicle.id}")
+                vehicle = vehicle
+                ego_vehicle_ID = vehicle.id
+        if vehicle == None:
+            raise RuntimeError(f"Vehicle with ID {role_name} not found!")
+        
+        return vehicle, ego_vehicle_ID
            
     def snap_to_resolution(self, node):
         x, y = node
         return [np.round(x / self.grid_resolution) * self.grid_resolution, np.round(y / self.grid_resolution) * self.grid_resolution]
-
-
-    # def expand_waypoint_to_lane_points(self, wp, lateral_res=0.5):
-    #     """
-    #     Expand a CARLA waypoint into a set of points across full lane width.
-    #     """
-    #     lateral_res = self.grid_resolution
-
-    #     loc = wp.transform.location
-    #     yaw = math.radians(wp.transform.rotation.yaw)
-
-    #     left_wp = wp.get_left_lane()
-    #     if left_wp.lane_type == carla.LaneType.Sidewalk:
-    #         barrier_region = 0.5 
-    #     else: 
-    #         barrier_region = 0.0
-    #     half_width = wp.lane_width * 0.5 - barrier_region
-
-    #     # Perpendicular unit vector to lane heading
-    #     nx = math.cos(yaw + math.pi / 2.0)
-    #     ny = math.sin(yaw + math.pi / 2.0)
-
-    #     num_samples = int((2 * half_width) / lateral_res) + 1
-    #     lane_points = []
-    #     for i in range(num_samples):
-    #         offset = -half_width + i * lateral_res
-    #         px = loc.x + nx * offset 
-    #         py = loc.y + ny * offset
-    #         lane_points.append((px, py))
-    #     return lane_points
-
+    
 
     def expand_waypoint_to_lane_points(self, wp):
         loc = wp.transform.location
@@ -150,10 +125,10 @@ class GlobalPlanner(Node):
 
         # Check for sidewalks
         left_wp = wp.get_left_lane()
-        left_barrier = 0.5 if left_wp and left_wp.lane_type == carla.LaneType.Sidewalk else 0.0
+        left_barrier = (self.vehicle_width/2 + 1) if left_wp and left_wp.lane_type == carla.LaneType.Sidewalk else 0.0
 
         right_wp = wp.get_right_lane()
-        right_barrier = 0.5 if right_wp and right_wp.lane_type == carla.LaneType.Sidewalk else 0.0
+        right_barrier = (self.vehicle_width/2 + 1) if right_wp and right_wp.lane_type == carla.LaneType.Sidewalk else 0.0
 
         # Lane half-widths on each side
         half_width_left = wp.lane_width * 0.5 - left_barrier
@@ -167,8 +142,8 @@ class GlobalPlanner(Node):
         lane_points = []
 
         # Compute number of samples on left and right separately
-        num_samples_left = int(half_width_left / self.grid_resolution)
-        num_samples_right = int(half_width_right / self.grid_resolution)
+        num_samples_left = int(math.ceil(half_width_left / self.grid_resolution))
+        num_samples_right = int(math.ceil(half_width_right / self.grid_resolution)) 
 
         # Sample left side (negative offsets)
         for i in range(num_samples_left, 0, -1):
@@ -199,8 +174,8 @@ class GlobalPlanner(Node):
         free_points = []
         for wp in waypoints:
             if wp.lane_type == carla.LaneType.Driving:
-                #lane_pts = self.expand_waypoint_to_lane_points(wp)
-                lane_pts = [(wp.transform.location.x, wp.transform.location.y )]
+                lane_pts = self.expand_waypoint_to_lane_points(wp)
+                #lane_pts = [(wp.transform.location.x, wp.transform.location.y )]
                 free_points.extend(lane_pts)
 
         free_points = np.array(free_points)
@@ -224,8 +199,7 @@ class GlobalPlanner(Node):
         X, Y = np.meshgrid(x_lin, y_lin)
         
         grid_map = np.ones(X.shape) 
-        for x_pos, y_pos in free_points:         
-               
+        for x_pos, y_pos in free_points:       
             grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]  = 0
             
         obstacle_list = self.get_obstacle_list()
@@ -330,6 +304,32 @@ class GlobalPlanner(Node):
         #print("path", path)
         self.path_kd_tree = sp.KDTree(self.path[:, 0:2])
         self.is_trajectory_generated = True
+
+        # #--- Traffic obstacle Manager setup ---
+        # tm = self.client.get_trafficmanager(9000)
+        # tm.set_synchronous_mode(True)
+        # tm.global_percentage_speed_difference(10.0)
+        # tm.set_global_distance_to_leading_vehicle(2.5)
+
+        # self.obstacle_vehicle.set_autopilot(True, tm.get_port())
+        # tm.ignore_lights_percentage(self.obstacle_vehicle, 100)
+        # tm.ignore_signs_percentage(self.obstacle_vehicle, 100)
+        # tm.vehicle_percentage_speed_difference(self.obstacle_vehicle, 0)
+
+
+        # #traffic manager for ego vehicle 
+        # tm_1 = self.client.get_trafficmanager(8000)
+        # tm_1.set_synchronous_mode(True)
+        # tm_1.global_percentage_speed_difference(10.0)
+        # tm_1.set_global_distance_to_leading_vehicle(2.5)
+
+        # self.vehicle.set_autopilot(False, tm_1.get_port())
+        # tm_1.ignore_lights_percentage(self.vehicle, 100)
+        # tm_1.ignore_signs_percentage(self.vehicle, 100)
+        # tm_1.vehicle_percentage_speed_difference(self.vehicle, 0)
+
+        #self.vehicle.set_autopilot(False)
+
         response.message = "Global Path generated!"        
         self.traj_obj.create_path_funs(self.path)
         smooth_path = self.traj_obj.get_interpld_path()
@@ -390,32 +390,27 @@ class GlobalPlanner(Node):
         vd_path_msg.y_val = np.array(y_val  ).astype(float).tolist()
         self.path_pub.publish(vd_path_msg)
 
-    def get_current_state(self, s_curr_flag = False):               
-        self.vehicle_transform = self.vehicle.get_transform()    
+    def get_current_state(self):
+
+        if self.is_odom_state_estimate == True and self.is_odom_available == True: 
+            return self.current_state
+        else:
+            #use ground truth
+            self.vehicle_transform = self.vehicle.get_transform() 
+            # Velocity in longitudinal and lateral directions
+            vehicle_velocity = self.vehicle.get_velocity()
+            #print("vehicle_velocity", vehicle_velocity)
+            forward_vector = self.vehicle_transform.get_forward_vector()
+            longitudinal_velocity = (vehicle_velocity.x * forward_vector.x +
+                                     vehicle_velocity.y * forward_vector.y )
+
+
+            x = self.vehicle_transform.location.x
+            y = self.vehicle_transform.location.y        
+            yaw = math.radians(self.vehicle_transform.rotation.yaw)
+
         
-        # Velocity in longitudinal and lateral directions
-        vehicle_velocity = self.vehicle.get_velocity()
-        #print("vehicle_velocity", vehicle_velocity)
-        forward_vector = self.vehicle_transform.get_forward_vector()
-        longitudinal_velocity = (vehicle_velocity.x * forward_vector.x +
-                                 vehicle_velocity.y * forward_vector.y )
-        
-        
-        x = self.vehicle_transform.location.x
-        y = self.vehicle_transform.location.y        
-        yaw = math.radians(self.vehicle_transform.rotation.yaw)
-
-        #print("current location", x, " ", y)
-
-        # if s_curr_flag == True:
-        #     _, index = self.path_kd_tree.query([x,y], 1)
-        #     s_current = self.traj_obj.waypoints[index][4] 
-
-        #     print("index", index)
-        #     print("s_current", s_current)
-            
-
-        return (x, y, yaw, longitudinal_velocity)
+        return [x, y, yaw, longitudinal_velocity]
        
     def get_obstacle_list(self):
         actors = self.world.get_actors()
@@ -436,27 +431,6 @@ class GlobalPlanner(Node):
             point = [tf.location.x, tf.location.y, tf.rotation.yaw,bb.extent.x*2, bb.extent.y*2 ]
             obstacle_list.append(point)
         return obstacle_list 
-
-
-    def publish_odometry(self): 
-        x,y, yaw, vel = self.get_current_state(s_curr_flag = False)
-        self.current_loc = self.vehicle.get_transform()
-        odom_msg = VDpose()
-        # current_time = self.sim_clock.now()
-        # #print(current_time) 
-        # odom_msg.header.stamp = current_time.to_msg()
-        # #odom_msg.header.stamp = self.get_clock().now().to_msg()
-        # odom_msg.header.frame_id = 'map'
-
-        # Position
-        odom_msg.x = x
-        odom_msg.y = y   
-        #yaw = yaw #(yaw  + 2 * np.pi) % (4*np.pi) - (2* np.pi)  # MPC range of Yaw - -2*pi to +2 *pi   
-        odom_msg.psi = yaw
-        odom_msg.velocity = vel
-        #odom_msg.distance = s_current
-        # Assigning longitudinal and lateral velocities to odometry message (optional fields)        
-        self.odom_pub.publish(odom_msg)  
 
 
     def publish_waypoints(self, N=10):       
@@ -507,7 +481,7 @@ class GlobalPlanner(Node):
         return (wp.transform.location.x, wp.transform.location.y, math.radians(wp.transform.rotation.yaw))
 
     def get_n_waypoints(self):
-        x,y, yaw, vel = self.get_current_state(s_curr_flag = True)  
+        x,y, yaw, vel = self.get_current_state()  
                   
         waypoints = []        
         s_total = self.traj_obj.track_length
@@ -593,6 +567,12 @@ class GlobalPlanner(Node):
         self.vd_list_pub.publish(vd_list_msg) 
 
 
+    def state_cb(self, msg): 
+        self.is_odom_available =  True
+        self.current_state =  [msg.x, msg.y, msg.psi, msg.velocity]            
+        self.current_vel = msg.velocity
+         
+ 
 
     def cal_error(self):
         if self.ref_waypoint !=None and self.current_loc != None:

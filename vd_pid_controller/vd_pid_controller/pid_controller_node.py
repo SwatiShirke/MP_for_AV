@@ -14,17 +14,21 @@ from scipy.interpolate import CubicSpline
 import scipy.spatial as sp
 
 
-
     
 class PIDPublisher(Node):
 
     def __init__(self):
         super().__init__('pid_publisher')
+        self.is_odom_state_estimate = True
         self.qos_profile = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=1, reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE)        
-        self.state_sub = self.create_subscription(VDpose, '/carla/ego_vehicle/odometry',self.state_cb, self.qos_profile)
-        self.state_sub  # prevent unused variable warning        
-        #self.mpc_sub = self.create_subscription(VDControlCMD, 'mpc_cmd', self.mpc_cmd_cb, self.qos_profile)
-        #self.mpc_sub  # prevent unused variable warning
+        
+        if self.is_odom_state_estimate == True:
+            self.state_sub = self.create_subscription(VDpose, '/vehicle_est_pose',self.state_cb, self.qos_profile)
+        else:
+            #ground truth
+            self.state_sub = self.create_subscription(VDpose, '/carla/ego_vehicle/odometry',self.state_cb, self.qos_profile)
+
+        self.state_sub  # prevent unused variable warning 
         self.local_traj_sub = self.create_subscription(VDtraj, 'predicted_path', self.local_traj_cb, self.qos_profile)
         self.pub_control_cmd = self.create_publisher(CarlaEgoVehicleControl,'/carla/ego_vehicle/vehicle_control_cmd',self.qos_profile)
         self.sim_clock = self.get_clock()
@@ -50,6 +54,7 @@ class PIDPublisher(Node):
         self.pedal_map_fun = self.create_interpld_obj(path) 
         self.is_odom_available = False 
         self.is_traj_available = False 
+
 
     def create_interpld_obj(self, path):
         df = pd.read_csv(path)  
@@ -143,7 +148,7 @@ class PIDPublisher(Node):
             current_time = self.sim_clock.now() 
             msg.header.stamp = current_time.to_msg()
 
-            print("self.accel_cmd",self.accel_cmd )
+            #print("self.accel_cmd",self.accel_cmd )
             if self.accel_cmd >= 0:
                 msg.throttle = self.accel_cmd 
                 msg.steer = self.ref_steering_angle
