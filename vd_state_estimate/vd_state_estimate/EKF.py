@@ -113,7 +113,7 @@ class EKF:
         k_factor = 1000/20
         #print("K_fact", k_factor)   
         #print(" (V @ self.Q @ V.T)", V @ self.Q @ V.T)  
-        print("Q", self.Q) 
+        #print("Q", self.Q) 
         #print("Q * k_factor", self.Q * k_factor) 
         S = F @ S @ F.T +   self.Q  * k_factor  # (V @ self.Q @ V.T) #* k_factor    #self.Q    
         #print("trace", np.trace(S))

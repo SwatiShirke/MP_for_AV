@@ -163,7 +163,7 @@ def plot_vehicle_data(topic_data):
         plt.figure()
         plt.plot(odom_times, odom_yaw, label='Yaw Angle')
         plt.plot(traj_times, traj_yaw, label='Reference Yaw', linestyle='--')
-        plt.plot(mpc_pred_times, traj_yaw, label='Reference Yaw', linestyle='--')
+        #plt.plot(mpc_pred_times, traj_yaw, label='Reference Yaw', linestyle='--')
         plt.legend()
         plt.xlabel('Time (seconds)')
         plt.ylabel('Yaw Angle')

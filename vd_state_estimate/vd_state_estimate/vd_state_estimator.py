@@ -8,7 +8,7 @@ from vd_msgs.msg import VDpose
 from rclpy.qos import QoSProfile, QoSHistoryPolicy, ReliabilityPolicy, DurabilityPolicy
 from vd_msgs.msg import GPSpose
 from rclpy.clock import Clock
-
+import math
 
 #This is a ros node for state estimation
 #creates a filter object
@@ -49,6 +49,8 @@ class state_estim_node(Node):
         self.init_count = 0 
         self.gps_dt = 0.1
 
+        print("Here at init")
+
         
     def IMU_callback(self, msg):
         if not self.GPS_init_flag:
@@ -60,13 +62,8 @@ class state_estim_node(Node):
             acc_x = msg.linear_acceleration.x
             acc_y = msg.linear_acceleration.y
             omega = msg.angular_velocity.z
-            U = np.array([acc_x, acc_y, omega])
-            #print("U", U)
+            U = np.array([acc_x, acc_y, omega])           
             self.X, self.P, dx = self.EKF.predict(self.X, U, self.P)
-            print("trace of P", np.trace(self.P))
-            #print("state ", self.X[0:2])
-            #print("velocity after predict", self.X[3])   
-
             #publish 
             theta = self.X[2]          
             vel_w = np.array([self.X[3], self.X[4]]).reshape(2,1)
@@ -79,22 +76,22 @@ class state_estim_node(Node):
             pose_msg.x = self.X[0]
             pose_msg.y = self.X[1]
             pose_msg.psi = theta 
-            pose_msg.velocity = vel_body[0,0]      
-            
+            pose_msg.velocity = vel_body[0,0]             
             self.publisher.publish(pose_msg)
 
 
     def GPS_callback(self, msg):
-        if not self.GPS_init_flag:       
-            self.X = np.array([msg.x, msg.y,0,0,0, self.b_g])  
+        if not self.GPS_init_flag:  
+            print("I am here")          
+            self.X = np.array([msg.x, msg.y,msg.psi,0,0, self.b_g])       
             self.x_last = msg.x
             self.y_last = msg.y         
             self.P = np.diag(np.array([msg.covar_x, msg.covar_y,0, 0,0,0]))  
             self.P_last = self.P          
-            #print("init state ", self.X[0:2])
+            print("self.X", self.X)
             self.GPS_init_flag = True
         else:
-            
+            print("here now")
             #vel calculations
             vel_x = (self.X[0] - self.x_last)/ self.gps_dt
             vel_y = (self.X[1] - self.y_last) /self.gps_dt
@@ -117,12 +114,12 @@ class state_estim_node(Node):
             # R[0,2] = 0.02
             # R[2,0] = 0.02  
             
-            print("R", R) 
+            #print("R", R) 
             self.X, self.P =  self.EKF.update(self.X, self.P, z, R)
             self.x_last = self.X[0]
             self.y_last = self.X[1] 
             self.P_last = self.P 
-            print("trace of P", np.trace(self.P)) 
+            #print("trace of P", np.trace(self.P)) 
             #print("velocity after update", self.X[3]) 
 
 

@@ -92,7 +92,10 @@ class GPS(Node):
         # print("long", data.longitude)
         # print("here...............")
         # print("latt", data.latitude) 
-
+        vehicle_transform = self.vehicle.get_transform()
+        yaw = (math.radians(vehicle_transform.rotation.yaw) + np.pi) % (2*np.pi) - np.pi
+        #yaw angle is used only for setting intial state
+        #as there is no RTK GPS available
         self.update_GPS_noise(data.latitude )
         self.longitude = data.longitude - self.bias_longitude 
         self.latitude = data.latitude - self.bias_latitude 
@@ -107,6 +110,7 @@ class GPS(Node):
         pose = GPSpose()
         pose.x = self.x
         pose.y = self.y
+        
 
         lat_rad = math.radians(self.latitude)  # convert latitude once
 
@@ -125,6 +129,7 @@ class GPS(Node):
 
         pose.covar_x = x_covar
         pose.covar_y = y_covar
+        pose.psi = yaw 
         self.publisher.publish(pose)
 
        
