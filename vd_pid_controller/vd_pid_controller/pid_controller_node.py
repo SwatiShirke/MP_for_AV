@@ -18,7 +18,7 @@ import scipy.spatial as sp
 class PIDPublisher(Node):
     def __init__(self):
         super().__init__('pid_publisher')
-        self.is_odom_state_estimate = True 
+        self.is_odom_state_estimate = False 
         self.qos_profile = QoSProfile(history=QoSHistoryPolicy.KEEP_LAST, depth=1, reliability=ReliabilityPolicy.BEST_EFFORT, durability=DurabilityPolicy.VOLATILE)        
         
         if self.is_odom_state_estimate == True:

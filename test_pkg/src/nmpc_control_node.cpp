@@ -63,7 +63,7 @@ namespace nmpc_control_nodelet
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   
   private:
-    bool is_odom_state_estimate = true;
+    bool is_odom_state_estimate = false;
     NMPCControl controller_;
     rclcpp::Clock clock_;
     double mass_ = 0.278;

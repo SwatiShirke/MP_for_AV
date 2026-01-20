@@ -19,8 +19,9 @@ from vd_global_planner.traj_opt import Trajecotry
 class GlobalPlanner(Node):
     def __init__(self):
         super().__init__('global_planner')
-
-        self.is_odom_state_estimate = True  # if ture - then state estimation is used else ground truth is used
+        self.is_odom_state_estimate = False  # if ture - then state estimation is used else ground truth is used
+        self.is_odom_available = False       #if true then state estimator node is ON and getting data from it
+        
         #Connect to CARLA               
         self.clock = Clock() #wall clock
         self.sim_clock = self.get_clock() #sim clock
@@ -42,7 +43,7 @@ class GlobalPlanner(Node):
         self.vehicle_width = 1.744
         self.map = self.world.get_map()
         self.resolution_K = 0.5
-        self.grid_resolution =  0.5 #round(self.resolution_K * self.ref_vel)  
+        self.grid_resolution =  2 #round(self.resolution_K * self.ref_vel)  
         self.buffer = self.grid_resolution *20       
         self.grid_map, self.offset, self.obstacle_list = self.get_grid_map()
 
@@ -66,12 +67,12 @@ class GlobalPlanner(Node):
         self.current_s_len = 0
         
         self.path_kd_tree = None
-        self.init_vel = 1.00 #m/s used for predicting future points
+        self.init_vel = 1.00        #m/s used for predicting future points
         self.goal_margin = 10.00 #m
 
         ## MPC settings
-        self.N = 10         #horizon  steps
-        self.Tf = 5        # horizon time
+        self.N = 10                 #horizon  steps
+        self.Tf = 5                 #horizon time
         self.time_period = 0.05 # timer period MPC frequency = 100Hz 
 
         ##ROS pub sub
@@ -276,8 +277,6 @@ class GlobalPlanner(Node):
         
 
         print("goal yaw  ", wp.transform.rotation.yaw)
-
-
         self.goal = (request.x,request.y, request.yaw)
         start_time = time.time()
         print("start time", start_time )
@@ -584,6 +583,15 @@ class GlobalPlanner(Node):
     def timer_callback(self):
                      
         if self.is_trajectory_generated:
+
+            transform = self.vehicle.get_transform()
+            location = transform.location
+            yaw = transform.rotation.yaw
+            control = self.vehicle.get_control()
+            velocity = self.vehicle.get_velocity()
+            speed = math.sqrt(velocity.x**2 + velocity.y**2 + velocity.z**2) * 3.6  # km/h
+            if speed > 0.1:
+                self.obstacle_vehicle.set_autopilot(True)
             
             #cal nd publish norm error 
             #self.cal_error()

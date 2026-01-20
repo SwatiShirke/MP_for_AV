@@ -36,14 +36,15 @@ def main():
 
     # Get blueprint library
     blueprint_library = world.get_blueprint_library()
-    vehicle_bp = blueprint_library.find("vehicle.mini.cooper_s_2021")  # Mini Cooper
+    vehicle_bp = blueprint_library.find("vehicle.mini.cooper")  # Mini Cooper
     vehicle_bp.set_attribute('role_name', 'hero')
 
     # Spawn the vehicle
     spawn_points = world.get_map().get_spawn_points()
     if not spawn_points:
         raise RuntimeError("No spawn points available!")
-    spawn_point = random.choice(spawn_points)
+    spawn_point = spawn_points[0]  # Use the first spawn point
+    print(f"[INFO] Spawning Mini Cooper at: {spawn_point.location}")
     vehicle = world.spawn_actor(vehicle_bp, spawn_point)
     print(f"[INFO] Mini Cooper spawned at: {spawn_point.location}")
 
