@@ -593,8 +593,6 @@ class GlobalPlanner(Node):
             # =======================
             self.publish_waypoints()
 
-
-
 def main(args=None):
     rclpy.init(args=args)
     planner_node = GlobalPlanner()
