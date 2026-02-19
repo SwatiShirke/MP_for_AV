@@ -18,7 +18,7 @@ class Node:
 
 
 class a_star:
-    def __init__(self, grid_map, offset,  grid_resolution, buffer, goal_radius):
+    def __init__(self, grid_map, offset,  grid_resolution, goal_radius):
         self.grid_map = grid_map
         self.offset = offset
         self.grid_resolution = grid_resolution    
@@ -90,7 +90,7 @@ class a_star:
         #start node 
         start_node = Node(start, None, 0)
         self.open_dict[start_node.get_index()] = start_node         
-        heapq.heappush(p_queue, (0 + self.cal_heuristic_cost(start, goal), start))
+        heapq.heappush(p_queue, (0 + self._cal_heuristic_cost(start, goal), start))
         
         
         explored_nodes = []
@@ -127,7 +127,7 @@ class a_star:
                             self.open_dict[n_index].dist_from_source = n_cost 
                             self.open_dict[n_index].parent_index = node                          
                         
-                        total_cost = n_cost + self.cal_heuristic_cost(n_index, goal)
+                        total_cost = n_cost + self._cal_heuristic_cost(n_index, goal)
                         heapq.heappush(p_queue, (total_cost, n_index))
                          
         print("path not found!")             

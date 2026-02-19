@@ -78,7 +78,7 @@ class Trajectory():
 
         current_location : (x,y,yaw) current location of the ego vehicle, used to find the closest point on the trajectory. 
         """
-        x_current, y_current, yaw_current = current_location
+        x_current, y_current, yaw_current = current_location[0:3]
         _, index = self.path_kd_tree.query([x_current, y_current], k=1)
         s_init = self.waypoints[index, 3] #x,y,yaw of the closest point on the trajectory
         ds= (self.Tf / self.N) * ref_velocity
@@ -102,7 +102,7 @@ class Trajectory():
 
         current_location : (x,y,yaw) current location of the ego vehicle, used to find the closest point on the trajectory. 
         """
-        x0, y0, yaw = current_location   # yaw MUST be radians
+        x0, y0, yaw,_ , _ , _, _ = current_location   # yaw MUST be radians
 
         traj_world = self.get_traj_wps(current_location, ref_velocity)  # (N,4)
         if traj_world.size == 0:

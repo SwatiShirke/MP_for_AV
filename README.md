@@ -26,3 +26,8 @@ longest dist
 Point A: (-110.96, 59.69, 0.60)
 
 Point B: (57.57, -67.85, 0.60)
+
+
+./CarlaUE4.sh -quality-level=Low -ResX=800 -ResY=600 -windowed -nosound
+
+./CarlaUnreal.sh -RenderOffScreen -quality-level=Low -ResX=800 -ResY=600 -nosound
