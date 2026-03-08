@@ -31,3 +31,6 @@ Point B: (57.57, -67.85, 0.60)
 
 
 Spawning Mini Cooper at: Location(x=-64.644844, y=24.471010, z=0.600000)
+
+
+./CarlaUnreal.sh -RenderOffScreen -quality-level=Low -ResX=800 -ResY=600 -nosound --ROS2

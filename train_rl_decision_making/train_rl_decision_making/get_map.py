@@ -1,7 +1,9 @@
 import carla
 import numpy as np
-import matplotlib.pyplot as plt
 import math
+import matplotlib
+matplotlib.use("Agg")  # non-GUI backend (safe for headless)
+import matplotlib.pyplot as plt
 
 class Grid_map:
     def __init__(self, world, grd_res, buffer):
@@ -39,17 +41,18 @@ class Grid_map:
         self.offset = (x_min, y_min)
         x_lin = np.linspace(x_min, x_max, int((x_max - x_min)/self.grid_resolution)+1)
         y_lin = np.linspace(y_min, y_max, int((y_max - y_min)/self.grid_resolution)+1)
-      
+        
+        
         
         X, Y = np.meshgrid(x_lin, y_lin)
         
         self.grid_map = np.ones(X.shape) 
+        self.h, self.w = self.grid_map.shape
         for x_pos, y_pos in free_points:       
             self.grid_map[int((y_pos - y_min)/self.grid_resolution), int((x_pos - x_min)/self.grid_resolution)]  = 0
             
-        return self.grid_map, self.offset, self.grid_resolution  
+        return self.grid_map, self.offset, self.grid_resolution 
     
-
     def expand_waypoint_to_lane_points(self, wp):
         loc = wp.transform.location
         yaw = math.radians(wp.transform.rotation.yaw)
@@ -120,41 +123,152 @@ class Grid_map:
         plt.tight_layout()
         plt.show()
 
-    def plot_grid_map_world(self, grid_map=None):
+    def plot_grid_map_world(self, start=None, goal=None, path=None, show_path_points=False):
         """
-        Plot grid map in CARLA world coordinates (offset-correct, cell-aligned).
+        Plot grid map in CARLA world coordinates and optionally overlay:
+            - start (x,y)
+            - goal (x,y)
+            - path  (N,2) world coordinates
         """
-        import matplotlib.pyplot as plt
+        if not hasattr(self, "grid_map"):
+            raise RuntimeError("Grid map not generated yet. Call get_grid_map() first.")
 
-        if grid_map is None:
-            if not hasattr(self, "grid_map"):
-                raise RuntimeError("Grid map not generated yet. Call get_grid_map() first.")
-            grid_map = self.grid_map
+        if not hasattr(self, "offset"):
+            raise RuntimeError("Offset not set. Call get_grid_map() first.")
 
+        grid_map = self.grid_map
         x_min, y_min = self.offset
         h, w = grid_map.shape
         res = self.grid_resolution
 
-        # Cell-edge aligned extents (IMPORTANT)
+        # Compute world extents
         x_max = x_min + w * res
         y_max = y_min + h * res
 
-        plt.figure(figsize=(8, 8))
-        plt.imshow(
+
+        plt.figure(figsize=(9, 9))
+
+        # Create world coordinate mesh
+        x_vals = np.linspace(x_min, x_max, w + 1)
+        y_vals = np.linspace(y_min, y_max, h + 1)
+
+        plt.pcolormesh(
+            x_vals,
+            y_vals,
             grid_map,
-            origin="lower",
-            cmap="gray_r",                 # 0=free (white), 1=occupied (black)
-            extent=[x_min, x_max, y_min, y_max],
-            interpolation="nearest"
+            cmap="gray_r",
+            shading="auto",
+            vmin=0,
+            vmax=1
         )
 
+        # ---- Overlay path
+        if path is not None:
+            path = np.asarray(path, dtype=np.float32)
+            if path.ndim != 2 or path.shape[1] != 2:
+                raise ValueError(f"path must be (N,2), got {path.shape}")
+
+            plt.plot(path[:, 0], path[:, 1], linewidth=2, label="Path")
+
+            if show_path_points:
+                plt.scatter(path[:, 0], path[:, 1], s=10)
+
+        # ---- Start / Goal
+        if start is not None:
+            plt.scatter(start[0], start[1], s=80, marker="o", label="Start")
+
+        if goal is not None:
+            plt.scatter(goal[0], goal[1], s=80, marker="X", label="Goal")
         plt.colorbar(label="Occupancy (0=free, 1=occupied)")
         plt.title("CARLA Occupancy Grid (World Coordinates)")
         plt.xlabel("World X (m)")
         plt.ylabel("World Y (m)")
         plt.axis("equal")
+        plt.legend()
         plt.tight_layout()
-        plt.show()
+        # ---- SAVE INSTEAD OF SHOW ----
+        save_path = "grid_map_with_path.png"   # you can parameterize this if needed
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()  # important to free memory
+        print(f"Grid map saved to {save_path}")
+
+    def plot_explored_nodes(self, explored_nodes, start=None, goal=None):
+        """
+        Plot occupancy grid and explored nodes only.
+
+        explored_nodes: list of (x,y,k) OR (ix,iy,k)
+        """
+
+        if not hasattr(self, "grid_map"):
+            raise RuntimeError("Grid map not generated yet.")
+
+        grid_map = self.grid_map
+        x_min, y_min = self.offset
+        h, w = grid_map.shape
+        res = self.grid_resolution
+
+        x_max = x_min + w * res
+        y_max = y_min + h * res
+
+        plt.figure(figsize=(9, 9))
+
+        # Draw grid
+        x_vals = np.linspace(x_min, x_max, w + 1)
+        y_vals = np.linspace(y_min, y_max, h + 1)
+
+        plt.pcolormesh(
+            x_vals,
+            y_vals,
+            grid_map,
+            cmap="gray_r",
+            shading="auto",
+            vmin=0,
+            vmax=1
+        )
+
+        # ----------------------------
+        # Plot explored nodes
+        # ----------------------------
+        if explored_nodes is not None and len(explored_nodes) > 0:
+
+            explored_nodes = np.asarray(explored_nodes)
+
+            xs = explored_nodes[:, 0]
+            ys = explored_nodes[:, 1]
+
+            # If indices, convert to world
+            if np.issubdtype(xs.dtype, np.integer):
+                xs = x_min + xs * res
+                ys = y_min + ys * res
+
+            plt.scatter(
+                xs,
+                ys,
+                s=6,
+                c="blue",
+                alpha=0.35
+            )
+
+        # ----------------------------
+        # Optional start / goal
+        # ----------------------------
+        if start is not None:
+            plt.scatter(start[0], start[1], s=80, c="green", marker="o")
+
+        if goal is not None:
+            plt.scatter(goal[0], goal[1], s=80, c="red", marker="X")
+
+        plt.title("Explored Nodes")
+        plt.xlabel("World X (m)")
+        plt.ylabel("World Y (m)")
+        plt.axis("equal")
+        plt.tight_layout()
+
+        save_path = "explored_nodes.png"
+        plt.savefig(save_path, dpi=300, bbox_inches="tight")
+        plt.close()
+
+        print(f"Explored nodes plot saved to {save_path}")
 
 if __name__ == "__main__":
     client = carla.Client('localhost', 2000)

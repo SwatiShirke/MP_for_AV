@@ -38,8 +38,12 @@ class Trajectory():
             raise ValueError("path should not be None")
             return None
         
+        if path_array.shape[0] < 2 or path_array.shape[1] < 2:
+            print(f"[create_path_funs] path has <2 points: {path_array.shape[0]}")
+            return None
+        
         #compute track length for each waypoint
-        d = np.diff(path_array, axis=0)
+        d = np.diff(path_array[:,0:2], axis=0)
         dist = np.linalg.norm(d, axis=1)
         s_len = np.cumsum(dist)
         s_len = np.insert(s_len, 0, 0)
@@ -48,11 +52,17 @@ class Trajectory():
         yaw = np.arctan2(d[:,1], d[:,0])
         yaw = np.r_[yaw, yaw[-1]] 
 
-        wps = np.hstack((path_array, yaw.reshape(-1,1), s_len.reshape(-1,1)))        
+        wps = np.hstack((path_array[:,0:2], yaw.reshape(-1,1), s_len.reshape(-1,1)))        
         self.track_length = s_len[-1]  
 
-        self._interploate(wps)
-        self.generate_WP_KD_tree(self.resoultion)
+        try:    
+            self._interploate(wps)
+            self.generate_WP_KD_tree(self.resoultion)
+            return True
+        except:
+            print(f"[ERROR] Failed to interpolate or genrate KD tree waypoints:")
+            return False
+        
 
     def get_interpolated_path(self, resoultion = 0.25):
         """
@@ -84,12 +94,17 @@ class Trajectory():
         ds= (self.Tf / self.N) * ref_velocity
         traj_wps = []
        
-        for i in range(self.N):
+        for i in range(self.N):            
             s_current = s_init +  i * ds 
+            #print(f"i={i}, s_current={s_current:.3f}")
             point = self.traj_interpld(s_current)          
 
             if not np.all(np.isfinite(point)):
-             break
+                if len(traj_wps) == 0:
+                    return None
+                else:
+                    traj_wps.append(traj_wps[i-1])
+                    continue
             
             traj_wps.append(point)
     
@@ -117,8 +132,9 @@ class Trajectory():
         # world -> ego (rotate by -yaw)
         x_e =  c * dx + s * dy
         y_e = -s * dx + c * dy
+        yaw_e = traj_world[:, 2] - yaw
 
-        return np.stack([x_e, y_e], axis=1)  # (N,2)
+        return np.stack([x_e, y_e, yaw_e], axis=1)  # (N,3)
  
     def generate_WP_KD_tree(self, resoultion=0.25):
         """
@@ -185,8 +201,8 @@ def test_kdtree_nearest(traj: Trajectory):
     assert 0 <= idx < traj.waypoints.shape[0]
     s_nn = traj.waypoints[idx, 3]
 
-    print(f"  query = {q}, nearest idx={idx}, dist={dist:.3f}, s_nn={s_nn:.3f}")
-    print("  OK")
+    # print(f"  query = {q}, nearest idx={idx}, dist={dist:.3f}, s_nn={s_nn:.3f}")
+    # print("  OK")
 
 
 def test_get_traj_wps(traj: Trajectory):

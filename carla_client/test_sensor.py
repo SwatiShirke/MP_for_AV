@@ -81,6 +81,22 @@ def main():
     camera_surface = pygame.Surface((WIDTH, HEIGHT))
     camera.listen(lambda img: draw_image(camera_surface, img))
 
+    # ------------------ Camera ------------------
+    cam_bp = blueprint_library.find("sensor.camera.rgb")
+    cam_bp.set_attribute("image_size_x", str(WIDTH))
+    cam_bp.set_attribute("image_size_y", str(HEIGHT))
+    cam_bp.set_attribute("fov", "100")
+
+    cam_transform_2 = carla.Transform(carla.Location(x=0.00, z=2.4))
+    camera_2 = world.spawn_actor(cam_bp, cam_transform_2, attach_to=hero_vehicle)
+    camera_is_listening = False
+    def cb(image):
+        nonlocal camera_is_listening
+        camera_is_listening = True
+
+    camera_2.listen(cb)
+    
+    
     # ------------------ Telemetry ------------------
     font = pygame.font.Font(None, 32)
     clock = pygame.time.Clock()
@@ -97,14 +113,25 @@ def main():
     REQUIRED_FRAMES = 10         # consecutive ticks
 
     print("[INFO] Simulation running")
-
+    counter = 0
     try:
         while True:
             world.tick()
-    
+            if counter > 30:
+                # camera_2.stop() 
+                # camera_2(False)
+                # for i in range(50):  # tick a few more times to ensure the camera thread has fully stopped
+                #     camera_2.stop()
+                #     world.tick()
+                camera_2.destroy()
+
+                
+                    
+                #print("[INFO] Camera stopped and destroyed after 30 ticks")
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    return
+                    return  
 
             # -------- Ego telemetry --------
             ego_control = hero_vehicle.get_control()
@@ -144,13 +171,14 @@ def main():
             for line in info:
                 display.blit(font.render(line, True, (255, 255, 255)), (10, y))
                 y += 28
-
+            counter += 1
             pygame.display.flip()
             clock.tick(30)
 
     finally:
         print("[INFO] Cleaning up")
-        
+        camera.stop()
+        #camera.destroy()
         hero_vehicle.destroy()
         obstacle_vehicle.destroy()
         settings.synchronous_mode = False

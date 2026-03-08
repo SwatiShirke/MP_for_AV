@@ -12,8 +12,6 @@ from scipy.interpolate import griddata
 from carla_msgs.msg import CarlaEgoVehicleControl
 from scipy.interpolate import CubicSpline
 import scipy.spatial as sp
-
-
     
 class PIDPublisher(Node):
     def __init__(self):
@@ -50,6 +48,7 @@ class PIDPublisher(Node):
         #get pedal model
         path = "src/MP_for_AV/carla_client/pedal_map_data.xlsx"
         #print(path)
+        
         self.pedal_map_fun = self.create_interpld_obj(path) 
         self.is_odom_available = False 
         self.is_traj_available = False 
@@ -72,6 +71,7 @@ class PIDPublisher(Node):
         return pedals_interp
 
     def state_cb(self, msg): 
+        #print("Received odometry message: ", msg)
         self.is_odom_available =  True
         self.current_state =  [msg.x, msg.y, msg.psi, msg.velocity]            
         self.current_vel = msg.velocity
@@ -92,15 +92,17 @@ class PIDPublisher(Node):
         return traj_interpld
 
     def local_traj_cb(self, msg): 
+        #print("Received local trajectory message")
         self.is_traj_available = True
         ##create a KD tree for search        
         self.traj_interpld = self.get_traj_data_struct(msg)
 
 
     def timer_callback(self): 
+        #print("Timer callback triggered")
         if self.is_odom_available and self.is_traj_available:
             # print("                  ")
-            # print("here..........")
+            #print("here..........")
             
             now = self.get_clock().now()
             current_time = now.nanoseconds / 1e9

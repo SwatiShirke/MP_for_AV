@@ -16,17 +16,17 @@ class SensorFusion:
 
     def __init__(
         self,
-        world,
-        ego_vehicle,
+        world,        
         min_distance,
-        yolo_model_path="yolov8n.pt",
-        max_objects=10
+        yolo_model,
+        max_objects=10,
+        ego_vehicle=None
     ):
-        self.world = world
-        self.ego_vehicle = ego_vehicle
+        self.world = world        
         self.max_objects = max_objects
         self.min_distance = min_distance  # meters, tune to remove ego reflections from lidar points
-
+        self.yolo = yolo_model
+        self.ego_vehicle = ego_vehicle
         # -----------------------
         # Camera parameters
         # -----------------------
@@ -49,7 +49,7 @@ class SensorFusion:
 
         # -----------------------
         # YOLO
-        self.yolo = YOLO(yolo_model_path)
+        
         self.conf_thres = 0.25
         self.iou_thres = 0.45
         self.vehicle_class_ids = {2, 3, 5, 7}
@@ -107,33 +107,37 @@ class SensorFusion:
 
         self.camera = None
         self.lidar = None
+        self.setup()
 
-        self.start()
+        
     # =========================================================
     # Setup
     # =========================================================
-    def start(self):
+    def setup(self):        
         self._spawn_camera()
         self._spawn_lidar()
+        self.spawn_collision_sensor()
 
     def _spawn_camera(self):
         bp = self.world.get_blueprint_library().find('sensor.camera.rgb')
+        bp.set_attribute("role_name", "rl_sensor_camera")
         bp.set_attribute('image_size_x', str(self.image_w))
         bp.set_attribute('image_size_y', str(self.image_h))
         bp.set_attribute('fov', str(self.fov))
-        bp.set_attribute("sensor_tick", "0.1")  # 10 Hz
+        bp.set_attribute("sensor_tick", "0.0")  # 10 Hz
         self.camera = self.world.spawn_actor(bp, self.cam_tf, attach_to=self.ego_vehicle)
         self.camera.listen(self._camera_callback)
 
     def _spawn_lidar(self):
         bp = self.world.get_blueprint_library().find('sensor.lidar.ray_cast')
+        bp.set_attribute("role_name", "rl_sensor_lidar")
         bp.set_attribute('range', '50')
         bp.set_attribute('channels', '32')
         bp.set_attribute('points_per_second', '50000')
         bp.set_attribute('rotation_frequency', '20')
         bp.set_attribute('upper_fov', '10')
         bp.set_attribute('lower_fov', '-30')
-        bp.set_attribute("sensor_tick", "0.1")  # 10 Hz
+        bp.set_attribute("sensor_tick", "0.0")  # 10 Hz
 
         self.lidar = self.world.spawn_actor(bp, self.lidar_tf, attach_to=self.ego_vehicle)
         self.lidar.listen(self._lidar_callback)
@@ -229,6 +233,7 @@ class SensorFusion:
 
     def _on_collision(self, event):
         self.collision_happened = True
+        self.actor_collided = event.other_actor.type_id 
 
     # =========================================================
     # Vehicle cache helpers
@@ -294,7 +299,8 @@ class SensorFusion:
           [x_ego, y_ego, yaw_rel, L, W, v_rel_x_ego, v_rel_y_ego, flag]
 
         step_count: int, monotonically increasing env step. Used for TTL slot cleanup.
-        """
+        """        
+        #print("Computing sensor state...")
         # ---- Expire old tracks (free slots)
         # Safe to run every call; O(max_objects)
         for slot in range(self.max_objects):
@@ -312,6 +318,7 @@ class SensorFusion:
             pts = self._latest_lidar
 
         obs = np.zeros((self.max_objects, 8), dtype=np.float32)
+        #print("dets", dets)
         if dets is None or pts is None:
             return obs
 
@@ -328,7 +335,7 @@ class SensorFusion:
                 float(vel.y),
             )
 
-        x0, y0, ego_yaw, ego_L, ego_W, ego_vx_w, ego_vy_w  = ego_state
+        x0, y0, ego_yaw, ego_vx_w, ego_vy_w, ego_L, ego_W,  = ego_state
 
         # -----------------------------
         # Existing LiDAR -> ego -> camera projection
@@ -353,7 +360,7 @@ class SensorFusion:
         valid = (u >= 0) & (u < self.image_w) & (v >= 0) & (v < self.image_h)
         u, v, Zc, pts_ego = u[valid], v[valid], Zc[valid], pts_ego[valid]
 
-
+        # print("dets", dets)
         # NOTE: We no longer use idx to place rows; slot is determined by track_id
         for d in dets:
             cx, cy, sx, sy = d["bbox"]
@@ -382,11 +389,11 @@ class SensorFusion:
             if matched is None:
                 continue
             
-            print("###############################################")
-            print(f"[MATCH] step={step_count}  "
-                  f"track_id={matched.id}  "
-                  f"pred_world=({pred_world_xy[0]:.2f},{pred_world_xy[1]:.2f})  "
-                  f"gt_world=({matched.get_location().x:.2f},{matched.get_location().y:.2f})")
+            # print("###############################################")
+            # print(f"[MATCH] step={step_count}  "
+            #       f"track_id={matched.id}  "
+            #       f"pred_world=({pred_world_xy[0]:.2f},{pred_world_xy[1]:.2f})  "
+            #       f"gt_world=({matched.get_location().x:.2f},{matched.get_location().y:.2f})")
               
 
             track_id = int(matched.id)
@@ -416,7 +423,9 @@ class SensorFusion:
 
             # update last seen for this slot
             self._slot_last_seen[slot] = int(step_count)
-
+        # print("obs shape", obs.shape)
+        # print("here npw######################3")
+        #print("obs", obs) 
         return obs
 
 
@@ -446,7 +455,7 @@ class SensorFusion:
     def get_current_state(self, traj_waypoints=None, ego_state=None, step_count=0):
         """
         traj_waypoints: (N,2) in ego frame
-        ego_state: (x, y, yaw, vx, vy) in world frame (yaw radians)
+        ego_state: (x, y, yaw, vx, vy, L, W) in world frame (yaw radians)
         step_count: int step index (used for stable ID slot TTL in compute_sensor_state)
 
         Returns:
@@ -461,11 +470,11 @@ class SensorFusion:
         if ego_state is None or traj_waypoints is None:
             return np.zeros((1 + self.max_objects + N_traj, 8), dtype=np.float32)
 
-        # ---- obstacles in stable slots (max_objects, 8)
+        # ---- obstacles in stable slots (max_objects, 8) in ego frame
         obs_array = self.compute_sensor_state(ego_state=ego_state, step_count=step_count)
         
         
-        _, _, ego_yaw, ego_L, ego_W, ego_vx_w, ego_vy_w  = ego_state 
+        _, _, ego_yaw, ego_vx_w, ego_vy_w, ego_L, ego_W  = ego_state 
         ego_vx_e, ego_vy_e = self._world_to_ego_vec2(float(ego_yaw), float(ego_vx_w), float(ego_vy_w))
 
         ego_row = np.array([[0.0, 0.0, 0.0,
@@ -478,7 +487,14 @@ class SensorFusion:
         traj_array[:, 0:2] = traj_waypoints[:, 0:2]
         traj_array[:, 7] = 1.0
 
+        # print("ego_row shape", ego_row.shape)
+        # print("obs_array shape", obs_array.shape)
+        # print("traj_array shape", traj_array.shape)
         state_arr = np.vstack((ego_row, obs_array, traj_array)).astype(np.float32)
+        # print("state_arr shape", state_arr.shape)
+
+        # print(" ")
+        # print("state", state_arr)
         return state_arr
 
 
@@ -574,7 +590,7 @@ class SensorFusion:
         spawn_loc = ego_loc + forward * distance + right * lateral_offset
         spawn_loc.z += 0.1  # avoid ground collision
 
-        print("soawned location for onstacle vehicle", spawn_loc)
+        print("spawned location for obstacle vehicle", spawn_loc)
 
         spawn_tf = carla.Transform(
             spawn_loc,
@@ -622,7 +638,7 @@ class SensorFusion:
             step_count += 1 
             time.sleep(0.02)
             self.maybe_refresh_cache(step_count, refresh_every=20)
-            print("\n", state)
+            #print("\n", state)
 
     # =========================================================
     # Cleanup
@@ -635,6 +651,9 @@ class SensorFusion:
             self.lidar.stop()
             self.lidar.destroy()
 
+        if self.collision_sensor:
+            self.collision_sensor.stop()
+            self.collision_sensor.destroy()
     # =========================================================
     # main
     # =========================================================
@@ -722,53 +741,53 @@ def main():
         ego_vehicle.set_autopilot(False)
         print("[INFO] Ego vehicle spawned")
 
-        # ------------------ Obstacle Vehicle 1 ------------------
-        # obs_bp = blueprint_library.find("vehicle.mini.cooper")
-        # obs_bp.set_attribute("role_name", "obstacle")
+        #------------------ Obstacle Vehicle 1 ------------------
+        obs_bp = blueprint_library.find("vehicle.mini.cooper")
+        obs_bp.set_attribute("role_name", "obstacle")
 
-        # obs_transform1 = carla.Transform(
-        #     carla.Location(x=-54.644844, y=24.471010, z=0.6),
-        #     carla.Rotation(yaw=180)
-        # )
+        obs_transform1 = carla.Transform(
+            carla.Location(x=-54.644844, y=24.471010, z=0.6),
+            carla.Rotation(yaw=180)
+        )
 
-        # obstacle_vehicle1 = world.try_spawn_actor(obs_bp, obs_transform1)
-        # if obstacle_vehicle1 is None:
-        #     print("[WARN] Failed to spawn obstacle vehicle 1 (collision).")
-        # else:
-        #     obstacle_vehicle1.set_autopilot(False)
-        #     print("[INFO] Obstacle vehicle 1 spawned")
+        obstacle_vehicle1 = world.try_spawn_actor(obs_bp, obs_transform1)
+        if obstacle_vehicle1 is None:
+            print("[WARN] Failed to spawn obstacle vehicle 1 (collision).")
+        else:
+            obstacle_vehicle1.set_autopilot(False)
+            print("[INFO] Obstacle vehicle 1 spawned")
 
-        # ------------------ Obstacle Vehicle 2 ------------------
-        # obs_bp2 = blueprint_library.find("vehicle.mini.cooper")
-        # obs_bp2.set_attribute("role_name", "obstacle")
+        #------------------ Obstacle Vehicle 2 ------------------
+        obs_bp2 = blueprint_library.find("vehicle.mini.cooper")
+        obs_bp2.set_attribute("role_name", "obstacle")
 
-        # obs_transform2 = carla.Transform(
-        #     carla.Location(x=-52.4844, y=28.471010, z=0.6),
-        #     carla.Rotation(yaw=180)
-        # )
+        obs_transform2 = carla.Transform(
+            carla.Location(x=-52.4844, y=28.471010, z=0.6),
+            carla.Rotation(yaw=180)
+        )
 
-        # obstacle_vehicle2 = world.try_spawn_actor(obs_bp2, obs_transform2)
-        # if obstacle_vehicle2 is None:
-        #     print("[WARN] Failed to spawn obstacle vehicle 2 (collision).")
-        # else:
-        #     obstacle_vehicle2.set_autopilot(False)
-        #     print("[INFO] Obstacle vehicle 2 spawned")
+        obstacle_vehicle2 = world.try_spawn_actor(obs_bp2, obs_transform2)
+        if obstacle_vehicle2 is None:
+            print("[WARN] Failed to spawn obstacle vehicle 2 (collision).")
+        else:
+            obstacle_vehicle2.set_autopilot(False)
+            print("[INFO] Obstacle vehicle 2 spawned")
 
-        # ------------------ Obstacle Vehicle 3 ------------------
-        # obs_bp3 = blueprint_library.find("vehicle.mini.cooper")
-        # obs_bp3.set_attribute("role_name", "obstacle")
+        #------------------ Obstacle Vehicle 3 ------------------
+        obs_bp3 = blueprint_library.find("vehicle.mini.cooper")
+        obs_bp3.set_attribute("role_name", "obstacle")
 
-        # obs_transform3 = carla.Transform(
-        #     carla.Location(x=-52.4844, y=20.471010, z=0.6),
-        #     carla.Rotation(yaw=180)
-        # )
+        obs_transform3 = carla.Transform(
+            carla.Location(x=-52.4844, y=20.471010, z=0.6),
+            carla.Rotation(yaw=180)
+        )
 
-        # obstacle_vehicle3 = world.try_spawn_actor(obs_bp3, obs_transform3)
-        # if obstacle_vehicle3 is None:
-        #     print("[WARN] Failed to spawn obstacle vehicle 3 (collision).")
-        # else:
-        #     obstacle_vehicle3.set_autopilot(False)
-        #     print("[INFO] Obstacle vehicle 3 spawned")
+        obstacle_vehicle3 = world.try_spawn_actor(obs_bp3, obs_transform3)
+        if obstacle_vehicle3 is None:
+            print("[WARN] Failed to spawn obstacle vehicle 3 (collision).")
+        else:
+            obstacle_vehicle3.set_autopilot(False)
+            print("[INFO] Obstacle vehicle 3 spawned")
 
         # Tick once so world state is consistent before sensors attach
         world.tick()
@@ -797,4 +816,5 @@ def main():
         world.apply_settings(original_settings)
 
 if __name__ == "__main__":
-    main()
+    #main()
+    pass 

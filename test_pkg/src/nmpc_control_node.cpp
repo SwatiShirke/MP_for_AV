@@ -164,9 +164,10 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
   
   if (filt_reference_msg->poses.size() > 1)
   { 
-    
+    //std::cout << "" << std::endl; 
     for (int i=0; i < kSamples; i++)
     { 
+      
       //std::cout << "ref recived x, y psi, vel " <<iterator->x << " " << iterator->y << " " << iterator->psi << " " << iterator->velocity <<std::endl;
        
       reference_states.col(i) << iterator->x,
@@ -216,12 +217,12 @@ void NMPCControlNodelet::referenceCallback(const vd_msgs::msg::VDtraj::SharedPtr
     //std::cout << "here in ref callback pt 2" << std::endl;
   }
 
-  this->set_ref_params(reference_params);
+  //this->set_ref_params(reference_params);
 
   // std::cout << "atfer update 30 " << reference_params << std::endl;
   controller_.setReferenceStates(reference_states);
   controller_.setReferenceInputs(reference_inputs);
-  controller_.setReferenceCBFParams(reference_params);  
+  //controller_.setReferenceCBFParams(reference_params);  
 
  
   rclcpp::Time now = this->get_clock()->now();

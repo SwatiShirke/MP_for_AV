@@ -5,7 +5,7 @@ from vd_msgs.msg import  VDpose, VDtraj
 
 
 class WaypointPublisher(Node):
-    def __init__(self, topic="/rl_waypoints", frame_id="map"):
+    def __init__(self, topic="/carla/ego_vehicle/waypoints", frame_id="map"):
         super().__init__("rl_waypoint_publisher")
         self.pub = self.create_publisher(VDtraj, topic, 10)
         self.frame_id = frame_id

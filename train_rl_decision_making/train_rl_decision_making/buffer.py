@@ -21,7 +21,8 @@ class RolloutBuffer:
         self.ptr = 0
 
     def store(self, state, action, reward, done, logprob, value):
-        """Store one transition."""
+        """Store one transition.
+        accepts state, action, reward, done, logprob, value as tensors."""
 
         if self.ptr >= self.buffer_size:
             raise ValueError("Buffer overflow")
@@ -32,10 +33,10 @@ class RolloutBuffer:
         # logprob, value - allow [1] -> []
         # value - allow [1,1] -> []
 
-        state = state.to(self.device)
+        state = state.to(self.device) 
         action = action.to(self.device)
-        logprob = logprob.to(self.device).squeeze()
-        value = value.to(self.device).squeeze()
+        logprob = logprob.to(self.device)
+        value = value.to(self.device) 
 
         # action: allow [1, act_dim] -> [act_dim]
         if action.dim() == 2 and action.shape[0] == 1:
@@ -43,14 +44,22 @@ class RolloutBuffer:
 
         # state: allow [1,21,9] -> [21,9]
         if state.dim() == 3 and state.shape[0] == 1:
-            state = state.squeeze(0)
+            state = state.squeeze(0) 
 
         self.states[self.ptr] = state
-        self.actions[self.ptr] = action
-        self.rewards[self.ptr] = reward if not torch.is_tensor(reward) else reward.to(self.device).squeeze()
-        self.dones[self.ptr] = done if not torch.is_tensor(done) else done.to(self.device).squeeze()
+        self.actions[self.ptr] = action               
+        self.rewards[self.ptr] = torch.tensor(reward, dtype=torch.float32) if not torch.is_tensor(reward) else reward.to(self.device).squeeze()
+        self.dones[self.ptr] = torch.tensor(done, dtype=torch.float32) if not torch.is_tensor(done) else done.to(self.device).squeeze()
         self.logprobs[self.ptr] = logprob
         self.values[self.ptr] = value
+
+        # print("stored states :", self.states[self.ptr: self.ptr+1].shape)
+        # print("stored actions :", self.actions[self.ptr: self.ptr+1].shape)
+        # print("stored rewards :", self.rewards[self.ptr: self.ptr+1].shape)
+        # print("stored dones :", self.dones[self.ptr: self.ptr+1].shape)
+        # print("stored logprobs :", self.logprobs[self.ptr: self.ptr+1].shape)
+        # print("stored values :", self.values[self.ptr: self.ptr+1].shape)
+
 
         self.ptr += 1
 
@@ -59,8 +68,8 @@ class RolloutBuffer:
         advantage = 0
         last_value = last_value.to(self.device).squeeze() if torch.is_tensor(last_value) else torch.tensor(last_value, device=self.device)
 
-        for t in reversed(range(self.buffer_size)):
-            if t == self.buffer_size - 1:
+        for t in reversed(range(self.ptr)):
+            if t == self.ptr - 1:
                 next_value = last_value
             else:
                 next_value = self.values[t + 1]
